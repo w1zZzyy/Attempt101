@@ -27,15 +27,20 @@ public:
 
     template<typename... Pieces>
     Bitboard get_pieces(Color c, Pieces... p) const {
-        static_assert(std::is_same_v<Pieces, Piece> && ...);
-        return (pieces[c][p] | ...);
+        constexpr bool isPiece      =   (std::is_same_v<Pieces, Piece> && ...);
+        constexpr bool isPieceType  =   (std::is_same_v<Pieces, PieceType> && ...);
+        static_assert((isPiece || isPieceType), "All template arguments must be of type Piece or PieceType");
+        return Bitboard((pieces[c][p] | ...));
     }
     template<typename... Colors>
-    Bitboard get_pieces(Colors... c) const {
-        static_assert(std::is_same_v<Colors, Color> && ...);
-        return (occupied[c] | ...);
+    Bitboard get_occupied(Colors... c) const {
+        constexpr bool isColor = (std::is_same_v<Colors, Color> && ...);
+        constexpr bool isColorType = (std::is_same_v<Colors, ColorType> && ...);
+        static_assert((isColor || isColorType), "All template arguments must be of type Color or ColorType");
+        return Bitboard((occupied[c] | ...));
     }
     Color get_side() const noexcept {return side;}
+    Square get_passant() const {return st->top().passant;}
 
     bool can_castle(CastleType ct, Bitboard enemy_attacks) const;
 
@@ -136,6 +141,14 @@ public:
     bool is_check() const noexcept {return checkers;}
     bool is_double_check() const {return checkers.count() == 2;}
 
+    template<typename... Squares>
+    bool is_blocker(Squares... sqr) const noexcept;
+    bool is_attacker(Square sqr) const noexcept {return checkers & sqr.bitboard();}
+
+    // оч редкая ситуация (при взятии на проходе шах нашему королю например)
+    // пример: Белый король: е5, Белая пешка: f5, Черная пешка: g5, Черная ладья: h5, (взятие на g6)
+    bool exposes_discovered_check(Square from, Square targ, const Position& p) const;
+
     Bitboard pinned_pieces() const noexcept {return pinned;}
     Bitboard pin_mask(Square sqr, const Position& p) const;
     Bitboard enemy_attacks() const noexcept {return attackers;}
@@ -146,9 +159,16 @@ private:
     Bitboard attackers; 
     Bitboard checkers;
     Bitboard pinned;
+    Bitboard king_blockers;
     Bitboard defense{Bitboard::Full()};
 
 };
 
+template <typename... Squares>
+inline bool PositionParams::is_blocker(Squares... sqr) const noexcept
+{
+    Bitboard blockers = Bitboard::FromSquares(sqr...);
+    return (king_blockers & blockers) == blockers;
+}
 
 }

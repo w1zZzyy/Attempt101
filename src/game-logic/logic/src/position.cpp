@@ -209,7 +209,7 @@ bool game::logic::Position::can_castle(CastleType ct, Bitboard enemy_attacks) co
     return 
           cr.has_path()                     &&
         !(cr.king_path()  & enemy_attacks)  &&
-        !(cr.clear_path() & get_pieces(WHITE, BLACK));
+        !(cr.clear_path() & get_occupied(WHITE, BLACK));
 }
 
 
@@ -243,9 +243,9 @@ PositionParams& game::logic::PositionParams::compute_enemy_attackers(const Posit
     AttackParams attack_params;
     attack_params
         .set_color(opp)
-        .set_blockers(position.get_pieces());
+        .set_blockers(position.get_occupied(WHITE, BLACK));
 
-    Bitboard    pieces = position.get_pieces(opp);
+    Bitboard    pieces = position.get_occupied(opp);
     Bitboard    king   = position.get_pieces(position.get_side(), KING);
     Square      ksq    = king.lsb();
 
@@ -262,6 +262,8 @@ PositionParams& game::logic::PositionParams::compute_enemy_attackers(const Posit
             this->defense   &=  position.piece_on(from).is(KNIGHT) ? from.bitboard() : between(ksq, from);
         }
     }
+
+    return *this;
 }
 
 PositionParams& game::logic::PositionParams::compute_pins_from_sliders(const Position& position)
@@ -277,21 +279,39 @@ PositionParams& game::logic::PositionParams::compute_pins_from_sliders(const Pos
     Bitboard snipers = 
         AttackManager::Get(ROOK, attack_params) & position.get_pieces(c.opp(), ROOK, QUEEN) |
         AttackManager::Get(BISHOP, attack_params) & position.get_pieces(c.opp(), BISHOP, QUEEN);
-    Bitboard occ = position.get_pieces() ^ snipers;
+    Bitboard occ = position.get_occupied(WHITE, BLACK) ^ snipers;
 
     while(snipers)
     {
         Square sniper_sq = snipers.poplsb();
         Bitboard b = between(ksq, sniper_sq) & occ;
 
-        // одна фигура на линии 
-        if(b.count() == 1) {
-            b &= position.get_pieces(c);
-            if(b) {
+        if(b) {
+            this->king_blockers |= b;
+            b &= position.get_occupied(c);
+            if(b.count() == 1) {
                 this->pinned |= b;
             }
         }
     }
+
+    return *this;
+}
+
+bool game::logic::PositionParams::exposes_discovered_check(Square from, Square targ, const Position &p) const
+{
+    const Color us = p.get_side();
+
+    AttackParams discovered_check_params;
+    discovered_check_params
+        .set_attacker(p.get_pieces(us, KING).lsb())
+        .set_blockers(p.get_occupied(WHITE, BLACK) ^ Bitboard::FromSquares(from, targ));
+
+    Bitboard sliders_on_line = p.get_pieces(us.opp(), ROOK, QUEEN) & same_line(from, targ);
+    if(sliders_on_line & AttackManager::Get(ROOK, discovered_check_params))
+        return false;
+
+    return true;
 }
 
 Bitboard game::logic::PositionParams::pin_mask(Square sqr, const Position &p) const
@@ -300,8 +320,8 @@ Bitboard game::logic::PositionParams::pin_mask(Square sqr, const Position &p) co
         return Bitboard::Null();
     }
 
-    const Color     c   = p.get_side();
-    const Square    ksq = p.get_pieces(c, KING).lsb();
+    const Color c = p.get_side();
+    const Square ksq = p.get_pieces(c, KING).lsb();
 
     return same_line(ksq, sqr);
 }

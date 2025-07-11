@@ -8,6 +8,7 @@ namespace game::logic
 
 
 class Bitboard;
+class Square;
 
 
 using U64 = uint64_t;
@@ -92,11 +93,11 @@ public:
 		color = (c == 'w') ? WHITE : (c == 'b') ? BLACK 
 		: ANY_COLOR;
 	}
-	constexpr void swap() noexcept {
+	void swap() noexcept {
 		color = ColorType(opp().color);
 	}
 
-	constexpr Color opp() const noexcept {
+	Color opp() const noexcept {
 		return ColorType(1 - int(color));
 	}
 
@@ -142,8 +143,6 @@ enum CastleRightsType : U8
 	kq_CASTLING 		= 	 k_CASTLING 	| 	q_CASTLING
 };
 
-class Bitboard;
-
 class Castle
 {
 public:
@@ -159,9 +158,11 @@ public:
 
 	Castle& add(CastleRightsType _cr) noexcept {
 		cr = static_cast<CastleRightsType>(cr | _cr);
+		return *this;
 	}
 	Castle& rem(CastleRightsType _cr) noexcept {
 		cr = static_cast<CastleRightsType>(cr & ~_cr);
+		return *this;
 	}
 
 	CastleRightsType extract(Color c, CastleType ct) const noexcept {
@@ -185,49 +186,43 @@ private:
 class FileType
 {
 public:
-	inline static const Bitboard File0;
-
-	inline static const Bitboard FileA = 0x0101010101010101ULL;
-	inline static const Bitboard FileB = FileA << 1;
-	inline static const Bitboard FileC = FileA << 2;
-	inline static const Bitboard FileD = FileA << 3;
-	inline static const Bitboard FileE = FileA << 4;
-	inline static const Bitboard FileF = FileA << 5;
-	inline static const Bitboard FileG = FileA << 6;
-	inline static const Bitboard FileH = FileA << 7;
-	
-	inline static const Bitboard NotFileA = ~FileA;
-	inline static const Bitboard NotFileB = ~FileB;
-	inline static const Bitboard NotFileC = ~FileC;
-	inline static const Bitboard NotFileD = ~FileD;
-	inline static const Bitboard NotFileE = ~FileE;
-	inline static const Bitboard NotFileF = ~FileF;
-	inline static const Bitboard NotFileG = ~FileG;
-	inline static const Bitboard NotFileH = ~FileH;
+	static const Bitboard FileA;
+	static const Bitboard FileB;
+	static const Bitboard FileC;
+	static const Bitboard FileD;
+	static const Bitboard FileE;
+	static const Bitboard FileF;
+	static const Bitboard FileG;
+	static const Bitboard FileH;	
+	static const Bitboard NotFileA;
+	static const Bitboard NotFileB;
+	static const Bitboard NotFileC;
+	static const Bitboard NotFileD;
+	static const Bitboard NotFileE;
+	static const Bitboard NotFileF;
+	static const Bitboard NotFileG;
+	static const Bitboard NotFileH;
 };
 
 class RankType
 {
 public:
-	inline static const Bitboard Rank0;
-
-	inline static const Bitboard Rank1 = 0b11111111;
-	inline static const Bitboard Rank2 = Rank1 << 8;
-	inline static const Bitboard Rank3 = Rank1 << 16;
-	inline static const Bitboard Rank4 = Rank1 << 24;
-	inline static const Bitboard Rank5 = Rank1 << 32;
-	inline static const Bitboard Rank6 = Rank1 << 40;
-	inline static const Bitboard Rank7 = Rank1 << 48;
-	inline static const Bitboard Rank8 = Rank1 << 56;
-
-	inline static const Bitboard NotRank1 = ~Rank1;
-	inline static const Bitboard NotRank2 = ~Rank2;
-	inline static const Bitboard NotRank3 = ~Rank3;
-	inline static const Bitboard NotRank4 = ~Rank4;
-	inline static const Bitboard NotRank5 = ~Rank5;
-	inline static const Bitboard NotRank6 = ~Rank6;
-	inline static const Bitboard NotRank7 = ~Rank7;
-	inline static const Bitboard NotRank8 = ~Rank8;
+	static const Bitboard Rank1;
+	static const Bitboard Rank2;
+	static const Bitboard Rank3;
+	static const Bitboard Rank4;
+	static const Bitboard Rank5;
+	static const Bitboard Rank6;
+	static const Bitboard Rank7;
+	static const Bitboard Rank8;
+	static const Bitboard NotRank1;
+	static const Bitboard NotRank2;
+	static const Bitboard NotRank3;
+	static const Bitboard NotRank4;
+	static const Bitboard NotRank5;
+	static const Bitboard NotRank6;
+	static const Bitboard NotRank7;
+	static const Bitboard NotRank8;
 };
 
 

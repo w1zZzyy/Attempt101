@@ -1,5 +1,6 @@
 #pragma once
 
+#include "defs.hpp"
 #include <cassert>
 #include <string_view>
 
@@ -10,7 +11,7 @@ namespace game::logic
 class Bitboard;
 
 
-enum SquareType : int8_t
+enum SquareType : U8
 {
     a1, b1, c1, d1, e1, f1, g1, h1,
 	a2, b2, c2, d2, e2, f2, g2, h2,
@@ -46,11 +47,11 @@ public:
     Square(const Square& s) noexcept : index(s.index) {}
     Square(int i) : index(ToSquare(i)) {}
 
-    Square& operator = (const Square& s) noexcept {index = s.index;}
-    Square& operator = (SquareType s) noexcept {index = s;}
+    Square& operator = (const Square& s) noexcept {index = s.index; return *this;}
+    Square& operator = (SquareType s) noexcept {index = s; return *this;}
 
-    Square& operator ++ () noexcept {index = ToSquare(index + 1);}
-    Square& operator -- () noexcept {index = ToSquare(index - 1);}
+    Square& operator ++ () noexcept {index = ToSquare(index + 1); return *this;}
+    Square& operator -- () noexcept {index = ToSquare(index - 1); return *this;}
 
     Square up() {return ToSquare(index + 8);}
     Square down() {return ToSquare(index - 8);}
@@ -61,11 +62,14 @@ public:
     bool operator > (const Square& s) const noexcept {return index > s.index;}
     bool operator < (int i) const noexcept {return index < i;}
     bool operator > (int i) const noexcept {return index > i;}
+    bool operator == (const Square& s) const noexcept {return index == s.index;}
+    bool operator != (const Square& s) const noexcept {return index == s.index;}
+    bool operator == (SquareType st) const noexcept {return index == st;}
+    bool operator != (SquareType st) const noexcept {return index != st;}
+
 
     Square operator + (int i) const {return ToSquare(index + i);}
     Square operator - (int i) const {return ToSquare(index - i);}
-
-    bool operator == (const Square& s) const noexcept {return index == s.index;}
 
     int operator / (int num) const noexcept {return index / num;}
     int operator % (int num) const noexcept {return index % num;}

@@ -28,7 +28,7 @@ public:
     Move(const Move& _m) noexcept : data(_m.data) {}
     Move(Square from, Square targ, MoveFlag flag);
 
-    Move& operator = (const Move& _m) noexcept {data = _m.data;}
+    Move& operator = (const Move& _m) noexcept {data = _m.data; return *this;}
 
     Square from() const;
     Square targ() const;

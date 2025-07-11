@@ -17,10 +17,10 @@ class AttackParams
     using OptDIR = std::optional<DirectionType>;
 public:
     
-    AttackParams& set_attacker(Square from) noexcept {attacker = from;}
-    AttackParams& set_blockers(OptBB bb) noexcept {blockers = bb;}
-    AttackParams& set_color(OptCLR clr) noexcept {color = clr;}
-    AttackParams& set_dir(OptDIR d) noexcept {dir = d;}
+    AttackParams& set_attacker(Square from) noexcept {attacker = from; return *this;}
+    AttackParams& set_blockers(OptBB bb) noexcept {blockers = bb; return *this;}
+    AttackParams& set_color(OptCLR clr) noexcept {color = clr; return *this;}
+    AttackParams& set_dir(OptDIR d) noexcept {dir = d; return *this;}
 
     Square get_attacker() const {return attacker;}
     Bitboard get_blockers() const {return *blockers;}

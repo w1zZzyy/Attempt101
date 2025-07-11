@@ -33,7 +33,7 @@ const int BishopBits[] =
 
 struct Magic
 {
-    Magic() : attacks(0), magic(nullptr) {}
+    Magic() = default;
     ~Magic() { delete[] magic; }
 
     Bitboard attacks;
@@ -82,7 +82,7 @@ Bitboard game::logic::BishopAttack::GetSlowAttack(const AttackParams& p) const
 		case SOUTH_WEST:   	return getDirAttack<SOUTH_WEST>(p.get_attacker(), p.get_blockers());
 		case NORTH_EAST:   	return getDirAttack<NORTH_EAST>(p.get_attacker(), p.get_blockers());
 		case NORTH_WEST:   	return getDirAttack<NORTH_WEST>(p.get_attacker(), p.get_blockers());
-		default:		 	return 0;
+		default:		 	return Bitboard::Null();
 		}
 	}
 
@@ -114,7 +114,7 @@ Bitboard game::logic::RookAttack::GetSlowAttack(const AttackParams& p) const
 		case WEST: 	return getDirAttack<WEST>(p.get_attacker(), p.get_blockers());
 		case EAST: 	return getDirAttack<EAST>(p.get_attacker(), p.get_blockers());
 		case NORTH: return getDirAttack<NORTH>(p.get_attacker(), p.get_blockers());
-		default:	return 0;
+		default:	return Bitboard::Null();
 		}
 	}
 
@@ -189,7 +189,7 @@ Bitboard game::logic::KnightAttack::GetSlowAttack(const AttackParams& p) const
 	if (!(knight & FileType::FileA))
 	{
 		attacks |= (knight >> 17) | (knight << 15);
-		if ((knight & FileType::FileB) == 0)
+		if (!(knight & FileType::FileB))
 			attacks |= (knight >> 10) | (knight << 6);
 	}
 
@@ -222,7 +222,7 @@ Bitboard game::logic::PawnAttack::GetSlowAttack(const AttackParams& p) const
             pawn.step<SOUTH_EAST>();
 	}
 
-	return 0;
+	return Bitboard::Null();
 }
 
 Bitboard game::logic::PawnAttack::GetFastAttack(const AttackParams &p) const
