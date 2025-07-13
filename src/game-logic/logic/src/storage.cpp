@@ -2,32 +2,31 @@
 
 using namespace game::logic;
 
+void game::logic::State::copy_core(const State& other) noexcept
+{
+    hash = other.hash;
+    castle = other.castle;
+    rule50 = other.rule50;
+    move = {};
+    passant = NO_SQUARE;
+    captured = NO_PIECE;
+}
+
 State &game::logic::DynamicStateStorage::create() {
-    if (history.empty()) {
-        history.emplace_back();
-        return history.front();
-    }
-
-    if (history.size() > curr + 1) {
-        history[curr + 1].copy_core(history[curr]);
-    } else {
-        history.emplace_back(history[curr]);
-    }
-
-    return history[++curr];
+    if (history.empty()) history.emplace_back();
+    else history.emplace_back(history.back());
+    return history.back();
 }
 
 State &game::logic::DynamicStateStorage::rollback() {
-    if (curr == 0) {
-        throw std::runtime_error("cant rollback");
-    }
-    return history[--curr];
+    history.pop_back();
+    return history.back();
 }
 
 State &game::logic::DynamicStateStorage::top() {
-    return history.at(curr);
+    return history.back();
 }
 
 const State &game::logic::DynamicStateStorage::top() const {
-    return history.at(curr);
+    return history.back();
 }

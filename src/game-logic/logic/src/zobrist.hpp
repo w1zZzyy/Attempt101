@@ -1,6 +1,7 @@
 #pragma once
 
 #include "square.hpp"
+#include "defs.hpp"
 
 namespace game::logic
 {

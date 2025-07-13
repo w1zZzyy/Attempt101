@@ -1,15 +1,12 @@
 #pragma once
 
 #include "position.hpp"
-#include "attack.hpp"
-
-#include <vector>
 
 namespace game::logic
 {
 
 
-class IMoveList
+/* class IMoveList
 {
 public:
 
@@ -17,16 +14,22 @@ public:
     virtual bool empty() const noexcept = 0;
     virtual size_t get_size() const noexcept = 0;
     
-};
+}; */
 
 
-class DefaultMoveList : public IMoveList
+class DefaultMoveList
 {
     inline static const size_t MAX_MOVES = 218;
 public:
 
-    bool empty() const noexcept override {return size == 0;}
+    void generate(const Position& p);
+    bool empty() const noexcept {return size == 0;}
     size_t get_size() const noexcept {return size;}
+    Move operator [] (size_t i) const {
+        if(i >= size) 
+            throw std::runtime_error("index out of range");
+        return moves[i];
+    }
 
 private:
 

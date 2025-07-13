@@ -41,19 +41,23 @@ void game::logic::Zobrist::Setup()
 Zobrist &game::logic::Zobrist::updateSquare(Color c, Piece p, Square s)
 {
     hash ^= ZobristPieceTable[c][p][s];
+	return *this;
 }
 
 Zobrist &game::logic::Zobrist::updateCastle(Castle cr)
 {
     hash ^= ZobristCastleTable[cr];
+	return *this;
 }
 
 Zobrist &game::logic::Zobrist::updateEnPassant(Square sqr)
 {
     hash ^= ZobristPassantTable[sqr];
+	return *this;
 }
 
 Zobrist &game::logic::Zobrist::updateSide()
 {
     hash ^= ZobristSide;
+	return *this;
 }

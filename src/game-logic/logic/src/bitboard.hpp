@@ -4,7 +4,7 @@
 #include <type_traits>
 
 #include "square.hpp"
-#include "defs.hpp"
+
 
 namespace game::logic
 {
@@ -14,27 +14,23 @@ class Bitboard
 {
 public:
 
-    static Bitboard Null() noexcept {return Bitboard(0ULL);}
-    static Bitboard Full() noexcept {return ~Null();}
+    static constexpr Bitboard Null() noexcept {return Bitboard(0ULL);}
+    static constexpr Bitboard Full() noexcept {return ~Null();}
     template<typename... Squares>
-    static Bitboard FromSquares(Squares... sqr) {
+    static constexpr Bitboard FromSquares(Squares... sqr) {
         constexpr bool isSquare     = (std::is_same_v<Square, Squares> && ...);
         constexpr bool isSquareType = (std::is_same_v<SquareType, Squares> && ...);
         static_assert((isSquare || isSquareType), "All arguments must be of type Square or SquareType");
 
-        Bitboard b;
-
         if constexpr (isSquare)
-            b.bb = (sqr.bitboard() | ...);
+            return Bitboard(((1ULL << sqr) | ...));
         if constexpr (isSquareType)
-            b.bb = (Square(sqr).bitboard() | ...);
-
-        return b;
+            return Bitboard(((1ULL << sqr) | ...));
     }
 
-    Bitboard()                  noexcept : bb(0) {}
-    Bitboard(const Bitboard& b) noexcept : bb(b.bb) {}
-    Bitboard(U64 bb)            noexcept : bb(bb) {}
+    constexpr Bitboard()                    noexcept : bb(0) {}
+    constexpr Bitboard(uint64_t bb)         noexcept : bb(bb) {}
+    constexpr Bitboard(const Bitboard& b)   noexcept : bb(b.bb) {}
 
     Bitboard& operator  =   (const Bitboard& b) noexcept {bb = b.bb; return *this;}
     Bitboard& operator  |=  (const Bitboard& b) noexcept {bb |= b.bb; return *this;}
@@ -42,20 +38,19 @@ public:
     Bitboard& operator  <<= (int num) noexcept {bb <<= num; return *this;}
     Bitboard& operator  >>= (int num) noexcept {bb >>= num; return *this;}
     Bitboard& operator  ^=  (const Bitboard& b) noexcept {bb ^= b.bb; return *this;}
-    Bitboard operator   |   (const Bitboard& b) noexcept {return Bitboard(*this) |= b;}
-    Bitboard operator   &   (const Bitboard& b) noexcept {return Bitboard(*this) &= b;}
-    Bitboard operator   <<  (int num) noexcept {return Bitboard(*this) <<= num;}
-    Bitboard operator   >>  (int num) noexcept {return Bitboard(*this) >>= num;}
-    Bitboard operator   ~   () const noexcept {return Bitboard(~bb);}
-    Bitboard operator   ^   (const Bitboard& b) const noexcept {return Bitboard(*this) ^= b;}
-    bool operator       ==  (const Bitboard& b) const noexcept {return bb == b.bb;}
-    bool operator       !=  (const Bitboard& b) const noexcept {return bb != b.bb;}
 
-    template<DirectionType dir>
-    Bitboard step() noexcept;
+    constexpr Bitboard operator   |   (const Bitboard& b) const noexcept {return Bitboard(bb | b.bb);}
+    constexpr Bitboard operator   &   (const Bitboard& b) const noexcept {return Bitboard(bb & b.bb);}
+    constexpr Bitboard operator   <<  (int num) const noexcept {return Bitboard(bb << num);}
+    constexpr Bitboard operator   >>  (int num) const noexcept {return Bitboard(bb >> num);}
+    constexpr Bitboard operator   ~   () const noexcept {return Bitboard(~bb);}
+    constexpr Bitboard operator   ^   (const Bitboard& b) const noexcept {return Bitboard(bb ^ b.bb);}
 
-    operator bool() const noexcept {return bb != 0;}
-    bool operator ! () const noexcept {return bb == 0;}
+    bool operator == (const Bitboard& b) const noexcept {return bb == b.bb;}
+    bool operator != (const Bitboard& b) const noexcept {return bb != b.bb;}
+
+    constexpr operator bool() const noexcept {return bb != 0;}
+    constexpr bool operator ! () const noexcept {return bb == 0;}
     
     Square lsb() const;
     Square poplsb();
@@ -65,9 +60,11 @@ public:
     friend int pext(const Bitboard& blockers, const Bitboard& attacks);
     friend Bitboard pdep(int num, const Bitboard& attacks);
 
+    void print() const;
+
 private:
 
-    U64 bb;
+    uint64_t bb;
 
 };
 

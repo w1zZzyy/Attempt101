@@ -3,12 +3,11 @@
 #include <cstdint>
 #include <optional>
 
+#include "bitboard.hpp"
+#include "square.hpp"
+
 namespace game::logic
 {
-
-
-class Bitboard;
-class Square;
 
 
 using U64 = uint64_t;
@@ -124,11 +123,11 @@ enum CastleRightsType : U8
 {
 	NO_CASTLING 		= 	0,
 
-	K_CASTLING 			= 	(KING_SIDE_CASTLING << 1) 	| 	KING_SIDE_CASTLING,
-	k_CASTLING 			= 	(KING_SIDE_CASTLING << 2) 	| 	KING_SIDE_CASTLING,
+	K_CASTLING 			= 	KING_SIDE_CASTLING << 1,
+	k_CASTLING 			= 	KING_SIDE_CASTLING << 2,
 
-	Q_CASTLING 			= 	(QUEEN_SIDE_CASTLING << 1) 	| 	QUEEN_SIDE_CASTLING,
-	q_CASTLING 			= 	(QUEEN_SIDE_CASTLING << 2) 	| 	QUEEN_SIDE_CASTLING,
+	Q_CASTLING 			= 	QUEEN_SIDE_CASTLING << 1,
+	q_CASTLING 			= 	QUEEN_SIDE_CASTLING << 2,
 
 	KQ_CASTLING			=	 K_CASTLING 	| 	Q_CASTLING,
 	KQk_CASTLING		=	 KQ_CASTLING 	| 	k_CASTLING,
@@ -148,7 +147,7 @@ class Castle
 public:
 
 	static constexpr int Count() noexcept {return 63;}
-	static std::optional<CastleType> ByRookSquare(Square rook_sqr);
+	static std::optional<CastleType> ByRookSquare(Color c, Square rook_sqr);
 
 	Castle() = default;
 	Castle(const Castle& c) : cr(c.cr) {}
@@ -165,8 +164,12 @@ public:
 		return *this;
 	}
 
-	CastleRightsType extract(Color c, CastleType ct) const noexcept {
+	CastleRightsType extract(Color c, CastleType ct) const noexcept {	
 		return static_cast<CastleRightsType>(cr & (ct << (c + 1))); 
+	}
+
+	bool available(CastleRightsType _cr) const noexcept {
+		return (cr & _cr) == _cr;
 	}
 
 	Bitboard king_path() const noexcept;
@@ -186,44 +189,61 @@ private:
 class FileType
 {
 public:
-	static const Bitboard FileA;
-	static const Bitboard FileB;
-	static const Bitboard FileC;
-	static const Bitboard FileD;
-	static const Bitboard FileE;
-	static const Bitboard FileF;
-	static const Bitboard FileG;
-	static const Bitboard FileH;	
-	static const Bitboard NotFileA;
-	static const Bitboard NotFileB;
-	static const Bitboard NotFileC;
-	static const Bitboard NotFileD;
-	static const Bitboard NotFileE;
-	static const Bitboard NotFileF;
-	static const Bitboard NotFileG;
-	static const Bitboard NotFileH;
+	inline static constexpr Bitboard FileA = Bitboard(0x0101010101010101ULL);
+	inline static constexpr Bitboard FileB = FileA << 1;
+	inline static constexpr Bitboard FileC = FileA << 2;
+	inline static constexpr Bitboard FileD = FileA << 3;
+	inline static constexpr Bitboard FileE = FileA << 4;
+	inline static constexpr Bitboard FileF = FileA << 5;
+	inline static constexpr Bitboard FileG = FileA << 6;
+	inline static constexpr Bitboard FileH = FileA << 7;
+	inline static constexpr Bitboard NotFileA = ~FileA;
+	inline static constexpr Bitboard NotFileB = ~FileB;
+	inline static constexpr Bitboard NotFileC = ~FileC;
+	inline static constexpr Bitboard NotFileD = ~FileD;
+	inline static constexpr Bitboard NotFileE = ~FileE;
+	inline static constexpr Bitboard NotFileF = ~FileF;
+	inline static constexpr Bitboard NotFileG = ~FileG;
+	inline static constexpr Bitboard NotFileH = ~FileH;
 };
 
 class RankType
 {
 public:
-	static const Bitboard Rank1;
-	static const Bitboard Rank2;
-	static const Bitboard Rank3;
-	static const Bitboard Rank4;
-	static const Bitboard Rank5;
-	static const Bitboard Rank6;
-	static const Bitboard Rank7;
-	static const Bitboard Rank8;
-	static const Bitboard NotRank1;
-	static const Bitboard NotRank2;
-	static const Bitboard NotRank3;
-	static const Bitboard NotRank4;
-	static const Bitboard NotRank5;
-	static const Bitboard NotRank6;
-	static const Bitboard NotRank7;
-	static const Bitboard NotRank8;
+	inline static constexpr Bitboard Rank1 = Bitboard(0xFFULL);
+	inline static constexpr Bitboard Rank2 = Rank1 << 8;
+	inline static constexpr Bitboard Rank3 = Rank1 << 16;
+	inline static constexpr Bitboard Rank4 = Rank1 << 24;
+	inline static constexpr Bitboard Rank5 = Rank1 << 32;
+	inline static constexpr Bitboard Rank6 = Rank1 << 40;
+	inline static constexpr Bitboard Rank7 = Rank1 << 48;
+	inline static constexpr Bitboard Rank8 = Rank1 << 56;
+	inline static constexpr Bitboard NotRank1 = ~Rank1;
+	inline static constexpr Bitboard NotRank2 = ~Rank2;
+	inline static constexpr Bitboard NotRank3 = ~Rank3;
+	inline static constexpr Bitboard NotRank4 = ~Rank4;
+	inline static constexpr Bitboard NotRank5 = ~Rank5;
+	inline static constexpr Bitboard NotRank6 = ~Rank6;
+	inline static constexpr Bitboard NotRank7 = ~Rank7;
+	inline static constexpr Bitboard NotRank8 = ~Rank8;
 };
+
+
+template<DirectionType dir>
+Bitboard step(Bitboard b) noexcept
+{
+	if constexpr (dir == NORTH) b <<= 8;
+	if constexpr (dir == SOUTH) b >>= 8;
+	if constexpr (dir == EAST)  (b &= FileType::NotFileH) <<= 1;
+	if constexpr (dir == WEST)  (b &= FileType::NotFileA) >>= 1;
+
+	if constexpr (dir == NORTH_WEST) (b &= FileType::NotFileA) <<= 7;
+	if constexpr (dir == NORTH_EAST) (b &= FileType::NotFileH) <<= 9;
+	if constexpr (dir == SOUTH_EAST) (b &= FileType::NotFileH) >>= 7;
+	if constexpr (dir == SOUTH_WEST) (b &= FileType::NotFileA) >>= 9;
+
+	return b;
+}
 
 
 }

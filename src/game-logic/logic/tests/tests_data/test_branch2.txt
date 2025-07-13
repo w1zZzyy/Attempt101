@@ -1,0 +1,8 @@
+r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1 
+4 
+c4c5: 60769
+d2d4: 72051
+f3d4: 75736
+b4c5: 58167
+f1f2: 73972
+g1h1: 81638

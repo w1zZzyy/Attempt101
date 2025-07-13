@@ -3,8 +3,8 @@
 #include "move.hpp"
 #include "zobrist.hpp"
 
+#include <cassert>
 #include <deque>
-#include <stdexcept>
 #include <memory>
 
 namespace game::logic
@@ -16,14 +16,7 @@ struct State
     State() = default;
     State(const State& s) {copy_core(s);}
 
-    void copy_core(const State& other) noexcept {
-        hash = other.hash;
-        castle = other.castle;
-        rule50 = other.rule50;
-        move = {};
-        passant = NO_SQUARE;
-        captured = NO_PIECE;
-    }
+    void copy_core(const State& other) noexcept;
 
     Zobrist hash{};
     Castle castle{NO_CASTLING};
@@ -70,7 +63,6 @@ public:
 
 private:
 
-    size_t curr = 0;
     std::deque<State> history;
 
 };
@@ -83,18 +75,13 @@ class FixedStateStorage : public IStateStorage
 public:
 
     State& create() override {
-        if (curr + 1 >= Size) {
-            throw std::runtime_error("buffer overflow");
-        }
-
-        history[curr + 1].copy_core_state(history[curr]);
+        assert(curr + 1 < Size);
+        history[curr + 1].copy_core(history[curr]);
         return history[++curr];
     }
 
     State& rollback() override {
-        if (curr == 0) {
-            throw std::runtime_error("cant rollback");
-        }
+        assert(curr != 0);
         return history[--curr];
     }
 

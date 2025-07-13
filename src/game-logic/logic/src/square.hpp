@@ -1,7 +1,9 @@
 #pragma once
 
-#include "defs.hpp"
+#include <cstdint>
 #include <cassert>
+#include <ostream>
+#include <sstream>
 #include <string_view>
 
 namespace game::logic
@@ -11,7 +13,7 @@ namespace game::logic
 class Bitboard;
 
 
-enum SquareType : U8
+enum SquareType : uint8_t
 {
     a1, b1, c1, d1, e1, f1, g1, h1,
 	a2, b2, c2, d2, e2, f2, g2, h2,
@@ -31,7 +33,7 @@ public:
     static constexpr int Count() noexcept {return 64;};
     static constexpr SquareType Start() noexcept {return a1;};
     static constexpr SquareType End() noexcept {return h8;};
-    static SquareType ToSquare(int index) {
+    static constexpr SquareType ToSquare(int index) {
         if(index > -1 && index < NO_SQUARE)
             return static_cast<SquareType>(index);
         return NO_SQUARE;
@@ -42,10 +44,10 @@ public:
         return ToSquare(rank * 8 + file);
     }
 
-    Square()                noexcept : index(NO_SQUARE) {}
-    Square(SquareType i)    noexcept : index(i) {}
-    Square(const Square& s) noexcept : index(s.index) {}
-    Square(int i) : index(ToSquare(i)) {}
+    constexpr Square()                noexcept : index(NO_SQUARE) {}
+    constexpr Square(SquareType i)    noexcept : index(i) {}
+    constexpr Square(const Square& s) noexcept : index(s.index) {}
+    constexpr Square(int i) : index(ToSquare(i)) {}
 
     Square& operator = (const Square& s) noexcept {index = s.index; return *this;}
     Square& operator = (SquareType s) noexcept {index = s; return *this;}
@@ -53,15 +55,11 @@ public:
     Square& operator ++ () noexcept {index = ToSquare(index + 1); return *this;}
     Square& operator -- () noexcept {index = ToSquare(index - 1); return *this;}
 
-    Square up() {return ToSquare(index + 8);}
-    Square down() {return ToSquare(index - 8);}
-    Square right() {return ToSquare(index + 1);}
-    Square left() {return ToSquare(index - 1);}
 
-    bool operator < (const Square& s) const noexcept {return index < s.index;}
-    bool operator > (const Square& s) const noexcept {return index > s.index;}
-    bool operator < (int i) const noexcept {return index < i;}
-    bool operator > (int i) const noexcept {return index > i;}
+    constexpr bool operator < (const Square& s) const noexcept {return index < s.index;}
+    constexpr bool operator > (const Square& s) const noexcept {return index > s.index;}
+    constexpr bool operator < (int i) const noexcept {return index < i;}
+    constexpr bool operator > (int i) const noexcept {return index > i;}
     bool operator == (const Square& s) const noexcept {return index == s.index;}
     bool operator != (const Square& s) const noexcept {return index == s.index;}
     bool operator == (SquareType st) const noexcept {return index == st;}
@@ -70,15 +68,23 @@ public:
 
     Square operator + (int i) const {return ToSquare(index + i);}
     Square operator - (int i) const {return ToSquare(index - i);}
+    Square& operator += (int i) {index = SquareType(index + i); return *this;}
+    Square& operator -= (int i) {index = SquareType(index - i); return *this;}
 
-    int operator / (int num) const noexcept {return index / num;}
-    int operator % (int num) const noexcept {return index % num;}
+    constexpr int operator / (int num) const noexcept {return index / num;}
+    constexpr int operator % (int num) const noexcept {return index % num;}
 
-    operator int() const noexcept {return index;}
+    constexpr operator int() const noexcept {return index;}
     
-    bool isValid() const noexcept {return index != NO_SQUARE;}
+    constexpr bool isValid() const noexcept {return index != NO_SQUARE;}
 
     Bitboard bitboard() const noexcept;
+
+    std::string to_string() const noexcept {
+        std::ostringstream os;
+        os << char('a' + index % 8) << index / 8 + 1;
+        return os.str();
+    }
 
 private:
 
@@ -91,7 +97,12 @@ private:
 Bitboard between(Square sq1, Square sq2);
 
 // (c2, e4) -> [b1; h7]
-Bitboard same_line(Square sq1, Square sq2);
+Bitboard line_bb(Square sq1, Square sq2);
 
+bool same_file(Square sq1, Square sq2) noexcept;
+bool same_rank(Square sq1, Square sq2) noexcept;
 
 }
+
+
+std::ostream& operator << (std::ostream& out, const game::logic::Square& sqr);

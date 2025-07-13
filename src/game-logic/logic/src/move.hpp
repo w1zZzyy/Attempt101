@@ -1,6 +1,8 @@
 #pragma once
 
 #include "square.hpp"
+#include "defs.hpp"
+#include <ostream>
 
 namespace game::logic
 {
@@ -42,3 +44,6 @@ private:
 
 
 }
+
+
+std::ostream& operator << (std::ostream& out, const game::logic::Move& m);

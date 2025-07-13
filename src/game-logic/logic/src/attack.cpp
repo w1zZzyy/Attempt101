@@ -1,4 +1,6 @@
 #include "attack.hpp"
+#include "bitboard.hpp"
+#include "defs.hpp"
 
 using namespace game::logic;
 
@@ -58,9 +60,9 @@ Bitboard getDirAttack(Square attacker, Bitboard blockers) noexcept
 
     while(piece)
     {
-        piece = piece.step<dir>();
-        attacks |= piece;
-        piece &= not_blocked;
+        piece 	= 	step<dir>(piece);
+        attacks |= 	piece;
+        piece 	&= 	not_blocked;
     }
 
     return attacks;
@@ -129,7 +131,7 @@ Bitboard game::logic::RookAttack::GetFastAttack(const AttackParams& p) const
 {
 	AssertParams(p);
 
-    auto blocked = p.get_blockers() & RookAttacksTable[p.get_attacker()].attacks;
+    Bitboard blocked = p.get_blockers() & RookAttacksTable[p.get_attacker()].attacks;
     int key = pext(blocked, RookAttacksTable[p.get_attacker()].attacks);
 
     return RookAttacksTable[p.get_attacker()].magic[key];
@@ -152,17 +154,17 @@ Bitboard game::logic::QueenAttack::GetFastAttack(const AttackParams& p) const
 Bitboard game::logic::KingAttack::GetSlowAttack(const AttackParams& p) const
 {
 	AssertParams(p);
-    auto king = p.get_attacker().bitboard();
+    Bitboard king = p.get_attacker().bitboard();
 
 	return 
-		king.step<NORTH>() 			|
-		king.step<EAST>() 			|
-		king.step<WEST>() 			|
-		king.step<SOUTH>() 			|
-		king.step<NORTH_EAST>() 	|
-		king.step<NORTH_WEST>() 	|
-		king.step<SOUTH_EAST>() 	|
-		king.step<SOUTH_WEST>();
+		step<NORTH>(king) 			|
+		step<EAST>(king) 			|
+		step<WEST>(king) 			|
+		step<SOUTH>(king) 			|
+		step<NORTH_EAST>(king) 		|
+		step<NORTH_WEST>(king) 		|
+		step<SOUTH_EAST>(king) 		|
+		step<SOUTH_WEST>(king);
 }
 
 Bitboard game::logic::KingAttack::GetFastAttack(const AttackParams& p) const
@@ -178,7 +180,7 @@ Bitboard game::logic::KnightAttack::GetSlowAttack(const AttackParams& p) const
 	AssertParams(p);
 
 	Bitboard attacks;
-	auto knight = p.get_attacker().bitboard();
+	Bitboard knight = p.get_attacker().bitboard();
 
 	if (!(knight & FileType::FileH))
 	{
@@ -208,18 +210,18 @@ Bitboard game::logic::PawnAttack::GetSlowAttack(const AttackParams& p) const
 {
 	AssertParams(p);
 
-    auto clr 	= 	p.get_color();
-	auto pawn 	= 	p.get_attacker().bitboard();
+    Color 		clr 	= 	p.get_color();
+	Bitboard 	pawn	= 	p.get_attacker().bitboard();
 
 	if(clr.is(WHITE)) {
 		return 
-			pawn.step<NORTH_WEST>() |
-            pawn.step<NORTH_EAST>();
+			step<NORTH_WEST>(pawn) |
+            step<NORTH_EAST>(pawn);
 	} 
 	if(clr.is(BLACK)) {
 		return 
-			pawn.step<SOUTH_WEST>() |
-            pawn.step<SOUTH_EAST>();
+			step<SOUTH_WEST>(pawn) |
+            step<SOUTH_EAST>(pawn);
 	}
 
 	return Bitboard::Null();
@@ -244,27 +246,29 @@ void game::logic::AttackManager::Setup()
 
 	auto SetSlideAttacks = [](const AttackPtr& attack_ptr, Magic* attack_table, const int* bits)
 	{
-		Bitboard edges = 
-			RankType::Rank1 | RankType::Rank8 |
-			FileType::FileA | FileType::FileH;
-
 		AttackParams params;
 
 		for(Square sqr = Square::Start(); sqr < Square::Count(); ++sqr)
 		{
-			int perms = 1ULL << bits[sqr];
+			int perms = 1 << bits[sqr];
 
 			attack_table[sqr].magic = new Bitboard[perms];
 			attack_table[sqr].attacks = attack_ptr->GetSlowAttack(
 				params.set_attacker(sqr).set_blockers(0)
-			) & ~edges;
+			);
+
+			const Bitboard b = sqr.bitboard();
+			if(b & FileType::NotFileA) attack_table[sqr].attacks &= FileType::NotFileA;
+			if(b & FileType::NotFileH) attack_table[sqr].attacks &= FileType::NotFileH;
+			if(b & RankType::NotRank1) attack_table[sqr].attacks &= RankType::NotRank1;
+			if(b & RankType::NotRank8) attack_table[sqr].attacks &= RankType::NotRank8;
 
 			for(int block_sqrs_num = 0; block_sqrs_num < perms; ++block_sqrs_num)
 			{
 				Bitboard blockers = pdep(block_sqrs_num, attack_table[sqr].attacks);
 				int key = pext(blockers, attack_table[sqr].attacks);
 				attack_table[sqr].magic[key] = attack_ptr->GetSlowAttack(
-					params.set_attacker(sqr).set_blockers(blockers)
+					params.set_blockers(blockers)
 				);
 			}
 		}

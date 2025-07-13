@@ -1,6 +1,8 @@
 #pragma once
 
 #include "bitboard.hpp"
+#include "defs.hpp"
+
 #include <optional>
 #include <cassert>
 #include <memory>
@@ -104,7 +106,7 @@ public:
     
 private:
 
-    static AttackPtr attacks[Piece::Count()];
+    inline static AttackPtr attacks[Piece::Count()];
     
 };
 

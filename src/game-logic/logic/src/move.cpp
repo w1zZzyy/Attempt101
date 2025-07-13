@@ -1,5 +1,5 @@
 #include "move.hpp"
-#include "defs.hpp"
+#include "square.hpp"
 
 using namespace game::logic;
 
@@ -34,4 +34,25 @@ Square game::logic::Move::targ() const
 MoveFlag game::logic::Move::flag() const
 {
     return static_cast<MoveFlag>(data >> offset::flag);
+}
+
+
+std::ostream& operator << (std::ostream& out, const game::logic::Move& m)
+{
+    Square from = m.from();
+    Square targ = m.targ();
+    MoveFlag flag = m.flag();
+
+    out << from << targ;
+
+    switch (flag) 
+    {
+        case game::logic::Q_PROMOTION_MF: out << 'q'; break;
+        case game::logic::K_PROMOTION_MF: out << 'n'; break;
+        case game::logic::R_PROMOTION_MF: out << 'r'; break;
+        case game::logic::B_PROMOTION_MF: out << 'b'; break;
+        default: break;
+    }
+
+    return  out;
 }

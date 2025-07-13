@@ -2,6 +2,7 @@
 
 #include "bitboard.hpp"
 #include "attack.hpp"
+#include "defs.hpp"
 
 #include <cmath>
 
@@ -12,7 +13,26 @@ static Bitboard BetweenSquares[Square::Count()][Square::Count()];
 static Bitboard SameLineSquares[Square::Count()][Square::Count()];
 
 
-void game::logic::Square::Setup()
+DirectionType DirFromToTarg(Square from, Square targ)
+{
+    int fromY = from / 8, fromX = from % 8;
+    int targY = targ / 8, targX = targ % 8;
+
+    return(  
+        (fromY == targY) ? (fromX > targX) ? WEST  : EAST  :
+        (fromX == targX) ? (fromY > targY) ? SOUTH : NORTH :
+        (std::abs(fromX - targX) != std::abs(fromY - targY)) ? NO_DIRECTION :
+        (fromX > targX) 
+            ? (fromY > targY) 
+                ? SOUTH_WEST 
+                : NORTH_WEST
+            : (fromY > targY)
+                ? SOUTH_EAST
+                : NORTH_EAST);
+}
+
+
+void SetupBetween()
 {
     const auto& queen = AttackManager::GetPtr(QUEEN);
     AttackParams params;
@@ -22,37 +42,50 @@ void game::logic::Square::Setup()
         params.set_attacker(from);
         for(Square targ = Square::Start(); targ < Square::Count(); ++targ)
         {
-            if (from == targ) continue;
+            if (from == targ) 
+                continue;
 
-            int fromY = from / 8, fromX = from % 8;
-			int targY = targ / 8, targX = targ % 8;
-
-            DirectionType dir =  
-				(fromY == targY) ? (fromX > targX) ? WEST  : EAST  :
-				(fromX == targX) ? (fromY > targY) ? SOUTH : NORTH :
-				(std::abs(fromX - targX) != std::abs(fromY - targY)) ? NO_DIRECTION :
-				(fromX > targX) 
-					? (fromY > targY) 
-						? SOUTH_WEST 
-						: NORTH_WEST
-					: (fromY > targY)
-						? SOUTH_EAST
-						: NORTH_WEST
-            ;
-
-            // setting up between
+            params.set_dir(DirFromToTarg(from, targ));
             params.set_blockers(targ.bitboard());
-            params.set_dir(dir);
             BetweenSquares[from][targ] = queen->GetSlowAttack(params);
-
-            // setting up sameline
-            params.set_blockers(0);
-            SameLineSquares[from][targ] = 
-                queen->GetSlowAttack(params) | 
-                queen->GetSlowAttack(params.set_dir(DirectionType(-dir))) | 
-                from.bitboard();
         }
-    } 
+    }
+}
+
+
+void SetupSameLine()
+{
+    const auto& queen = AttackManager::GetPtr(QUEEN);
+    AttackParams params; params.set_blockers(Bitboard::Null());
+
+    for(Square from = Square::Start(); from < Square::Count(); ++from)
+    {
+        params.set_attacker(from);
+        for(Square targ = Square::Start(); targ < Square::Count(); ++targ)
+        {
+            if (from == targ) 
+                continue;
+
+            DirectionType dir = DirFromToTarg(from, targ);
+            if(dir == NO_DIRECTION)
+                continue;
+
+            params.set_dir(dir);
+            Bitboard dir_attacks = queen->GetSlowAttack(params);
+            
+            params.set_dir(DirectionType(-dir));
+            Bitboard anti_dir_attacks = queen->GetSlowAttack(params);
+
+            SameLineSquares[from][targ] = dir_attacks | anti_dir_attacks | from.bitboard();
+        }
+    }
+}
+
+
+void game::logic::Square::Setup()
+{
+    SetupBetween();
+    SetupSameLine();
 }
 
 Bitboard game::logic::Square::bitboard() const noexcept
@@ -66,7 +99,18 @@ Bitboard game::logic::between(Square sq1, Square sq2)
     return BetweenSquares[sq1][sq2];
 }
 
-Bitboard game::logic::same_line(Square sq1, Square sq2)
+Bitboard game::logic::line_bb(Square sq1, Square sq2)
 {
     return SameLineSquares[sq1][sq2];
 }
+
+
+std::ostream& operator << (std::ostream& out, const game::logic::Square& sqr)
+{
+    out << sqr.to_string();
+    return out;
+}
+
+
+bool game::logic::same_file(Square sq1, Square sq2) noexcept {return sq1 % 8 == sq2 % 8;}
+bool game::logic::same_rank(Square sq1, Square sq2) noexcept {return sq1 / 8 == sq2 / 8;}
