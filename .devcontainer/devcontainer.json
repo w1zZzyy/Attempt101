@@ -1,0 +1,33 @@
+{
+	"name": "Existing Dockerfile",
+	"build": {
+		"context": "..",
+		"dockerfile": "../Dockerfile"
+	},
+	"customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-vscode.cpptools",
+                "llvm-vs-code-extensions.vscode-clangd",
+                "ms-vscode.cmake-tools",
+                "ms-vscode.makefile-tools",
+                "vadimcn.vscode-lldb",
+                "ms-azuretools.vscode-docker"
+            ],
+            "settings": {
+                "cmake.automaticReconfigure": false,
+                "cmake.configureOnEdit":  false,
+                "cmake.configureOnOpen": false,
+                "cmake.copyCompileCommands": "${workspaceFolder}/.vscode/compile_commands.json",
+                "clangd.path": "/usr/bin/clangd",
+                "clangd.arguments": [
+                    "--background-index",
+                    "--compile-commands-dir=build",
+                    "--clang-tidy",
+                    "--completion-style=detailed",
+                    "--header-insertion=never"
+                ]
+            }
+        }
+	}
+}
