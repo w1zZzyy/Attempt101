@@ -23,6 +23,9 @@ public:
     Position() = default;
     Position(std::string_view fen, StateStoragePtr&& st);
 
+    Position& set_fen(std::string_view fen);
+    Position& set_storage(StateStoragePtr&& st) {st = std::move(st); return *this;}
+
     void do_move(Move move);
     void undo_move();
 

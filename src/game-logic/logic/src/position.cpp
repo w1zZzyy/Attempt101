@@ -21,7 +21,12 @@ void game::logic::Position::Init()
 }
 
 
-game::logic::Position::Position(std::string_view fen, StateStoragePtr &&_st) : st(std::move(_st))
+game::logic::Position::Position(std::string_view fen, StateStoragePtr &&_st) : 
+    st(std::move(_st)) {
+    set_fen(fen);
+}
+
+Position& Position::set_fen(std::string_view fen)
 {
     auto& new_st = st->create();
 
@@ -94,8 +99,9 @@ game::logic::Position::Position(std::string_view fen, StateStoragePtr &&_st) : s
         new_st.passant = Square::ToSquare(passant); 
         new_st.hash.updateEnPassant(new_st.passant);
     }
-}
 
+    return *this;
+}
 
 void game::logic::Position::do_move(Move move)
 {

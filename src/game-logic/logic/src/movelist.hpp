@@ -6,17 +6,6 @@ namespace game::logic
 {
 
 
-/* class IMoveList
-{
-public:
-
-    virtual void generate(const Position&) = 0;
-    virtual bool empty() const noexcept = 0;
-    virtual size_t get_size() const noexcept = 0;
-    
-}; */
-
-
 class DefaultMoveList
 {
     inline static const size_t MAX_MOVES = 218;
