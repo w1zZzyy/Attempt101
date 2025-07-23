@@ -29,10 +29,10 @@ public:
     Color get_color() const {return *color;}
     DirectionType get_dir() const {return *dir;}
 
-    bool isAttacker() const noexcept {return attacker.isValid();}
-    bool isBlockers() const noexcept {return blockers.has_value();}
-    bool isColor() const noexcept {return color.has_value();}
-    bool isDir() const noexcept {return dir.has_value();}
+    bool hasAttacker() const noexcept {return attacker.isValid();}
+    bool hasBlockers() const noexcept {return blockers.has_value();}
+    bool hasColor() const noexcept {return color.has_value();}
+    bool hasDir() const noexcept {return dir.has_value();}
 
 private:
 
@@ -43,7 +43,8 @@ private:
 
 };
 
-struct IAttack {
+
+/* struct IAttack {
     virtual Bitboard GetSlowAttack(const AttackParams&) const = 0;
     virtual Bitboard GetFastAttack(const AttackParams&) const = 0;
     virtual ~IAttack() = default;
@@ -93,23 +94,11 @@ protected:
     void AssertParams(const AttackParams&) const override;
 };
 
+*/
 
 
-class AttackManager
-{
-    using AttackPtr = std::unique_ptr<IAttack>;
-public:
-
-    static void Setup();  
-
-    static const AttackPtr& GetPtr(Piece attacker) {return attacks[attacker];}
-    static Bitboard Get(Piece attacker, const AttackParams& p);
-    
-private:
-
-    inline static AttackPtr attacks[Piece::Count()];
-    
-};
-
+void SetupAttacks();
+Bitboard GetFastAttack(Piece pt, const AttackParams& ap);
+Bitboard GetSlowAttack(Piece pt, const AttackParams& ap);
 
 }

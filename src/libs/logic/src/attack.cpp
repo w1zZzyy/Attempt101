@@ -4,9 +4,6 @@
 
 using namespace game::logic;
 
-namespace
-{
-
 
 const int RookBits[] =
 {
@@ -50,6 +47,8 @@ static Bitboard KnightAttacksTable[Square::Count()];
 static Bitboard PawnAttacksTable[Color::Count()][Square::Count()];
 
 
+namespace Slow
+{
 
 template <DirectionType dir>
 Bitboard getDirAttack(Square attacker, Bitboard blockers) noexcept
@@ -68,116 +67,75 @@ Bitboard getDirAttack(Square attacker, Bitboard blockers) noexcept
     return attacks;
 }
 
-
-
-}
-
-
-Bitboard game::logic::BishopAttack::GetSlowAttack(const AttackParams& p) const
+template<DirectionType... Dirs>
+Bitboard SlideAttacks(const AttackParams &p)
 {
-	AssertParams(p);
+	assert(p.hasAttacker() && p.hasBlockers());
+	
+	Square attacker = p.get_attacker();
+	Bitboard blocker = p.get_blockers();
 
-	if(p.isDir()) {
-		switch (p.get_dir())
-		{
-		case SOUTH_EAST:   	return getDirAttack<SOUTH_EAST>(p.get_attacker(), p.get_blockers());
-		case SOUTH_WEST:   	return getDirAttack<SOUTH_WEST>(p.get_attacker(), p.get_blockers());
-		case NORTH_EAST:   	return getDirAttack<NORTH_EAST>(p.get_attacker(), p.get_blockers());
-		case NORTH_WEST:   	return getDirAttack<NORTH_WEST>(p.get_attacker(), p.get_blockers());
-		default:		 	return Bitboard::Null();
-		}
+	if(p.hasDir()) {
+		std::optional<Bitboard> result;
+
+		(void) std::initializer_list<int>
+		{(
+			(Dirs == p.get_dir()
+            ? (result = getDirAttack<Dirs>(attacker, blocker), 0)
+            : 0), ...
+   		)};
+		
+		return result.value_or(Bitboard::Null());
 	}
 
-    return
-        getDirAttack<SOUTH_EAST>(p.get_attacker(), p.get_blockers()) |
-        getDirAttack<SOUTH_WEST>(p.get_attacker(), p.get_blockers()) |
-        getDirAttack<NORTH_EAST>(p.get_attacker(), p.get_blockers()) |
-        getDirAttack<NORTH_WEST>(p.get_attacker(), p.get_blockers()); 
+	return (getDirAttack<Dirs>(attacker, blocker) | ...);
 }
 
-Bitboard game::logic::BishopAttack::GetFastAttack(const AttackParams& p) const
+Bitboard BishopAttack(const AttackParams &p)
 {
-	AssertParams(p);
-
-    auto blocked = p.get_blockers() & BishopAttacksTable[p.get_attacker()].attacks;
-    int key = pext(blocked, BishopAttacksTable[p.get_attacker()].attacks);
-
-    return BishopAttacksTable[p.get_attacker()].magic[key];
+	return SlideAttacks
+	<
+	SOUTH_EAST, SOUTH_WEST, 
+	NORTH_EAST, NORTH_WEST
+	>
+	(p);
 }
 
-Bitboard game::logic::RookAttack::GetSlowAttack(const AttackParams& p) const
+Bitboard RookAttack(const AttackParams &p)
 {
-	AssertParams(p);
-
-	if(p.isDir()) {
-		switch (p.get_dir())
-		{
-		case SOUTH: return getDirAttack<SOUTH>(p.get_attacker(), p.get_blockers());
-		case WEST: 	return getDirAttack<WEST>(p.get_attacker(), p.get_blockers());
-		case EAST: 	return getDirAttack<EAST>(p.get_attacker(), p.get_blockers());
-		case NORTH: return getDirAttack<NORTH>(p.get_attacker(), p.get_blockers());
-		default:	return Bitboard::Null();
-		}
-	}
-
-    return
-        getDirAttack<EAST>(p.get_attacker(), p.get_blockers())  |
-        getDirAttack<WEST>(p.get_attacker(), p.get_blockers())  |
-        getDirAttack<NORTH>(p.get_attacker(), p.get_blockers()) |
-        getDirAttack<SOUTH>(p.get_attacker(), p.get_blockers()); 
+	return SlideAttacks
+	<
+	EAST, WEST, 
+	NORTH, SOUTH
+	>
+	(p);
 }
 
-Bitboard game::logic::RookAttack::GetFastAttack(const AttackParams& p) const
+Bitboard QueenAttack(const AttackParams& p)
 {
-	AssertParams(p);
-
-    Bitboard blocked = p.get_blockers() & RookAttacksTable[p.get_attacker()].attacks;
-    int key = pext(blocked, RookAttacksTable[p.get_attacker()].attacks);
-
-    return RookAttacksTable[p.get_attacker()].magic[key];
+	return BishopAttack(p) | RookAttack(p);
 }
 
-
-
-Bitboard game::logic::QueenAttack::GetSlowAttack(const AttackParams& p) const
+Bitboard KingAttack(const AttackParams& p)
 {
-    return BishopAttack::GetSlowAttack(p) | RookAttack::GetSlowAttack(p);
-}
+	assert(p.hasAttacker());
 
-Bitboard game::logic::QueenAttack::GetFastAttack(const AttackParams& p) const
-{
-    return BishopAttack::GetFastAttack(p) | RookAttack::GetFastAttack(p);
-}
-
-
-
-Bitboard game::logic::KingAttack::GetSlowAttack(const AttackParams& p) const
-{
-	AssertParams(p);
-    Bitboard king = p.get_attacker().bitboard();
+	Bitboard king = p.get_attacker().bitboard();
 
 	return 
-		step<NORTH>(king) 			|
-		step<EAST>(king) 			|
-		step<WEST>(king) 			|
-		step<SOUTH>(king) 			|
-		step<NORTH_EAST>(king) 		|
-		step<NORTH_WEST>(king) 		|
-		step<SOUTH_EAST>(king) 		|
+		step<NORTH>(king) |
+		step<EAST>(king) |
+		step<WEST>(king) |
+		step<SOUTH>(king) |
+		step<NORTH_EAST>(king) |
+		step<NORTH_WEST>(king) |
+		step<SOUTH_EAST>(king) |
 		step<SOUTH_WEST>(king);
 }
 
-Bitboard game::logic::KingAttack::GetFastAttack(const AttackParams& p) const
+Bitboard KnightAttack(const AttackParams& p)
 {
-	AssertParams(p);
-    return KingAttacksTable[p.get_attacker()];
-}
-
-
-
-Bitboard game::logic::KnightAttack::GetSlowAttack(const AttackParams& p) const
-{
-	AssertParams(p);
+	assert(p.hasAttacker());
 
 	Bitboard attacks;
 	Bitboard knight = p.get_attacker().bitboard();
@@ -198,20 +156,12 @@ Bitboard game::logic::KnightAttack::GetSlowAttack(const AttackParams& p) const
 	return attacks;
 }
 
-Bitboard game::logic::KnightAttack::GetFastAttack(const AttackParams& p) const
+Bitboard PawnAttack(const AttackParams& p)
 {
-	AssertParams(p);
-    return KnightAttacksTable[p.get_attacker()];
-}
+	assert(p.hasAttacker() && p.hasColor());
 
-
-
-Bitboard game::logic::PawnAttack::GetSlowAttack(const AttackParams& p) const
-{
-	AssertParams(p);
-
-    Color 		clr 	= 	p.get_color();
-	Bitboard 	pawn	= 	p.get_attacker().bitboard();
+	Color clr = p.get_color();
+	Bitboard pawn = p.get_attacker().bitboard();
 
 	if(clr.is(WHITE)) {
 		return 
@@ -227,92 +177,146 @@ Bitboard game::logic::PawnAttack::GetSlowAttack(const AttackParams& p) const
 	return Bitboard::Null();
 }
 
-Bitboard game::logic::PawnAttack::GetFastAttack(const AttackParams &p) const
-{
-	AssertParams(p);
-    return PawnAttacksTable[p.get_color()][p.get_attacker()];
 }
 
 
-void game::logic::AttackManager::Setup()
+namespace Fast
 {
-	attacks[KING] 	= std::make_unique<KingAttack>();
-	attacks[QUEEN] 	= std::make_unique<QueenAttack>();
-	attacks[PAWN] 	= std::make_unique<PawnAttack>();
-	attacks[BISHOP] = std::make_unique<BishopAttack>();
-	attacks[KNIGHT] = std::make_unique<KnightAttack>();
-	attacks[ROOK] 	= std::make_unique<RookAttack>();
+
+inline Bitboard SlideAttacks(Magic* table, const AttackParams &p)
+{
+	assert(p.hasAttacker() && p.hasBlockers());
+
+	Square attacker = p.get_attacker();
+
+	Bitboard blocked = p.get_blockers() & table[attacker].attacks;
+    int key = pext(blocked, table[attacker].attacks);
+
+	return table[attacker].magic[key];
+}
+	
+Bitboard BishopAttack(const AttackParams &p)
+{
+	return SlideAttacks(BishopAttacksTable, p);
+}
+
+Bitboard RookAttack(const AttackParams &p)
+{
+	return SlideAttacks(RookAttacksTable, p);
+}
+
+Bitboard QueenAttack(const AttackParams& p)
+{
+	return BishopAttack(p) | RookAttack(p);
+}
+
+Bitboard KingAttack(const AttackParams& p)
+{
+	assert(p.hasAttacker());
+	return KingAttacksTable[p.get_attacker()];
+}
+
+Bitboard KnightAttack(const AttackParams& p)
+{
+	assert(p.hasAttacker());
+	return KnightAttacksTable[p.get_attacker()];
+}
+
+Bitboard PawnAttack(const AttackParams& p)
+{
+	assert(p.hasAttacker() && p.hasColor());
+	return PawnAttacksTable[p.get_color()][p.get_attacker()];
+}
+
+}
 
 
-	auto SetSlideAttacks = [](const AttackPtr& attack_ptr, Magic* attack_table, const int* bits)
+namespace SetAttacks
+{
+
+using AttackPtr = Bitboard(*)(const AttackParams&);
+
+void Slide(AttackPtr slow, Magic* attack_table, const int* bits)
+{
+	AttackParams params;
+
+	for(Square sqr = Square::Start(); sqr < Square::Count(); ++sqr)
 	{
-		AttackParams params;
+		int perms = 1 << bits[sqr];
 
-		for(Square sqr = Square::Start(); sqr < Square::Count(); ++sqr)
+		attack_table[sqr].magic = new Bitboard[perms];
+		attack_table[sqr].attacks = slow(
+			params.set_attacker(sqr).set_blockers(0)
+		);
+
+		const Bitboard b = sqr.bitboard();
+		if(b & FileType::NotFileA) attack_table[sqr].attacks &= FileType::NotFileA;
+		if(b & FileType::NotFileH) attack_table[sqr].attacks &= FileType::NotFileH;
+		if(b & RankType::NotRank1) attack_table[sqr].attacks &= RankType::NotRank1;
+		if(b & RankType::NotRank8) attack_table[sqr].attacks &= RankType::NotRank8;
+
+		for(int block_sqrs_num = 0; block_sqrs_num < perms; ++block_sqrs_num)
 		{
-			int perms = 1 << bits[sqr];
-
-			attack_table[sqr].magic = new Bitboard[perms];
-			attack_table[sqr].attacks = attack_ptr->GetSlowAttack(
-				params.set_attacker(sqr).set_blockers(0)
+			Bitboard blockers = pdep(block_sqrs_num, attack_table[sqr].attacks);
+			int key = pext(blockers, attack_table[sqr].attacks);
+			attack_table[sqr].magic[key] = slow(
+				params.set_blockers(blockers)
 			);
-
-			const Bitboard b = sqr.bitboard();
-			if(b & FileType::NotFileA) attack_table[sqr].attacks &= FileType::NotFileA;
-			if(b & FileType::NotFileH) attack_table[sqr].attacks &= FileType::NotFileH;
-			if(b & RankType::NotRank1) attack_table[sqr].attacks &= RankType::NotRank1;
-			if(b & RankType::NotRank8) attack_table[sqr].attacks &= RankType::NotRank8;
-
-			for(int block_sqrs_num = 0; block_sqrs_num < perms; ++block_sqrs_num)
-			{
-				Bitboard blockers = pdep(block_sqrs_num, attack_table[sqr].attacks);
-				int key = pext(blockers, attack_table[sqr].attacks);
-				attack_table[sqr].magic[key] = attack_ptr->GetSlowAttack(
-					params.set_blockers(blockers)
-				);
-			}
 		}
-	};
-	auto SetNonSlideAttacks = [](const AttackPtr& attack_ptr, Bitboard* attack_table, AttackParams& p)
-	{
-		for(Square sqr = Square::Start(); sqr < Square::Count(); ++sqr) {
-			p.set_attacker(sqr);
-			attack_table[sqr] = attack_ptr->GetSlowAttack(p);
-		}
-	};
-
-
-	SetSlideAttacks(attacks[BISHOP], BishopAttacksTable, BishopBits);
-	SetSlideAttacks(attacks[ROOK], RookAttacksTable, RookBits);
-
-
-	AttackParams p;
-
-	SetNonSlideAttacks(attacks[KING], KingAttacksTable, p);
-	SetNonSlideAttacks(attacks[KNIGHT], KnightAttacksTable, p);
-
-	for(Color clr(WHITE); clr.isValid(); clr.next()) {
-		p.set_color(clr);
-		SetNonSlideAttacks(attacks[PAWN], PawnAttacksTable[clr], p);
 	}
 }
 
-Bitboard game::logic::AttackManager::Get(Piece attacker, const AttackParams& p)
+void NonSlide(AttackPtr slow, Bitboard* attack_table, AttackParams& p)
 {
-    return attacks[attacker]->GetFastAttack(p);
+	for(Square sqr = Square::Start(); sqr < Square::Count(); ++sqr) {
+		p.set_attacker(sqr);
+		attack_table[sqr] = slow(p);
+	}
 }
 
-void game::logic::ISlideAttack::AssertParams(const AttackParams& p) const
-{
-	assert(p.isAttacker() && p.isBlockers());
 }
 
-void game::logic::INonSlideAttack::AssertParams(const AttackParams& p) const
+
+void game::logic::SetupAttacks()
 {
-	assert(p.isAttacker());
+	SetAttacks::Slide(&Slow::BishopAttack, BishopAttacksTable, BishopBits);
+	SetAttacks::Slide(&Slow::RookAttack, RookAttacksTable, RookBits);
+
+	AttackParams p;
+
+	SetAttacks::NonSlide(&Slow::KingAttack, KingAttacksTable, p);
+	SetAttacks::NonSlide(&Slow::KnightAttack, KnightAttacksTable, p);
+
+	for(Color clr(WHITE); clr.isValid(); clr.next()) {
+		p.set_color(clr);
+		SetAttacks::NonSlide(&Slow::PawnAttack, PawnAttacksTable[clr], p);
+	}
 }
 
-void game::logic::PawnAttack::AssertParams(const AttackParams& p) const
+Bitboard game::logic::GetFastAttack(Piece pt, const AttackParams &p)
 {
-	assert(p.isAttacker() && p.isColor());
+    switch (pt.type())
+	{
+	case BISHOP: return Fast::BishopAttack(p);
+	case ROOK: return Fast::RookAttack(p);
+	case QUEEN: return Fast::QueenAttack(p);
+	case KING: return Fast::KingAttack(p);
+	case KNIGHT: return Fast::KnightAttack(p);
+	case PAWN: return Fast::PawnAttack(p);
+	default: return Bitboard::Null();
+	}
+}
+
+Bitboard game::logic::GetSlowAttack(Piece pt, const AttackParams &p)
+{
+    switch (pt.type())
+	{
+	case BISHOP: return Slow::BishopAttack(p);
+	case ROOK: return Slow::RookAttack(p);
+	case QUEEN: return Slow::QueenAttack(p);
+	case KING: return Slow::KingAttack(p);
+	case KNIGHT: return Slow::KnightAttack(p);
+	case PAWN: return Slow::PawnAttack(p);
+	default: return Bitboard::Null();
+	}
 }

@@ -10,7 +10,7 @@ using namespace game::logic;
 
 constexpr auto prom_list = {Q_PROMOTION_MF, K_PROMOTION_MF, B_PROMOTION_MF, R_PROMOTION_MF};
 
-void game::logic::DefaultMoveList::generate(const Position &p)
+void game::logic::MoveList::generate(const Position &p)
 {
     size = 0;
 
@@ -27,7 +27,7 @@ void game::logic::DefaultMoveList::generate(const Position &p)
         : pawn_moves<BLACK>(p, params);
 }
 
-void game::logic::DefaultMoveList::piece_moves(
+void game::logic::MoveList::piece_moves(
     const Position &p,
     const PositionParams &pp
 ) {
@@ -52,7 +52,7 @@ void game::logic::DefaultMoveList::piece_moves(
     {
         Square from = pieces.poplsb();
 
-        Bitboard moves = AttackManager::Get(
+        Bitboard moves = GetFastAttack(
             p.piece_on(from),
             ap.set_attacker(from)
         ) & target;
@@ -65,7 +65,7 @@ void game::logic::DefaultMoveList::piece_moves(
     }
 }
 
-void game::logic::DefaultMoveList::king_moves(
+void game::logic::MoveList::king_moves(
     const Position          &p, 
     const PositionParams    &pp
 ) {
@@ -76,7 +76,7 @@ void game::logic::DefaultMoveList::king_moves(
     AttackParams ap; 
     ap.set_attacker(ksq);
 
-    Bitboard moves = AttackManager::Get(KING, ap) & ~enemy_attacks & ~p.get_occupied(us);
+    Bitboard moves = GetFastAttack(KING, ap) & ~enemy_attacks & ~p.get_occupied(us);
     while(moves)
         add(ksq, moves.poplsb(), DEFAULT_MF);
 
@@ -88,7 +88,7 @@ void game::logic::DefaultMoveList::king_moves(
 
 
 template<ColorType Us>
-inline void game::logic::DefaultMoveList::pawn_moves(
+inline void game::logic::MoveList::pawn_moves(
     const Position          &p, 
     const PositionParams    &pp
 ) {
@@ -143,7 +143,7 @@ inline void game::logic::DefaultMoveList::pawn_moves(
 }
 
 template <ColorType Us>
-void game::logic::DefaultMoveList::pinned_pawn_moves(
+void game::logic::MoveList::pinned_pawn_moves(
     Bitboard                pawns, 
     const Position&         p,
     const PositionParams&   pp
@@ -171,7 +171,7 @@ void game::logic::DefaultMoveList::pinned_pawn_moves(
 
         Bitboard single_up = step<Up>(from.bitboard()) & empty_target;
         Bitboard double_up = step<Up>(single_up & TRank3) & empty_target;
-        Bitboard captures  = AttackManager::Get(PAWN, ap.set_attacker(from)) & enemy_target & pin_mask;
+        Bitboard captures  = GetFastAttack(PAWN, ap.set_attacker(from)) & enemy_target & pin_mask;
 
         single_up &= pin_mask; 
         double_up &= pin_mask;
@@ -193,7 +193,7 @@ void game::logic::DefaultMoveList::pinned_pawn_moves(
 }
 
 template <ColorType Us, bool Pinned>
-void game::logic::DefaultMoveList::en_passant_moves(
+void game::logic::MoveList::en_passant_moves(
     Bitboard                pawns, 
     const Position&         p, 
     const PositionParams&   pp
@@ -213,7 +213,7 @@ void game::logic::DefaultMoveList::en_passant_moves(
     AttackParams passant_params; 
     passant_params.set_color(Them).set_attacker(passant);
 
-    Bitboard passant_attackers = AttackManager::Get(PAWN, passant_params) & pawns;
+    Bitboard passant_attackers = GetFastAttack(PAWN, passant_params) & pawns;
     while(passant_attackers)
     {
         Square from = passant_attackers.poplsb();
@@ -238,7 +238,7 @@ void game::logic::DefaultMoveList::en_passant_moves(
 }
 
 
-void game::logic::DefaultMoveList::pawn_move_generic(
+void game::logic::MoveList::pawn_move_generic(
     Bitboard                        moves, 
     std::initializer_list<MoveFlag> flags, 
     int                             offset_from
@@ -253,7 +253,7 @@ void game::logic::DefaultMoveList::pawn_move_generic(
 }
 
 
-std::optional<Move> DefaultMoveList::find(std::string_view notation) const 
+std::optional<Move> MoveList::find(std::string_view notation) const 
 {
     if(4 < notation.size() || notation.size() > 5) 
         return std::nullopt;
@@ -285,13 +285,13 @@ std::optional<Move> DefaultMoveList::find(std::string_view notation) const
 }
 
 
-template void DefaultMoveList::pawn_moves<WHITE>(const Position&, const PositionParams&);
-template void DefaultMoveList::pawn_moves<BLACK>(const Position&, const PositionParams&);
+template void MoveList::pawn_moves<WHITE>(const Position&, const PositionParams&);
+template void MoveList::pawn_moves<BLACK>(const Position&, const PositionParams&);
 
-template void DefaultMoveList::pinned_pawn_moves<WHITE>(Bitboard, const Position&, const PositionParams&);
-template void DefaultMoveList::pinned_pawn_moves<BLACK>(Bitboard, const Position&, const PositionParams&);
+template void MoveList::pinned_pawn_moves<WHITE>(Bitboard, const Position&, const PositionParams&);
+template void MoveList::pinned_pawn_moves<BLACK>(Bitboard, const Position&, const PositionParams&);
 
-template void DefaultMoveList::en_passant_moves<WHITE, true>(Bitboard, const Position&, const PositionParams&);
-template void DefaultMoveList::en_passant_moves<WHITE, false>(Bitboard, const Position&, const PositionParams&);
-template void DefaultMoveList::en_passant_moves<BLACK, true>(Bitboard, const Position&, const PositionParams&);
-template void DefaultMoveList::en_passant_moves<BLACK, false>(Bitboard, const Position&, const PositionParams&);
+template void MoveList::en_passant_moves<WHITE, true>(Bitboard, const Position&, const PositionParams&);
+template void MoveList::en_passant_moves<WHITE, false>(Bitboard, const Position&, const PositionParams&);
+template void MoveList::en_passant_moves<BLACK, true>(Bitboard, const Position&, const PositionParams&);
+template void MoveList::en_passant_moves<BLACK, false>(Bitboard, const Position&, const PositionParams&);

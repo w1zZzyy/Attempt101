@@ -7,7 +7,7 @@
 #include <string>
 
 #include "../src/position.hpp"
-#include "move.hpp"
+#include "../src/move.hpp"
 
 
 size_t CountNodes(game::logic::Position& pos, size_t depth);
@@ -43,7 +43,6 @@ class BranchesCountTest : public ITest
 public:
     void run() override;
 private:
-    bool contains(game::logic::Move move) const;
     void parse_file(std::ifstream& file) override;
     bool correct(game::logic::Move move, size_t nodes) const;
 

@@ -15,7 +15,7 @@ using namespace game::logic;
 
 void game::logic::Position::Init()
 {
-    AttackManager::Setup();
+    SetupAttacks();
     Square::Setup();
     Zobrist::Setup();
 }
@@ -354,7 +354,7 @@ PositionParams& game::logic::PositionParams::compute_enemy_attackers(const Posit
         Piece   type = position.piece_on(from);
         attack_params.set_attacker(from);
         
-        Bitboard piece_attacks = AttackManager::Get(type, attack_params);
+        Bitboard piece_attacks = GetFastAttack(type, attack_params);
         this->attackers |= piece_attacks;
 
         if(piece_attacks & king) {
@@ -377,7 +377,7 @@ PositionParams& game::logic::PositionParams::compute_enemy_attackers(const Posit
             .set_color(us)
             .set_attacker(ksq);
             
-        Bitboard pawn_checkers = AttackManager::Get(PAWN, attack_params) & pawns;
+        Bitboard pawn_checkers = GetFastAttack(PAWN, attack_params) & pawns;
 
         this->checkers  |=  pawn_checkers;
         this->defense   &=  pawn_checkers;
@@ -397,8 +397,8 @@ PositionParams& game::logic::PositionParams::compute_pins_from_sliders(const Pos
         .set_attacker(ksq);
 
     Bitboard snipers = 
-        AttackManager::Get(ROOK, attack_params) & position.get_pieces(c.opp(), ROOK, QUEEN) |
-        AttackManager::Get(BISHOP, attack_params) & position.get_pieces(c.opp(), BISHOP, QUEEN);
+        GetFastAttack(ROOK, attack_params) & position.get_pieces(c.opp(), ROOK, QUEEN) |
+        GetFastAttack(BISHOP, attack_params) & position.get_pieces(c.opp(), BISHOP, QUEEN);
     Bitboard occ = position.get_occupied(WHITE, BLACK) ^ snipers;
 
     while(snipers)
@@ -431,7 +431,7 @@ bool game::logic::PositionParams::exposes_discovered_check(Square from, Square t
         .set_blockers(p.get_occupied(WHITE, BLACK) ^ Bitboard::FromSquares(from, targ));
 
     Bitboard sliders_on_line = p.get_pieces(us.opp(), ROOK, QUEEN) & line_bb(from, targ);
-    if(sliders_on_line & AttackManager::Get(ROOK, discovered_check_params))
+    if(sliders_on_line & GetFastAttack(ROOK, discovered_check_params))
         return true;
 
     return false;

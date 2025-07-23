@@ -6,7 +6,7 @@ namespace game::logic
 {
 
 
-class DefaultMoveList
+class MoveList
 {
     inline static const size_t MAX_MOVES = 218;
 public:

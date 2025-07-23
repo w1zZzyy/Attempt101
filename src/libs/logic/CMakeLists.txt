@@ -4,6 +4,7 @@ project(Logic LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 set (
     Header 
@@ -43,6 +44,9 @@ set(
     tests/test_movegen.cpp
     tests/main.cpp
 )
+
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/tests/tests_data DESTINATION ${CMAKE_BINARY_DIR}/logic)
+add_definitions(-DLOGIC_TESTS_DATA_PATH="${CMAKE_CURRENT_BINARY_DIR}/tests_data")
 
 add_executable(tests_exe ${Tests})
 target_link_libraries(tests_exe PRIVATE ${PROJECT_NAME}_lib)

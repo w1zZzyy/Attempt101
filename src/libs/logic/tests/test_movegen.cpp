@@ -1,31 +1,3 @@
-/* 
-TestBranch CreateTest()
-{
-    return TestBranch(
-    R"(rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1 
-    5
-a2a3: 181046
-b2b3: 215255
-c2c3: 222861
-d2d3: 328511
-e2e3: 402988
-f2f3: 178889
-g2g3: 217210
-h2h3: 181044
-a2a4: 217832
-b2b4: 216145
-c2c4: 240082
-d2d4: 361790
-e2e4: 405385
-f2f4: 198473
-g2g4: 214048
-h2h4: 218829
-b1a3: 198572
-b1c3: 234656
-g1f3: 233491
-g1h3: 198502)");  
-} */
-
 #include "test_movegen.hpp"
 #include "../src/movelist.hpp"
 #include "position.hpp"
@@ -36,6 +8,7 @@ g1h3: 198502)");
 #include <iostream>
 #include <memory>
 #include <vector>
+#include <chrono>
 
 using namespace game::logic;
 
@@ -45,7 +18,7 @@ size_t CountNodes(game::logic::Position& pos, size_t depth)
         return 1;
     }
 
-    DefaultMoveList moves;
+    MoveList moves;
     moves.generate(pos);
 
     size_t nodes = 0;
@@ -89,7 +62,14 @@ void NodesCountTest::parse_file(std::ifstream& file)
 void NodesCountTest::run() 
 {
     Position pos(fen, std::make_unique<DynamicStateStorage>());
+
+    auto start = std::chrono::high_resolution_clock::now();
     size_t actual_nodes = CountNodes(pos, depth);
+    auto end = std::chrono::high_resolution_clock::now();
+
+    auto time = std::chrono::duration<double>(end - start).count();
+
+    std::cout << "Time: " << time << "\n";
     std::cout << "Actual: " << actual_nodes << "\tExpected: " << expected_nodes << "\n";
     std::cout << (actual_nodes == expected_nodes ? "Passed" : "Failed");
     std::cout << "\n--------------------------------------------------\n";
@@ -116,7 +96,7 @@ void BranchesCountTest::run()
 {
     Position pos(fen, std::make_unique<DynamicStateStorage>());
 
-    DefaultMoveList moves;
+    MoveList moves;
     moves.generate(pos);
 
     std::vector<std::string> bad_fens;

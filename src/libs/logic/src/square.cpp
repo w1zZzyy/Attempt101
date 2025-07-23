@@ -34,7 +34,6 @@ DirectionType DirFromToTarg(Square from, Square targ)
 
 void SetupBetween()
 {
-    const auto& queen = AttackManager::GetPtr(QUEEN);
     AttackParams params;
 
     for(Square from = Square::Start(); from < Square::Count(); ++from)
@@ -47,7 +46,7 @@ void SetupBetween()
 
             params.set_dir(DirFromToTarg(from, targ));
             params.set_blockers(targ.bitboard());
-            BetweenSquares[from][targ] = queen->GetSlowAttack(params);
+            BetweenSquares[from][targ] = GetSlowAttack(QUEEN, params);
         }
     }
 }
@@ -55,7 +54,6 @@ void SetupBetween()
 
 void SetupSameLine()
 {
-    const auto& queen = AttackManager::GetPtr(QUEEN);
     AttackParams params; params.set_blockers(Bitboard::Null());
 
     for(Square from = Square::Start(); from < Square::Count(); ++from)
@@ -71,10 +69,10 @@ void SetupSameLine()
                 continue;
 
             params.set_dir(dir);
-            Bitboard dir_attacks = queen->GetSlowAttack(params);
+            Bitboard dir_attacks = GetSlowAttack(QUEEN, params);
             
             params.set_dir(DirectionType(-dir));
-            Bitboard anti_dir_attacks = queen->GetSlowAttack(params);
+            Bitboard anti_dir_attacks = GetSlowAttack(QUEEN, params);
 
             SameLineSquares[from][targ] = dir_attacks | anti_dir_attacks | from.bitboard();
         }
