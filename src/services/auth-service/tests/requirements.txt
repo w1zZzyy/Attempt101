@@ -1,0 +1,2 @@
+yandex-taxi-testsuite[postgresql-binary] >= 0.2.0
+

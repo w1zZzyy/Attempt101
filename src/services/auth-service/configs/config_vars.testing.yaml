@@ -1,0 +1,9 @@
+worker-threads: 2
+worker-fs-threads: 1
+logger-level: debug
+
+is_testing: true
+
+server-port: 8080
+
+dbconnection: 'postgresql://testsuite@localhost:15433/service_auth_db'
