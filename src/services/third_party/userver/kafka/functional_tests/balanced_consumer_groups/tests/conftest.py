@@ -1,0 +1,44 @@
+import asyncio
+import json
+import logging
+
+import common
+import pytest
+
+pytest_plugins = ['pytest_userver.plugins.kafka']
+
+
+@pytest.fixture(scope='session')
+def kafka_local(_patched_bootstrap_servers_internal):
+    return _patched_bootstrap_servers_internal
+
+
+@pytest.fixture(scope='session')
+def kafka_components():
+    return [
+        'kafka-consumer-first',
+        'kafka-consumer-second',
+        'kafka-consumer-cooperative-first',
+        'kafka-consumer-cooperative-second',
+    ]
+
+
+@pytest.fixture(scope='session')
+def service_env(kafka_secdist):
+    return {'SECDIST_CONFIG': json.dumps(kafka_secdist)}
+
+
+@pytest.fixture(name='stop_consumers', autouse=True)
+async def stop_consumers(service_client):
+    yield
+
+    logging.debug('Stopping consumers after test...')
+
+    await asyncio.sleep(1.0)  # wait until messages are consumed
+    for consumer in common.CONSUMERS:  # clear consumed messages, if exists
+        await common.get_consumed_messages(service_client, consumer)
+
+    # guarantee the consumers to be stopped after each test
+    await common.stop_consumers(service_client)
+
+    logging.debug('All consumers are stopped')

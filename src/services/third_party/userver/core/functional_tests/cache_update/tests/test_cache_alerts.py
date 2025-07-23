@@ -1,0 +1,76 @@
+import testsuite
+
+
+async def invalidate_caches(service_client, update_type):
+    if update_type == 'full':
+        await service_client.invalidate_caches(cache_names=['alert-cache'])
+    elif update_type == 'incremental':
+        try:
+            await service_client.invalidate_caches(
+                clean_update=False,
+                cache_names=['alert-cache'],
+            )
+        except testsuite.utils.http.HttpResponseError:
+            pass
+
+
+async def wait_to_fire(
+    service_client,
+    monitor_client,
+    failure_count,
+    update_interval,
+):
+    for _ in range(failure_count):
+        await invalidate_caches(service_client, 'incremental')
+
+
+async def test_cache_update(
+    service_client,
+    monitor_client,
+    dynamic_config,
+    service_config_yaml,
+):
+    await service_client.update_server_state()
+    alert_cache = service_config_yaml['components_manager']['components']['alert-cache']
+    static_alert = alert_cache['alert-on-failing-to-update-times']
+    update_interval = alert_cache['update-interval']
+    assert update_interval[-1] == 's'
+    update_interval = int(update_interval[:-1])
+
+    await wait_to_fire(
+        service_client,
+        monitor_client,
+        static_alert,
+        update_interval,
+    )
+
+    assert (await monitor_client.single_metric('alerts.cache_update_error')).value == 1
+
+    # successful update
+    await invalidate_caches(service_client, 'full')
+    assert (await monitor_client.single_metric('alerts.cache_update_error')).value == 0
+
+    # set a new value in dynamic_config
+    dynamic_alert = static_alert - 1
+    assert dynamic_alert != 0
+    alert_cache = {
+        'alert-cache': {
+            'alert-on-failing-to-update-times': dynamic_alert,
+            'update-interval-ms': update_interval * 1000,
+            'update-jitter-ms': 1000,
+            'full-update-interval-ms': 10000,
+            'full-update-jitter-ms': 1000,
+        },
+    }
+    dynamic_config.set_values({'USERVER_CACHES': alert_cache})
+    await service_client.update_server_state()
+    assert dynamic_config.get('USERVER_CACHES') == alert_cache
+
+    await wait_to_fire(
+        service_client,
+        monitor_client,
+        dynamic_alert,
+        update_interval,
+    )
+
+    assert (await monitor_client.single_metric('alerts.cache_update_error')).value == 1
