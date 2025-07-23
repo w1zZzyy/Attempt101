@@ -1,6 +1,0 @@
-# yaml
-components:
-    schemas:
-        DateTime:
-            type: string
-            format: date-time

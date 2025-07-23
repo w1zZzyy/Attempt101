@@ -1,9 +1,0 @@
-project-name: userver-clickhouse
-project-alt-names:
-  - yandex-userver-clickhouse
-maintainers:
-  - Common components
-description: ClickHouse driver
-
-libraries:
-  - userver-core
