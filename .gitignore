@@ -1,5 +1,9 @@
 build*
 .vscode/
 .cache/
-.cache/
+.ccache/
+.cores/
+.pgdata/
+.idea/
 **/.cache/
+__pycache__
