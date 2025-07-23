@@ -1,8 +1,0 @@
-components:
-    schemas:
-        Int:
-            type: object
-            additionalProperties: false
-            properties:
-                foo:
-                    type: integer

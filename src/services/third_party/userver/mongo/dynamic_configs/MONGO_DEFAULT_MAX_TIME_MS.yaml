@@ -1,6 +1,0 @@
-default: 0
-description: ''
-schema:
-    x-usrv-cpp-type: std::chrono::milliseconds
-    type: integer
-    minimum: 0

@@ -1,5 +1,0 @@
-default: 30
-description: ''
-schema:
-    minimum: 0
-    type: integer

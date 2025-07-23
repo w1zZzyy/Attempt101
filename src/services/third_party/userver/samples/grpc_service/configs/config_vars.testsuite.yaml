@@ -1,2 +1,0 @@
-# yaml
-greeter-endpoint: $grpc_mockserver

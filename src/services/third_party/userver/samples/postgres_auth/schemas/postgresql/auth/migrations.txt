@@ -1,2 +1,0 @@
-V001__create_db.sql
-V002__add_name.sql

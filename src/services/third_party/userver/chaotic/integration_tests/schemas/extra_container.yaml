@@ -1,7 +1,0 @@
-definitions:
-    ObjectWithExtraType:
-        type: object
-        properties: {}
-        x-usrv-cpp-extra-type: std::map
-        additionalProperties:
-            type: string

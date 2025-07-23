@@ -1,6 +1,0 @@
-default: 5
-description: ''
-schema:
-    type: integer
-    minimum: 1
-
