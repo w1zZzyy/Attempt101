@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.20 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.20)
 
 project(Logic LANGUAGES CXX) 
 
@@ -34,8 +34,10 @@ set(
 
 add_library(${PROJECT_NAME}_lib STATIC ${Header} ${Source})
 
+
 if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
 	target_compile_options(${PROJECT_NAME}_lib PUBLIC -mbmi2 -mbmi)
+    set(CMAKE_CXX_FLAGS_RELEASE "-O3 -march=native -flto")
 endif()
 
 set(

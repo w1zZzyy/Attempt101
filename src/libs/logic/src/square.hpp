@@ -29,8 +29,8 @@ enum SquareType : uint8_t
 class Square
 {
 public:
+
     static void Setup();
-    static constexpr int Count() noexcept {return 64;};
     static constexpr SquareType Start() noexcept {return a1;};
     static constexpr SquareType End() noexcept {return h8;};
     static constexpr SquareType ToSquare(int index) {

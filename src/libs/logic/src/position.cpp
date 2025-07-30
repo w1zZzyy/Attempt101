@@ -21,14 +21,14 @@ void game::logic::Position::Init()
 }
 
 
-game::logic::Position::Position(std::string_view fen, StateStoragePtr &&_st) : 
-    st(std::move(_st)) {
+game::logic::Position::Position(std::string_view fen)
+{
     set_fen(fen);
 }
 
 Position& Position::set_fen(std::string_view fen)
 {
-    auto& new_st = st->create();
+    auto& new_st = st.create();
 
     std::stringstream ss(fen.data());
 
@@ -105,11 +105,11 @@ Position& Position::set_fen(std::string_view fen)
 
 void game::logic::Position::do_move(Move move)
 {
-    State& old_st = st->top();
+    State& old_st = st.top();
     if(old_st.passant.isValid())
         old_st.hash.updateEnPassant(old_st.passant);
 
-    State& new_st   =   st->create();
+    State& new_st   =   st.create();
     new_st.move     =   move;
 
     Square from     =   move.from();
@@ -169,14 +169,14 @@ void game::logic::Position::undo_move()
 {
     constexpr bool HashUpdate = false;
 
-    Move last_move = st->top().move;
-    Piece captured = st->top().captured;
+    Move last_move = st.top().move;
+    Piece captured = st.top().captured;
     
     Square from = last_move.from();
     Square targ = last_move.targ();
     MoveFlag flag = last_move.flag();
 
-    State& old_st = st->rollback();
+    State& old_st = st.rollback();
     side.swap();
 
     switch (flag)
@@ -210,7 +210,7 @@ void game::logic::Position::undo_move()
 
 bool game::logic::Position::can_castle(CastleType ct, Bitboard enemy_attacks) const
 {
-    const Castle cr = st->top().castle.extract(side, ct);
+    const Castle cr = st.top().castle.extract(side, ct);
     return 
           cr.has_path()                     &&
         !(cr.king_path()  & enemy_attacks)  &&
@@ -219,14 +219,14 @@ bool game::logic::Position::can_castle(CastleType ct, Bitboard enemy_attacks) co
 
 void game::logic::Position::update_passant(Square sqr)
 {
-    State& curr_st = st->top();
+    State& curr_st = st.top();
     curr_st.hash.updateEnPassant(sqr);
     curr_st.passant = sqr;
 }
 
 void game::logic::Position::update_castle(Color c, CastleType ct)
 {
-    State& curr_st = st->top();
+    State& curr_st = st.top();
     const CastleRightsType cr = curr_st.castle.extract(c, ct);
 
     if(cr == NO_CASTLING) 
@@ -299,7 +299,7 @@ std::string game::logic::Position::fen() const noexcept
 
     res << (side.is(WHITE) ? " w " : " b ");
 
-    State& curr_st = st->top();
+    const State& curr_st = st.top();
     
     if(curr_st.castle != NO_CASTLING) {
         if(curr_st.castle.available(K_CASTLING)) res << 'K';
@@ -319,7 +319,7 @@ std::string game::logic::Position::fen() const noexcept
 
 bool Position::is_draw() const
 {
-    return not_enough_pieces() || st->is_draw();
+    return not_enough_pieces() || st.repetition() || st.top().rule50 == 50;
 }
 
 bool Position::not_enough_pieces() const noexcept
@@ -452,7 +452,7 @@ Bitboard game::logic::PositionParams::pin_mask(Square sqr, const Position &p) co
 
 std::ostream& operator<<(std::ostream& out, const game::logic::Position& position)
 {
-    constexpr char PieceName[Color::Count()][Piece::Count()] =
+    constexpr char PieceName[COLOR_COUNT][PIECE_COUNT] =
 	{
 		{'K', 'Q', 'P', 'N', 'B', 'R'},
 		{'k', 'q', 'p', 'n', 'b', 'r'}

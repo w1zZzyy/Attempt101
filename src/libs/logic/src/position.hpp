@@ -21,10 +21,9 @@ public:
     static void Init();
 
     Position() = default;
-    Position(std::string_view fen, StateStoragePtr&& st);
+    Position(std::string_view fen);
 
     Position& set_fen(std::string_view fen);
-    Position& set_storage(StateStoragePtr&& st) {st = std::move(st); return *this;}
 
     void do_move(Move move);
     void undo_move();
@@ -46,7 +45,7 @@ public:
         return Bitboard((occupied[c] | ...));
     }
     Color get_side() const noexcept {return side;}
-    Square get_passant() const {return st->top().passant;}
+    Square get_passant() const {return st.top().passant;}
 
     bool can_castle(CastleType ct, Bitboard enemy_attacks) const;
 
@@ -56,11 +55,11 @@ public:
 
 private:
 
-    Bitboard pieces[Color::Count()][Piece::Count()];
-    Bitboard occupied[Color::Count()];
-    Piece types[Square::Count()];
+    Bitboard pieces[COLOR_COUNT][PIECE_COUNT];
+    Bitboard occupied[COLOR_COUNT];
+    Piece types[SQUARE_COUNT];
     Color side;
-    StateStoragePtr st;
+    StateStorage st;
     
 
     template<bool HashUpdate = true>
@@ -94,7 +93,7 @@ inline void Position::add_piece(Color color, Piece piece, Square sqr)
     types[sqr] = piece;
 
     if constexpr (HashUpdate)
-        st->top().hash.updateSquare(color, piece, sqr);
+        st.top().hash.updateSquare(color, piece, sqr);
 }
 
 template <bool HashUpdate>
@@ -110,7 +109,7 @@ inline void Position::remove_piece(Color color, Square sqr)
     types[sqr] = NO_PIECE;
 
     if constexpr (HashUpdate)
-        st->top().hash.updateSquare(color, piece, sqr);
+        st.top().hash.updateSquare(color, piece, sqr);
 }
 
 template <bool HashUpdate>
@@ -127,7 +126,7 @@ inline void Position::move_piece(Square from, Square targ)
     types[targ] = piece;
 
     if constexpr (HashUpdate) {
-        State& curr_st = st->top();
+        State& curr_st = st.top();
         curr_st.hash.updateSquare(side, piece, from);
         curr_st.hash.updateSquare(side, piece, targ);
     }
@@ -146,7 +145,7 @@ inline void Position::replace(Piece new_p, Square s)
     pieces[side][new_p] ^= piece_bb;
 
     if constexpr (HashUpdate) {
-        State& curr_st = st->top();
+        State& curr_st = st.top();
         curr_st.hash.updateSquare(side, old_p, s);
         curr_st.hash.updateSquare(side, new_p, s);
     }

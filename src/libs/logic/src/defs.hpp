@@ -10,6 +10,14 @@ namespace game::logic
 {
 
 
+constexpr int PIECE_COUNT = 6;
+constexpr int COLOR_COUNT = 2;
+constexpr int CASTLE_COUNT = 63;
+constexpr int SQUARE_COUNT = 64;
+constexpr int MAX_MOVES_COUNT = 218;
+constexpr int MAX_HISTORY_SIZE = 20;
+
+
 using U64 = uint64_t;
 using U8  = uint8_t;
 
@@ -44,9 +52,7 @@ enum PieceType : U8
 class Piece
 {
 public:
-	static constexpr int Count() noexcept {return 6;}
-
-
+	
 	Piece() noexcept : piece(NO_PIECE) {}
 	Piece(PieceType _p) noexcept : piece(_p) {}
 	Piece(const Piece& _p) noexcept : piece(_p.piece) {}
@@ -77,7 +83,6 @@ enum ColorType : U8
 class Color
 {
 public:
-	static constexpr int Count() noexcept {return 2;}
 	
 	Color() noexcept : color(ANY_COLOR) {}
 	Color(const Color& c) noexcept : color(c.color) {}
@@ -146,7 +151,6 @@ class Castle
 {
 public:
 
-	static constexpr int Count() noexcept {return 63;}
 	static std::optional<CastleType> ByRookSquare(Color c, Square rook_sqr);
 
 	Castle() = default;

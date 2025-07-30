@@ -9,9 +9,9 @@ namespace
 {
 
 
-static Bitboard ZobristPieceTable[Color::Count()][Piece::Count()][Square::Count()];
-static Bitboard ZobristCastleTable[Castle::Count()];
-static Bitboard ZobristPassantTable[Square::Count()];
+static Bitboard ZobristPieceTable[COLOR_COUNT][PIECE_COUNT][SQUARE_COUNT];
+static Bitboard ZobristCastleTable[CASTLE_COUNT];
+static Bitboard ZobristPassantTable[SQUARE_COUNT];
 static Bitboard ZobristSide;
 
 
@@ -26,13 +26,13 @@ void game::logic::Zobrist::Setup()
 
     for (Color c = WHITE; c.isValid(); c.next())
 		for (Piece p = KING; p.isValid(); p.next())
-			for (Square s = a1; s < Square::Count(); ++s)
+			for (Square s = a1; s < SQUARE_COUNT; ++s)
 				ZobristPieceTable[c][p][s] = dist(gen);
 
-	for (int i = 0; i < Castle::Count(); ++i)
+	for (int i = 0; i < CASTLE_COUNT; ++i)
 		ZobristCastleTable[i] = dist(gen);
 
-	for (Square s = a1; s < Square::Count(); ++s)
+	for (Square s = a1; s < SQUARE_COUNT; ++s)
 		ZobristPassantTable[s] = dist(gen);
 
 	ZobristSide = dist(gen);

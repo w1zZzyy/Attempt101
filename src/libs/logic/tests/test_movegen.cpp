@@ -61,7 +61,7 @@ void NodesCountTest::parse_file(std::ifstream& file)
 
 void NodesCountTest::run() 
 {
-    Position pos(fen, std::make_unique<DynamicStateStorage>());
+    Position pos(fen);
 
     auto start = std::chrono::high_resolution_clock::now();
     size_t actual_nodes = CountNodes(pos, depth);
@@ -94,7 +94,7 @@ void BranchesCountTest::parse_file(std::ifstream& file)
 
 void BranchesCountTest::run() 
 {
-    Position pos(fen, std::make_unique<DynamicStateStorage>());
+    Position pos(fen);
 
     MoveList moves;
     moves.generate(pos);

@@ -6,12 +6,13 @@
 #include <cassert>
 #include <deque>
 #include <memory>
+#include <array>
 
 namespace game::logic
 {
 
 
-struct State
+/* struct State
 {
     State() = default;
     State(const State& s) {copy_core(s);}
@@ -75,60 +76,39 @@ private:
 };
 
 
-// engine style
-/* template<size_t Size>
-class FixedStateStorage : public IStateStorage
+using StateStoragePtr = std::unique_ptr<IStateStorage>; */
+
+
+
+struct State
+{
+    Zobrist hash{};
+    Castle castle{NO_CASTLING};
+    int rule50{0};
+
+    Move move{};
+    Square passant{NO_SQUARE};
+    Piece captured{NO_PIECE};
+};
+
+class StateStorage
 {
 public:
 
-    State& create() override {
-        assert(curr + 1 < Size);
-        history[curr + 1].copy_core(history[curr]);
-        return history[++curr];
-    }
+    State& create();
+    State& rollback();
 
-    State& rollback() override {
-        assert(curr != 0);
-        return history[--curr];
-    }
+    State& top();
+    const State& top() const;
 
-    State& top() override {
-        return history[curr];
-    }
-
-    const State& top() const override {
-        return history[curr];
-    }
-
-    bool is_draw() const override {
-        if(history.empty() || history.back().rule50 != 50) {
-            return false;
-        }
-
-        const Zobrist& h = history.back().hash;
-        int counter = 1;
-        int curr = history.size() - 2;
-
-        while(curr >= 0 && history[curr].rule50 - 1 != history[curr + 1].rule50) {
-            if(history[curr].hash == h) 
-                ++counter;
-            if(counter == 3) 
-                return true;
-            --curr;
-        }
-
-        return false;
-    }
+    bool repetition() const;
 
 private:
 
-    size_t curr = 0;
-    State history[Size];
+    State history[MAX_HISTORY_SIZE];
+    size_t size{0};
 
-}; */
-
-
-using StateStoragePtr = std::unique_ptr<IStateStorage>;
+};
 
 
 }

@@ -9,8 +9,8 @@
 using namespace game::logic;
 
 
-static Bitboard BetweenSquares[Square::Count()][Square::Count()];  
-static Bitboard SameLineSquares[Square::Count()][Square::Count()];
+static Bitboard BetweenSquares[SQUARE_COUNT][SQUARE_COUNT];  
+static Bitboard SameLineSquares[SQUARE_COUNT][SQUARE_COUNT];
 
 
 DirectionType DirFromToTarg(Square from, Square targ)
@@ -36,10 +36,10 @@ void SetupBetween()
 {
     AttackParams params;
 
-    for(Square from = Square::Start(); from < Square::Count(); ++from)
+    for(Square from = Square::Start(); from < SQUARE_COUNT; ++from)
     {
         params.set_attacker(from);
-        for(Square targ = Square::Start(); targ < Square::Count(); ++targ)
+        for(Square targ = Square::Start(); targ < SQUARE_COUNT; ++targ)
         {
             if (from == targ) 
                 continue;
@@ -56,10 +56,10 @@ void SetupSameLine()
 {
     AttackParams params; params.set_blockers(Bitboard::Null());
 
-    for(Square from = Square::Start(); from < Square::Count(); ++from)
+    for(Square from = Square::Start(); from < SQUARE_COUNT; ++from)
     {
         params.set_attacker(from);
-        for(Square targ = Square::Start(); targ < Square::Count(); ++targ)
+        for(Square targ = Square::Start(); targ < SQUARE_COUNT; ++targ)
         {
             if (from == targ) 
                 continue;

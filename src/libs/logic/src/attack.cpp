@@ -40,11 +40,11 @@ struct Magic
 };
 
 
-static Magic RookAttacksTable[Square::Count()];
-static Magic BishopAttacksTable[Square::Count()];
-static Bitboard KingAttacksTable[Square::Count()];
-static Bitboard KnightAttacksTable[Square::Count()];
-static Bitboard PawnAttacksTable[Color::Count()][Square::Count()];
+static Magic RookAttacksTable[SQUARE_COUNT];
+static Magic BishopAttacksTable[SQUARE_COUNT];
+static Bitboard KingAttacksTable[SQUARE_COUNT];
+static Bitboard KnightAttacksTable[SQUARE_COUNT];
+static Bitboard PawnAttacksTable[COLOR_COUNT][SQUARE_COUNT];
 
 
 namespace Slow
@@ -240,7 +240,7 @@ void Slide(AttackPtr slow, Magic* attack_table, const int* bits)
 {
 	AttackParams params;
 
-	for(Square sqr = Square::Start(); sqr < Square::Count(); ++sqr)
+	for(Square sqr = Square::Start(); sqr < SQUARE_COUNT; ++sqr)
 	{
 		int perms = 1 << bits[sqr];
 
@@ -268,7 +268,7 @@ void Slide(AttackPtr slow, Magic* attack_table, const int* bits)
 
 void NonSlide(AttackPtr slow, Bitboard* attack_table, AttackParams& p)
 {
-	for(Square sqr = Square::Start(); sqr < Square::Count(); ++sqr) {
+	for(Square sqr = Square::Start(); sqr < SQUARE_COUNT; ++sqr) {
 		p.set_attacker(sqr);
 		attack_table[sqr] = slow(p);
 	}

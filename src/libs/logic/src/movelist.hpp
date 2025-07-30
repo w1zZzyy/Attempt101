@@ -8,7 +8,6 @@ namespace game::logic
 
 class MoveList
 {
-    inline static const size_t MAX_MOVES = 218;
 public:
 
     void generate(const Position& p);
@@ -23,7 +22,7 @@ public:
 
 private:
 
-    Move moves[MAX_MOVES];
+    Move moves[MAX_MOVES_COUNT];
     size_t size;
 
 
