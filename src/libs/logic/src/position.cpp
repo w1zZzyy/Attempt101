@@ -337,6 +337,10 @@ bool Position::not_enough_pieces() const noexcept
 
 Position& game::logic::Position::compute_enemy_attackers()
 {
+    this->attackers = Bitboard::Null();
+    this->checkers = Bitboard::Null();
+    this->defense = Bitboard::Full();
+
     const Color opp = side.opp();
 
     Bitboard    pawns   = get_pieces(opp, PAWN);
@@ -387,6 +391,9 @@ Position& game::logic::Position::compute_enemy_attackers()
 
 Position& game::logic::Position::compute_pins_from_sliders()
 {
+    this->king_blockers = Bitboard::Null();
+    this->pinned = Bitboard::Null();
+
     const Color opp = side.opp();
     const Square ksq = get_pieces(side, KING).lsb();
 

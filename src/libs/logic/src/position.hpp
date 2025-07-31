@@ -113,7 +113,7 @@ private:
     Bitboard checkers;
     Bitboard pinned;
     Bitboard king_blockers;
-    Bitboard defense{Bitboard::Full()};
+    Bitboard defense;
 
 };
 
