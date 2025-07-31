@@ -1,4 +1,11 @@
 cmake_minimum_required(VERSION 3.12)
 project(libs LANGUAGES CXX)
 
-add_subdirectory(logic)
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+set(CMAKE_CXX_FLAGS_RELEASE "-O3 -march=native -flto")
+
+include_directories(logic engine)
+
+add_subdirectory(logic engine)
