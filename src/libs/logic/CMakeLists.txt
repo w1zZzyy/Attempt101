@@ -2,10 +2,6 @@ cmake_minimum_required(VERSION 3.20)
 
 project(Logic LANGUAGES CXX) 
 
-set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-
 set (
     Header 
     src/attack.hpp
@@ -37,7 +33,6 @@ add_library(${PROJECT_NAME}_lib STATIC ${Header} ${Source})
 
 if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
 	target_compile_options(${PROJECT_NAME}_lib PUBLIC -mbmi2 -mbmi)
-    set(CMAKE_CXX_FLAGS_RELEASE "-O3 -march=native -flto")
 endif()
 
 set(
