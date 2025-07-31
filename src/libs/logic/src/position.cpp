@@ -335,23 +335,22 @@ bool Position::not_enough_pieces() const noexcept
 }
 
 
-PositionParams& game::logic::PositionParams::compute_enemy_attackers(const Position& position)
+Position& game::logic::Position::compute_enemy_attackers()
 {
-    const Color us  = position.get_side();
-    const Color opp = us.opp();
+    const Color opp = side.opp();
 
-    Bitboard    pawns   = position.get_pieces(opp, PAWN);
-    Bitboard    pieces  = position.get_occupied(opp) ^ pawns;
-    Bitboard    king    = position.get_pieces(us, KING);
+    Bitboard    pawns   = get_pieces(opp, PAWN);
+    Bitboard    pieces  = get_occupied(opp) ^ pawns;
+    Bitboard    king    = get_pieces(side, KING);
     Square      ksq     = king.lsb();
 
     AttackParams attack_params;
-    attack_params.set_blockers(position.get_occupied(WHITE, BLACK) ^ king);
+    attack_params.set_blockers(get_occupied(WHITE, BLACK) ^ king);
 
     while(pieces)
     {
         Square  from = pieces.poplsb();
-        Piece   type = position.piece_on(from);
+        Piece   type = piece_on(from);
         attack_params.set_attacker(from);
         
         Bitboard piece_attacks = GetFastAttack(type, attack_params);
@@ -359,7 +358,7 @@ PositionParams& game::logic::PositionParams::compute_enemy_attackers(const Posit
 
         if(piece_attacks & king) {
             this->checkers  |=  from.bitboard();
-            this->defense   &=  position.piece_on(from).is(KNIGHT) 
+            this->defense   &=  piece_on(from).is(KNIGHT) 
                                 ? from.bitboard() 
                                 : between(ksq, from);
         }
@@ -374,7 +373,7 @@ PositionParams& game::logic::PositionParams::compute_enemy_attackers(const Posit
     if (pawn_attacks & king) 
     {
         attack_params
-            .set_color(us)
+            .set_color(side)
             .set_attacker(ksq);
             
         Bitboard pawn_checkers = GetFastAttack(PAWN, attack_params) & pawns;
@@ -386,10 +385,10 @@ PositionParams& game::logic::PositionParams::compute_enemy_attackers(const Posit
     return *this;
 }
 
-PositionParams& game::logic::PositionParams::compute_pins_from_sliders(const Position& position)
+Position& game::logic::Position::compute_pins_from_sliders()
 {
-    const Color c = position.get_side();
-    const Square ksq = position.get_pieces(c, KING).lsb();
+    const Color opp = side.opp();
+    const Square ksq = get_pieces(side, KING).lsb();
 
     AttackParams attack_params;
     attack_params
@@ -397,9 +396,9 @@ PositionParams& game::logic::PositionParams::compute_pins_from_sliders(const Pos
         .set_attacker(ksq);
 
     Bitboard snipers = 
-        GetFastAttack(ROOK, attack_params) & position.get_pieces(c.opp(), ROOK, QUEEN) |
-        GetFastAttack(BISHOP, attack_params) & position.get_pieces(c.opp(), BISHOP, QUEEN);
-    Bitboard occ = position.get_occupied(WHITE, BLACK) ^ snipers;
+        GetFastAttack(ROOK, attack_params) & get_pieces(opp, ROOK, QUEEN) |
+        GetFastAttack(BISHOP, attack_params) & get_pieces(opp, BISHOP, QUEEN);
+    Bitboard occ = get_occupied(WHITE, BLACK) ^ snipers;
 
     while(snipers)
     {
@@ -408,7 +407,7 @@ PositionParams& game::logic::PositionParams::compute_pins_from_sliders(const Pos
 
         if(b) {
             this->king_blockers |= b;
-            if(b.count() == 1 && b & position.get_occupied(c)) {
+            if(b.count() == 1 && b & get_occupied(side)) {
                 this->pinned |= b;
             }
         }
@@ -417,34 +416,31 @@ PositionParams& game::logic::PositionParams::compute_pins_from_sliders(const Pos
     return *this;
 }
 
-bool game::logic::PositionParams::exposes_discovered_check(Square from, Square targ, const Position &p) const
+bool game::logic::Position::exposes_discovered_check(Square from, Square targ) const
 {
     if(!same_rank(from, targ)) {
         return false;
     }
 
-    const Color us = p.get_side();
-
     AttackParams discovered_check_params;
     discovered_check_params
-        .set_attacker(p.get_pieces(us, KING).lsb())
-        .set_blockers(p.get_occupied(WHITE, BLACK) ^ Bitboard::FromSquares(from, targ));
+        .set_attacker(get_pieces(side, KING).lsb())
+        .set_blockers(get_occupied(WHITE, BLACK) ^ Bitboard::FromSquares(from, targ));
 
-    Bitboard sliders_on_line = p.get_pieces(us.opp(), ROOK, QUEEN) & line_bb(from, targ);
+    Bitboard sliders_on_line = get_pieces(side.opp(), ROOK, QUEEN) & line_bb(from, targ);
     if(sliders_on_line & GetFastAttack(ROOK, discovered_check_params))
         return true;
 
     return false;
 }
 
-Bitboard game::logic::PositionParams::pin_mask(Square sqr, const Position &p) const
+Bitboard game::logic::Position::pin_mask(Square sqr) const
 {
     if(!(pinned & sqr.bitboard())) {
         return Bitboard::Null();
     }
 
-    const Color c = p.get_side();
-    const Square ksq = p.get_pieces(c, KING).lsb();
+    const Square ksq = get_pieces(side, KING).lsb();
 
     return line_bb(ksq, sqr);
 }

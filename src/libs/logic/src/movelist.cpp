@@ -10,40 +10,37 @@ using namespace game::logic;
 
 constexpr auto prom_list = {Q_PROMOTION_MF, K_PROMOTION_MF, B_PROMOTION_MF, R_PROMOTION_MF};
 
-void game::logic::MoveList::generate(const Position &p)
+void game::logic::MoveList::generate(Position &pos)
 {
     size = 0;
 
-    PositionParams params;
-    params
-        .compute_enemy_attackers(p)
-        .compute_pins_from_sliders(p);
+    pos
+        .compute_enemy_attackers()
+        .compute_pins_from_sliders();
     
-    piece_moves(p, params);
-    king_moves(p, params);
+    piece_moves(pos);
+    king_moves(pos);
 
-    p.get_side().is(WHITE) 
-        ? pawn_moves<WHITE>(p, params)
-        : pawn_moves<BLACK>(p, params);
+    pos.get_side().is(WHITE) 
+        ? pawn_moves<WHITE>(pos)
+        : pawn_moves<BLACK>(pos);
 }
 
-void game::logic::MoveList::piece_moves(
-    const Position &p,
-    const PositionParams &pp
-) {
-    if(pp.is_double_check()) 
+void game::logic::MoveList::piece_moves(const Position& pos)
+{
+    if(pos.is_double_check()) 
         return;
 
-    const Color us = p.get_side();
+    const Color us = pos.get_side();
     AttackParams ap; ap.set_blockers(
-        p.get_occupied(WHITE, BLACK)
+        pos.get_occupied(WHITE, BLACK)
     );
     
-    Bitboard target = ~p.get_occupied(us);
-    if(pp.is_check()) 
-        target &= pp.defensive_squares();
+    Bitboard target = ~pos.get_occupied(us);
+    if(pos.is_check()) 
+        target &= pos.defensive_squares();
 
-    Bitboard pieces = p.get_pieces(
+    Bitboard pieces = pos.get_pieces(
         us,
         BISHOP, ROOK, QUEEN, KNIGHT
     );
@@ -53,11 +50,11 @@ void game::logic::MoveList::piece_moves(
         Square from = pieces.poplsb();
 
         Bitboard moves = GetFastAttack(
-            p.piece_on(from),
+            pos.piece_on(from),
             ap.set_attacker(from)
         ) & target;
 
-        if(Bitboard pin_mask = pp.pin_mask(from, p)) 
+        if(Bitboard pin_mask = pos.pin_mask(from)) 
             moves &= pin_mask;
 
         while(moves) 
@@ -65,34 +62,30 @@ void game::logic::MoveList::piece_moves(
     }
 }
 
-void game::logic::MoveList::king_moves(
-    const Position          &p, 
-    const PositionParams    &pp
-) {
-    const Color     us              =   p.get_side();
-    const Square    ksq             =   p.get_pieces(us, KING).lsb();
-    const Bitboard  enemy_attacks   =   pp.enemy_attacks();
+void game::logic::MoveList::king_moves(const Position &pos)
+{
+    const Color     us              =   pos.get_side();
+    const Square    ksq             =   pos.get_pieces(us, KING).lsb();
+    const Bitboard  enemy_attacks   =   pos.enemy_attacks();
 
     AttackParams ap; 
     ap.set_attacker(ksq);
 
-    Bitboard moves = GetFastAttack(KING, ap) & ~enemy_attacks & ~p.get_occupied(us);
+    Bitboard moves = GetFastAttack(KING, ap) & ~enemy_attacks & ~pos.get_occupied(us);
     while(moves)
         add(ksq, moves.poplsb(), DEFAULT_MF);
 
-    if(p.can_castle(KING_SIDE_CASTLING, enemy_attacks)) 
+    if(pos.can_castle(KING_SIDE_CASTLING, enemy_attacks)) 
         add(ksq, ksq + 2 * EAST, S_CASTLE_MF);
-    if(p.can_castle(QUEEN_SIDE_CASTLING, enemy_attacks)) 
+    if(pos.can_castle(QUEEN_SIDE_CASTLING, enemy_attacks)) 
         add(ksq, ksq + 2 * WEST, L_CASTLE_MF);
 }
 
 
 template<ColorType Us>
-inline void game::logic::MoveList::pawn_moves(
-    const Position          &p, 
-    const PositionParams    &pp
-) {
-    if(pp.is_double_check()) 
+inline void game::logic::MoveList::pawn_moves(const Position &pos)
+{
+    if(pos.is_double_check()) 
         return;
 
 
@@ -103,23 +96,23 @@ inline void game::logic::MoveList::pawn_moves(
     constexpr Bitboard      TRank3      =   (Us == WHITE) ? RankType::Rank3 : RankType::Rank6;
     constexpr Bitboard      TRank8      =   (Us == WHITE) ? RankType::Rank8 : RankType::Rank1;
 
-    const Bitboard enemy = p.get_occupied(Them);
-    const Bitboard empty = ~p.get_occupied(WHITE, BLACK);
+    const Bitboard enemy = pos.get_occupied(Them);
+    const Bitboard empty = ~pos.get_occupied(WHITE, BLACK);
 
     
-    Bitboard pawns  = p.get_pieces(Us, PAWN);
-    Bitboard pinned = pp.pinned_pieces() & pawns;
+    Bitboard pawns  = pos.get_pieces(Us, PAWN);
+    Bitboard pinned = pos.pinned_pieces() & pawns;
     pawns ^= pinned;
 
-    pinned_pawn_moves<Us>(pinned, p, pp);
+    pinned_pawn_moves<Us>(pinned, pos);
 
     Bitboard single_up      = step<Up>(pawns)                   &   empty;
     Bitboard double_up      = step<Up>(single_up & TRank3)      &   empty;
     Bitboard capture_left   = step<Left>(pawns)                 &   enemy;
     Bitboard capture_right  = step<Right>(pawns)                &   enemy;
 
-    if(pp.is_check()) {
-        Bitboard defense = pp.defensive_squares();
+    if(pos.is_check()) {
+        Bitboard defense = pos.defensive_squares();
         single_up &= defense, double_up &= defense,
         capture_left &= defense, capture_right &= defense;
     }
@@ -139,16 +132,13 @@ inline void game::logic::MoveList::pawn_moves(
     pawn_move_generic(prom_right, prom_list, Right);
 
 
-    en_passant_moves<Us, false>(pawns, p, pp);
+    en_passant_moves<Us, false>(pawns, pos);
 }
 
 template <ColorType Us>
-void game::logic::MoveList::pinned_pawn_moves(
-    Bitboard                pawns, 
-    const Position&         p,
-    const PositionParams&   pp
-) {
-    if(pp.is_check())
+void game::logic::MoveList::pinned_pawn_moves(Bitboard pawns, const Position& pos)
+{
+    if(pos.is_check())
         return;
 
     constexpr ColorType     Them    =   (Us == WHITE) ? BLACK : WHITE;
@@ -156,10 +146,10 @@ void game::logic::MoveList::pinned_pawn_moves(
     constexpr Bitboard      TRank3  =   (Us == WHITE) ? RankType::Rank3 : RankType::Rank6;
     constexpr Bitboard      TRank8  =   (Us == WHITE) ? RankType::Rank8 : RankType::Rank1;
 
-    const Bitboard enemy_target = p.get_occupied(Them);
-    const Bitboard empty_target = ~p.get_occupied(WHITE, BLACK); 
+    const Bitboard enemy_target = pos.get_occupied(Them);
+    const Bitboard empty_target = ~pos.get_occupied(WHITE, BLACK); 
 
-    en_passant_moves<Us, true>(pawns, p, pp);
+    en_passant_moves<Us, true>(pawns, pos);
 
     AttackParams ap; 
     ap.set_color(Us);
@@ -167,7 +157,7 @@ void game::logic::MoveList::pinned_pawn_moves(
     while(pawns)
     {
         Square      from            =   pawns.poplsb();
-        Bitboard    pin_mask        =   pp.pin_mask(from, p);
+        Bitboard    pin_mask        =   pos.pin_mask(from);
 
         Bitboard single_up = step<Up>(from.bitboard()) & empty_target;
         Bitboard double_up = step<Up>(single_up & TRank3) & empty_target;
@@ -193,21 +183,18 @@ void game::logic::MoveList::pinned_pawn_moves(
 }
 
 template <ColorType Us, bool Pinned>
-void game::logic::MoveList::en_passant_moves(
-    Bitboard                pawns, 
-    const Position&         p, 
-    const PositionParams&   pp
-) {
-    if(p.get_passant() == NO_SQUARE)
+void game::logic::MoveList::en_passant_moves(Bitboard pawns, const Position& pos)
+{
+    if(pos.get_passant() == NO_SQUARE)
         return;
 
     constexpr ColorType     Them    =   (Us == WHITE) ? BLACK : WHITE;
     constexpr DirectionType Up      =   (Us == WHITE) ? NORTH : SOUTH;
 
-    const Square passant    =   p.get_passant();
+    const Square passant    =   pos.get_passant();
     const Square targ_pawn  =   passant - Up;
 
-    if(pp.is_check() && !pp.is_attacker(targ_pawn)) 
+    if(pos.is_check() && !pos.is_attacker(targ_pawn)) 
         return;
 
     AttackParams passant_params; 
@@ -220,7 +207,7 @@ void game::logic::MoveList::en_passant_moves(
 
         if constexpr (Pinned)
         {
-            Bitboard pin_mask = pp.pin_mask(from, p);
+            Bitboard pin_mask = pos.pin_mask(from);
             if(!(pin_mask & passant.bitboard())) 
                 continue;
         }
@@ -228,8 +215,8 @@ void game::logic::MoveList::en_passant_moves(
         else
         {
             if(
-                pp.is_blocker(from, targ_pawn) &&
-                pp.exposes_discovered_check(from, targ_pawn, p)
+                pos.is_blocker(from, targ_pawn) &&
+                pos.exposes_discovered_check(from, targ_pawn)
             ) continue;
         }
 
@@ -283,15 +270,3 @@ std::optional<Move> MoveList::find(std::string_view notation) const
 
     return std::nullopt;
 }
-
-
-template void MoveList::pawn_moves<WHITE>(const Position&, const PositionParams&);
-template void MoveList::pawn_moves<BLACK>(const Position&, const PositionParams&);
-
-template void MoveList::pinned_pawn_moves<WHITE>(Bitboard, const Position&, const PositionParams&);
-template void MoveList::pinned_pawn_moves<BLACK>(Bitboard, const Position&, const PositionParams&);
-
-template void MoveList::en_passant_moves<WHITE, true>(Bitboard, const Position&, const PositionParams&);
-template void MoveList::en_passant_moves<WHITE, false>(Bitboard, const Position&, const PositionParams&);
-template void MoveList::en_passant_moves<BLACK, true>(Bitboard, const Position&, const PositionParams&);
-template void MoveList::en_passant_moves<BLACK, false>(Bitboard, const Position&, const PositionParams&);

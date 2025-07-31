@@ -108,7 +108,3 @@ std::ostream& operator << (std::ostream& out, const game::logic::Square& sqr)
     out << sqr.to_string();
     return out;
 }
-
-
-bool game::logic::same_file(Square sq1, Square sq2) noexcept {return sq1 % 8 == sq2 % 8;}
-bool game::logic::same_rank(Square sq1, Square sq2) noexcept {return sq1 / 8 == sq2 / 8;}

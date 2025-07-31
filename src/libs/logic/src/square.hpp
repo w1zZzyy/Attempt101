@@ -99,9 +99,6 @@ Bitboard between(Square sq1, Square sq2);
 // (c2, e4) -> [b1; h7]
 Bitboard line_bb(Square sq1, Square sq2);
 
-bool same_file(Square sq1, Square sq2) noexcept;
-bool same_rank(Square sq1, Square sq2) noexcept;
-
 }
 
 

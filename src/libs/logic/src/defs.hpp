@@ -16,6 +16,7 @@ constexpr int CASTLE_COUNT = 63;
 constexpr int SQUARE_COUNT = 64;
 constexpr int MAX_MOVES_COUNT = 218;
 constexpr int MAX_HISTORY_SIZE = 20;
+constexpr int INF = 1000000;
 
 
 using U64 = uint64_t;
@@ -248,6 +249,9 @@ Bitboard step(Bitboard b) noexcept
 
 	return b;
 }
+
+bool same_file(Square sq1, Square sq2) noexcept;
+bool same_rank(Square sq1, Square sq2) noexcept;
 
 
 }

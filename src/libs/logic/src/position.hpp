@@ -29,6 +29,14 @@ public:
     void undo_move();
 
     Piece piece_on(Square s) const {return types[s];}
+    Color piece_clr_on(Square s) const {
+        const Bitboard b = s.bitboard();
+        return (
+            (b & occupied[WHITE]) ? WHITE :
+            (b & occupied[BLACK]) ? BLACK :
+            ANY_COLOR
+        );
+    };
 
     template<typename... Pieces>
     Bitboard get_pieces(Color c, Pieces... p) const {
@@ -46,21 +54,34 @@ public:
     }
     Color get_side() const noexcept {return side;}
     Square get_passant() const {return st.top().passant;}
+    Piece get_captured() const {return st.top().captured;}
 
     bool can_castle(CastleType ct, Bitboard enemy_attacks) const;
 
     std::string fen() const noexcept;
 
     bool is_draw() const;
+    bool is_check() const noexcept {return checkers;}
+    bool is_double_check() const {return checkers.count() == 2;}
+
+    template<typename... Squares>
+    bool is_blocker(Squares... sqr) const noexcept;
+    bool is_attacker(Square sqr) const noexcept {return checkers & sqr.bitboard();}
+
+    // оч редкая ситуация (при взятии на проходе шах нашему королю например)
+    // используется для взятия на проходе
+    // пример: Белый король: е5, Белая пешка: f5, Черная пешка: g5, Черная ладья: h5, (взятие на g6)
+    bool exposes_discovered_check(Square from, Square targ) const;
+
+    Bitboard pinned_pieces() const noexcept {return pinned;}
+    Bitboard pin_mask(Square sqr) const;
+    Bitboard enemy_attacks() const noexcept {return attackers;}
+    Bitboard defensive_squares() const noexcept {return defense;}
+
+    Position& compute_enemy_attackers();
+    Position& compute_pins_from_sliders();
 
 private:
-
-    Bitboard pieces[COLOR_COUNT][PIECE_COUNT];
-    Bitboard occupied[COLOR_COUNT];
-    Piece types[SQUARE_COUNT];
-    Color side;
-    StateStorage st;
-    
 
     template<bool HashUpdate = true>
     void add_piece(Color color, Piece piece, Square sqr);
@@ -78,8 +99,22 @@ private:
     void update_castle(Color c, CastleType ct);
     void try_to_update_castle(Color c, Square maybe_rook);
 
-
     bool not_enough_pieces() const noexcept;
+
+private:
+
+    Bitboard pieces[COLOR_COUNT][PIECE_COUNT];
+    Bitboard occupied[COLOR_COUNT];
+    Piece types[SQUARE_COUNT];
+    Color side;
+    StateStorage st;
+
+    Bitboard attackers; 
+    Bitboard checkers;
+    Bitboard pinned;
+    Bitboard king_blockers;
+    Bitboard defense{Bitboard::Full()};
+
 };
 
 
@@ -151,47 +186,13 @@ inline void Position::replace(Piece new_p, Square s)
     }
 }
 
-
-class PositionParams
-{
-public:
-
-    PositionParams& compute_enemy_attackers(const Position& p);
-    PositionParams& compute_pins_from_sliders(const Position& p);
-
-    bool is_check() const noexcept {return checkers;}
-    bool is_double_check() const {return checkers.count() == 2;}
-
-    template<typename... Squares>
-    bool is_blocker(Squares... sqr) const noexcept;
-    bool is_attacker(Square sqr) const noexcept {return checkers & sqr.bitboard();}
-
-    // оч редкая ситуация (при взятии на проходе шах нашему королю например)
-    // используется для взятия на проходе
-    // пример: Белый король: е5, Белая пешка: f5, Черная пешка: g5, Черная ладья: h5, (взятие на g6)
-    bool exposes_discovered_check(Square from, Square targ, const Position& pos) const;
-
-    Bitboard pinned_pieces() const noexcept {return pinned;}
-    Bitboard pin_mask(Square sqr, const Position& p) const;
-    Bitboard enemy_attacks() const noexcept {return attackers;}
-    Bitboard defensive_squares() const noexcept {return defense;}
-
-private:
-
-    Bitboard attackers; 
-    Bitboard checkers;
-    Bitboard pinned;
-    Bitboard king_blockers;
-    Bitboard defense{Bitboard::Full()};
-
-};
-
 template <typename... Squares>
-inline bool PositionParams::is_blocker(Squares... sqr) const noexcept
+inline bool Position::is_blocker(Squares... sqr) const noexcept
 {
     Bitboard blockers = Bitboard::FromSquares(sqr...);
     return (king_blockers & blockers) == blockers;
 }
+
 
 }
 
