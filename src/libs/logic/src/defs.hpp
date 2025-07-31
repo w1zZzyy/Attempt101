@@ -253,5 +253,7 @@ Bitboard step(Bitboard b) noexcept
 bool same_file(Square sq1, Square sq2) noexcept;
 bool same_rank(Square sq1, Square sq2) noexcept;
 
+Square where_passant(Square from, Square targ);
+
 
 }

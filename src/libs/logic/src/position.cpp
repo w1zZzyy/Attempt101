@@ -131,10 +131,10 @@ void game::logic::Position::do_move(Move move)
         update_castle(side, BOTH_SIDES_CASTLING);
         break;
     case DOUBLE_MF:
-        update_passant(targ - (targ > from ? NORTH : SOUTH));
+        update_passant(where_passant(from, targ));
         break;
     case EN_PASSANT_MF:
-        remove_piece(side.opp(), targ - (targ > from ? NORTH : SOUTH));
+        remove_piece(side.opp(), where_passant(from, targ));
         break;
     case Q_PROMOTION_MF:
         replace(QUEEN, from);
@@ -188,7 +188,7 @@ void game::logic::Position::undo_move()
         move_piece<HashUpdate>(from + WEST, targ + 2 * WEST);
         break;
     case EN_PASSANT_MF:
-        add_piece<HashUpdate>(side.opp(), PAWN, targ - ((targ > from) ? NORTH : SOUTH));
+        add_piece<HashUpdate>(side.opp(), PAWN, where_passant(from, targ));
         break;
     case Q_PROMOTION_MF:
     case R_PROMOTION_MF:

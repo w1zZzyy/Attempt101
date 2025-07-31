@@ -76,3 +76,9 @@ bool game::logic::Castle::has_path() const noexcept
 
 bool game::logic::same_file(Square sq1, Square sq2) noexcept {return sq1 % 8 == sq2 % 8;}
 bool game::logic::same_rank(Square sq1, Square sq2) noexcept {return sq1 / 8 == sq2 / 8;}
+
+
+Square game::logic::where_passant(Square from, Square targ)
+{
+    return targ - (targ > from ? NORTH : SOUTH);
+}
