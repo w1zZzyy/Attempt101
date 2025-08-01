@@ -1,9 +1,0 @@
-worker-threads: 2
-worker-fs-threads: 1
-logger-level: debug
-
-is_testing: false
-
-server-port: 8080
-
-dbconnection: 'postgresql://user:password@service-postgres:5432/chess_db'
