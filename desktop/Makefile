@@ -1,6 +1,6 @@
 .PHONY: clean build-debug build-release
 
-build-impl-%:
+build-impl-%: 
 	@mkdir -p build_$* && cd build_$* && \
 	cmake -DCMAKE_BUILD_TYPE=$* .. && \
 	cmake --build .
