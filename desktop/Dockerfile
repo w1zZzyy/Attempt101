@@ -1,12 +1,13 @@
 FROM ubuntu:24.04
 
 RUN apt-get update && apt-get install -y \
-    g++ \
+    build-essential \
     cmake \
     git \
-    gdb \
     libx11-dev \
     libxrandr-dev \
+    libxcursor-dev \
+    libxi-dev \
     libfreetype6-dev \
     libglew-dev \
     libjpeg-dev \
@@ -18,6 +19,4 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /app
 
-COPY desktop/ .
-
-COPY libs/ ../libs/
+COPY . .
