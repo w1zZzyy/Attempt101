@@ -12,4 +12,8 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     SFML::Graphics SFML::System SFML::Window 
     Engine_lib
 )
+target_include_directories(${PROJECT_NAME} PRIVATE 
+    ${CMAKE_CURRENT_SOURCE_DIR}/../libs/engine/src
+    ${CMAKE_CURRENT_SOURCE_DIR}/../libs/logic/src
+)
 
