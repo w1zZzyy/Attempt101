@@ -18,8 +18,3 @@ RUN apt-get update && apt-get install -y \
     && apt-get clean
 
 WORKDIR /app
-
-COPY ./libs ./libs
-COPY ./desktop ./desktop
-COPY ./Makefile ./Makefile 
-COPY ./CMakeLists.txt ./CMakeLists.txt 

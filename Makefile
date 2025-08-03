@@ -8,12 +8,28 @@ build-impl-%:
 build-debug: build-impl-debug
 build-release: build-impl-release
 
+
+run-desktop-impl-%: build-$*
+	./build_$*/desktop/ChessUI
+
+run-desktop-debug: run-desktop-impl-debug 
+run-desktop-release: run-desktop-impl-release 
+
+
 docker-build-desktop:
 	@git submodule update --init
 	@docker build -f desktop/Dockerfile -t chessui .
 
 docker-run-desktop: docker-build-desktop
-	@docker run -it -v $(PWD):/app chessui
+	@xhost +local:root
+	@docker run -it \
+	--device /dev/dri \
+	-e DISPLAY=$(DISPLAY) \
+	-e LIBGL_ALWAYS_SOFTWARE=1 \
+	-v /tmp/.X11-unix:/tmp/.X11-unix \
+	-v $(PWD):/app \
+	chessui
+	@xhost -local:root
 
 docker-clean:
 	@docker system prune -a --volumes
