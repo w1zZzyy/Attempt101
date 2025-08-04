@@ -42,7 +42,7 @@ set(
     tests/main.cpp
 )
 
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/tests/tests_data DESTINATION ${CMAKE_BINARY_DIR}/logic)
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/tests/tests_data DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 add_definitions(-DLOGIC_TESTS_DATA_PATH="${CMAKE_CURRENT_BINARY_DIR}/tests_data")
 
 add_executable(tests_exe ${Tests})

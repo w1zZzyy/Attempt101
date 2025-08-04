@@ -1,3 +1,6 @@
 [submodule "desktop/SFML"]
 	path = desktop/SFML
 	url = https://github.com/SFML/SFML.git
+[submodule "desktop/json"]
+	path = desktop/json
+	url = https://github.com/nlohmann/json.git
