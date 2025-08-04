@@ -1,4 +1,8 @@
 {
     "C_Cpp.intelliSenseEngine": "default",
-    "C_Cpp.default.compileCommands": "${workspaceFolder}/build_debug/compile_commands.json"
+    "C_Cpp.default.compileCommands": "${workspaceFolder}/build_debug/compile_commands.json",
+    "files.associations": {
+        "fstream": "cpp",
+        "iosfwd": "cpp"
+    }
 }
