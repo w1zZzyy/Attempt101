@@ -1,0 +1,24 @@
+{
+    "square_color": {
+        "white": {
+            "red": 232,
+            "green": 235,
+            "blue": 239,
+            "alpha": 255
+        }, 
+        "black": {
+            "red": 125,
+            "green": 135,
+            "blue": 150,
+            "alpha": 255
+        }
+    },
+    "square_size": {
+        "width": 100,
+        "height": 80
+    },
+    "start_pos": {
+        "x": 0,
+        "y": 560
+    }
+}
