@@ -9,7 +9,7 @@ build-debug: build-impl-debug
 build-release: build-impl-release
 
 
-run-desktop-impl-%: build-$*
+run-desktop-impl-%: build-%
 	./build_$*/desktop/ChessUI
 
 run-desktop-debug: run-desktop-impl-debug 
@@ -26,6 +26,7 @@ docker-run-desktop: docker-build-desktop
 	--device /dev/dri \
 	-e DISPLAY=$(DISPLAY) \
 	-e LIBGL_ALWAYS_SOFTWARE=1 \
+	-e SDL_VIDEO_X11_NO_SHM=1 \
 	-v /tmp/.X11-unix:/tmp/.X11-unix \
 	-v $(PWD):/app \
 	chessui
