@@ -8,7 +8,7 @@
             "name": "Desktop",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/build_debug/desktop/ChessUI",
+            "program": "${workspaceFolder}/build_debug/desktop/ChessDesktop",
             "args": [],
             "stopAtEntry": false,
             "cwd": "${fileDirname}",
