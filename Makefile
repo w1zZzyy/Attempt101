@@ -10,7 +10,7 @@ build-release: build-impl-release
 
 
 run-desktop-impl-%: build-%
-	./build_$*/desktop/ChessUI
+	@./build_$*/desktop/ChessDesktop
 
 run-desktop-debug: run-desktop-impl-debug 
 run-desktop-release: run-desktop-impl-release 
