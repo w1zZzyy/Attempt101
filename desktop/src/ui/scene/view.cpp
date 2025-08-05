@@ -1,67 +1,68 @@
 #include "view.hpp"
 
-#include <nlohmann/json.hpp>
-#include <fstream>
+#include "resources/textures_manager/view.hpp"
 
-#include "../window/view.hpp"
-
-using json = nlohmann::json;
-
-namespace desktop::ui
+namespace ui
 {
-    
-
-desktop::ui::GameScene::GameScene(game::logic::Color side_pov) : 
-    side_pov(side_pov)
-{
-    InitBoard();
-}
 
 void GameScene::Render(sf::RenderWindow &window)
 {
-    board.Render(window, side_pov);
+    board.Render(window);
+    for(auto& entity : entities) 
+        entity->Render(window);
 }
 
-void GameScene::SetupWindow(WindowRenderer &window)
+void GameScene::ReadConfig(const resource::BoardConfigManager &config)
 {
-    std::ifstream file(ASSETS_PATH"/configs/window_config.json");
-    
-    json config;
-    file >> config;
-
-    window
-        .setWindowSize(config["width"], config["height"])
-        .setTitle(config["title"])
-        .setFPS(config["fps"]);
-}
-
-void GameScene::InitBoard()
-{
-    std::ifstream file(ASSETS_PATH"/configs/board_config.json");
-    
-    json config;
-    file >> config;
-
-    const json& wsq = config["square_color"]["white"];
-    const json& bsq = config["square_color"]["black"];
-    const json& square_size = config["square_size"];
-    const json& start = config["start_pos"];
-
     using namespace game::logic;
 
-    board
-        .setSquareColor(WHITE, wsq["red"], wsq["green"], wsq["blue"], wsq["alpha"])
-        .setSquareColor(BLACK, bsq["red"], bsq["green"], bsq["blue"], bsq["alpha"])
-        .setSquareSize(square_size["width"], square_size["height"])
-        .setStartPos(start["x"], start["y"]);
+    const sf::Vector2f square_size = config.SquareSize();
+
+    SquarePosition::Init(player_side, config.LeftBottomSquare(), square_size);
+
+    board 
+        .setSquareColor(WHITE, config.WhiteSquare())
+        .setSquareColor(BLACK, config.BlackSquare())
+        .setSquareSize(square_size);
+
+    pos.set_fen(config.InitalFen());
+    update_game();
+
+    for(Square sqr = Square::Start(); sqr <= Square::End(); ++sqr) {
+        if(auto piece = pos.piece_on(sqr); piece.isValid()) 
+        {
+            auto clr = pos.piece_clr_on(sqr);
+            auto entity = entities.emplace_back(std::make_shared<PieceEntity>(
+                *resource::TextureManager::Get(clr, piece)
+            ));
+            entity->setPos(SquarePosition::GetPos(sqr)).setSize(square_size);
+        }
+    }
 }
 
-void SceneManager::NextScene(WindowRenderer &window)
+void GameScene::update_game()
 {
-    if(!scene) {
-        scene = std::make_unique<GameScene>(game::logic::WHITE);
-        scene->SetupWindow(window);
+    using namespace game::logic;
+
+    pos.compute_enemy_attackers().compute_pins_from_sliders();
+    legal_moves.generate(pos);
+
+    if(pos.is_check()) {
+        status = legal_moves.empty() 
+        ?  static_cast<GameStatus>(int(pos.get_side().opp()))
+        : GameStatus::Draw;
+    } else if(pos.is_draw()) {
+        status = GameStatus::Draw;
+    } else {
+        status = GameStatus::InProgress;
     }
+}
+
+SceneManager::SceneManager()
+{
+    resource::BoardConfigManager config;
+    scene = std::make_unique<GameScene>(game::logic::WHITE);
+    scene->ReadConfig(config);
 }
 
 

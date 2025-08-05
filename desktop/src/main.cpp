@@ -1,16 +1,11 @@
-#include "ui/window/view.hpp"
+#include "application/view.hpp"
 
-int main()
+int main() 
 {
-    desktop::ui::WindowRenderer window;
-    
-    while(window.IsOpen()) 
-    {
-        while(auto event = window.PollEvent()) {
-            if (event->is<sf::Event::Closed>())
-                window.Close();
-        }
+    game::logic::Position::Init();
 
-        window.Draw();
-    }
+    Application app;
+    app.run();
+
+    return 0;
 }

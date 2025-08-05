@@ -1,46 +1,62 @@
 #pragma once
 
-#include <memory>
-#include <SFML/Graphics.hpp>
 #include "board/view.hpp"
+#include "piece/view.hpp"
+#include "resources/config_manager/view.hpp"
+#include "logic/src/position.hpp"
+#include "logic/src/movelist.hpp"
 
-namespace desktop::ui
+#include <vector>
+
+namespace ui
 {
 
-class WindowRenderer;
 
-class IScene {
+class IScene
+{
 public:
     virtual ~IScene() = default;
-    virtual void Render(sf::RenderWindow& window) = 0;
-    virtual void SetupWindow(WindowRenderer& window) = 0;
+    virtual void Render(sf::RenderWindow&) = 0;
+    virtual void ReadConfig(const resource::BoardConfigManager&) = 0;
 };
+
 
 class GameScene : public IScene {
 public:
 
-    GameScene(game::logic::Color side_pov);
-    void Render(sf::RenderWindow& window) override;
-    void SetupWindow(WindowRenderer& window) override;
+    GameScene(game::logic::Color side) : player_side(side) {}
+    void Render(sf::RenderWindow&) override;
+    void ReadConfig(const resource::BoardConfigManager&) override;
 
 private:
 
-    void InitBoard();
+    void update_game();
 
 private:
+
+    game::logic::Color player_side;
 
     BoardRenderer board;
-    game::logic::Color side_pov;
+    std::vector<EntityPtr> entities;
+
+    game::logic::Position pos;
+    game::logic::MoveList legal_moves;
+    game::logic::GameStatus status;
 
 };
 
 
-class SceneManager {
+class SceneManager
+{
 public:
-    void NextScene(WindowRenderer& window);
-    void Render(sf::RenderWindow& window) {scene->Render(window);}
+
+    SceneManager();
+    void Render(sf::RenderWindow& window) {scene->Render(window);};
+
 private:
+
     std::unique_ptr<IScene> scene;
+
 };
 
 

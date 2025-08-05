@@ -1,60 +1,35 @@
 #include "view.hpp"
 
-#include <ranges>
+#include "../entity/view.hpp"
 
-namespace desktop::ui
+namespace ui
 {
 
 BoardRenderer &BoardRenderer::setSquareColor(
     game::logic::Color side, 
-    uint8_t r, uint8_t g, uint8_t b, uint8_t a
+    sf::Color color
 ) noexcept {
-    square_clr[side] = sf::Color(r, g, b, a);
+    square_clr[side] = color;
     return *this;
 }
 
-BoardRenderer &BoardRenderer::setSquareSize(float x, float y) noexcept
+BoardRenderer &BoardRenderer::setSquareSize(sf::Vector2f s) noexcept
 {
-    square_shape = sf::Vector2f(x, y);
+    square_shape = s;
     return *this;
 }
 
-BoardRenderer &BoardRenderer::setStartPos(float x, float y) noexcept
+void BoardRenderer::Render(sf::RenderWindow &window) const
 {
-    start_pos = sf::Vector2f(x, y);
-    return *this;
-}
+    using namespace game::logic;
 
-void BoardRenderer::Render(sf::RenderWindow &window, game::logic::Color side_pov) const
-{
-    assert(side_pov == game::logic::WHITE || side_pov == game::logic::BLACK);
+    sf::RectangleShape rect_sqr(square_shape);
+    rect_sqr.setSize(square_shape);
 
-    sf::RectangleShape sqr(square_shape);
-
-    sf::Vector2f curr_pos = start_pos;
-    game::logic::Color curr_clr = (
-        (side_pov == game::logic::WHITE) 
-        ? game::logic::BLACK // a1 sqr is black
-        : game::logic::WHITE // a8 sqr is white
-    ); 
-
-    for(int y = 0; y < 8; ++y) 
-    {
-        for(int x = 0; x < 8; ++x) 
-        {
-            sqr.setPosition(curr_pos);
-            sqr.setFillColor(square_clr[curr_clr]);
-
-            window.draw(sqr);
-
-            curr_pos.x += square_shape.x;
-            curr_clr.swap();
-        }
-
-        curr_clr.swap();
-
-        curr_pos.x = start_pos.x;
-        curr_pos.y -= square_shape.y;
+    for(Square sqr = Square::Start(); sqr <= Square::End(); ++sqr) {
+        rect_sqr.setPosition(SquarePosition::GetPos(sqr));
+        rect_sqr.setFillColor(square_clr[SquarePosition::GetSquareColor(sqr)]);
+        window.draw(rect_sqr);
     }
 }
 
