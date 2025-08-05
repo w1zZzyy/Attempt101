@@ -191,6 +191,11 @@ private:
 };
 
 
+enum class GameStatus {
+	White, Black, Draw, InProgress
+};
+
+
 class FileType
 {
 public:
