@@ -18,6 +18,8 @@ size_t CountNodes(game::logic::Position& pos, size_t depth)
         return 1;
     }
 
+    pos.compute_enemy_attackers().compute_pins_from_sliders();
+
     MoveList moves;
     moves.generate(pos);
 

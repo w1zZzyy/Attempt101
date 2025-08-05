@@ -10,13 +10,9 @@ using namespace game::logic;
 
 constexpr auto prom_list = {Q_PROMOTION_MF, K_PROMOTION_MF, B_PROMOTION_MF, R_PROMOTION_MF};
 
-void game::logic::MoveList::generate(Position &pos)
+void game::logic::MoveList::generate(const Position &pos)
 {
     size = 0;
-
-    pos
-        .compute_enemy_attackers()
-        .compute_pins_from_sliders();
     
     piece_moves(pos);
     king_moves(pos);

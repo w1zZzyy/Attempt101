@@ -10,7 +10,7 @@ class MoveList
 {
 public:
 
-    void generate(Position& p);
+    void generate(const Position& p);
     bool empty() const noexcept {return size == 0;}
     size_t get_size() const noexcept {return size;}
     Move operator [] (size_t i) const {

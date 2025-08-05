@@ -10,6 +10,8 @@ SearchResults Search::start(const SearchOptions &options)
 {
     logic::Position pos(options.fen);
 
+    pos.compute_enemy_attackers().compute_pins_from_sliders();
+
     logic::MoveList moves; 
     moves.generate(pos);
 
@@ -42,6 +44,8 @@ int Search::negamax(logic::Position &pos, int depth, Eval& eval, int alpha, int 
 
     if(depth == 0) 
         return eval.score(pos);
+
+    pos.compute_enemy_attackers().compute_pins_from_sliders();
 
     MoveList moves;
     moves.generate(pos);
