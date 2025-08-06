@@ -1,4 +1,4 @@
-.PHONY: clean
+.PHONY: clean docker-build-debug docker-build-release
 
 build-impl-%:
 	@mkdir -p build_$*
@@ -9,28 +9,23 @@ build-debug: build-impl-debug
 build-release: build-impl-release
 
 
-run-desktop-impl-%: build-%
+run-desktop-impl-%:
 	@./build_$*/desktop/ChessDesktop
 
 run-desktop-debug: run-desktop-impl-debug 
 run-desktop-release: run-desktop-impl-release 
+	
 
-
-docker-build-desktop:
+docker-build-impl-%:
 	@git submodule update --init
 	@docker build -f desktop/Dockerfile -t chessui .
+	@docker run --rm \
+	-v $(PWD):${PWD} \
+	-w ${PWD} \
+	chessui ${MAKE} build-$*
 
-docker-run-desktop: docker-build-desktop
-	@xhost +local:root
-	@docker run -it \
-	--device /dev/dri \
-	-e DISPLAY=$(DISPLAY) \
-	-e LIBGL_ALWAYS_SOFTWARE=1 \
-	-e SDL_VIDEO_X11_NO_SHM=1 \
-	-v /tmp/.X11-unix:/tmp/.X11-unix \
-	-v $(PWD):/app \
-	chessui
-	@xhost -local:root
+docker-build-debug: docker-build-impl-debug 
+docker-build-release: docker-build-impl-release
 
 docker-clean:
 	@docker system prune -a --volumes
