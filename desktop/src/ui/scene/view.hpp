@@ -37,7 +37,7 @@ private:
     game::logic::Color player_side;
 
     BoardRenderer board;
-    std::vector<EntityPtr> entities;
+    std::vector<model::EntityPtr> entities;
 
     game::logic::Position pos;
     game::logic::MoveList legal_moves;

@@ -1,13 +1,12 @@
 #pragma once
 
 #include "SFML/Graphics.hpp"
-#include <memory>
 #include <logic/src/defs.hpp>
 
-namespace ui
+namespace ui::model
 {
 
-class SquarePosition
+class Square
 {
 public:
 
@@ -24,16 +23,5 @@ private:
     static sf::Vector2f pos[game::logic::SQUARE_COUNT];
 
 };
-
-class Entity
-{
-public:
-    virtual ~Entity() = default;
-    virtual void Render(sf::RenderWindow&) = 0;
-    virtual Entity& setSize(sf::Vector2f) = 0;
-    virtual Entity& setPos(sf::Vector2f) = 0;
-};  
-
-using EntityPtr = std::shared_ptr<Entity>;
 
 }

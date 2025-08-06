@@ -1,13 +1,13 @@
 #pragma once
 
-#include "../entity/view.hpp"
+#include "../models/entity.hpp"
 #include "logic/src/defs.hpp"
 
 namespace ui 
 {
 
 
-class PieceEntity : public Entity
+class PieceEntity : public model::Entity
 {
 public:
 

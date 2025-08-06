@@ -1,6 +1,7 @@
 #include "view.hpp"
 
 #include "resources/textures_manager/view.hpp"
+#include "../models/square.hpp"
 
 namespace ui
 {
@@ -18,7 +19,7 @@ void GameScene::ReadConfig(const resource::BoardConfigManager &config)
 
     const sf::Vector2f square_size = config.SquareSize();
 
-    SquarePosition::Init(player_side, config.LeftBottomSquare(), square_size);
+    model::Square::Init(player_side, config.LeftBottomSquare(), square_size);
 
     board 
         .setSquareColor(WHITE, config.WhiteSquare())
@@ -35,7 +36,7 @@ void GameScene::ReadConfig(const resource::BoardConfigManager &config)
             auto entity = entities.emplace_back(std::make_shared<PieceEntity>(
                 *resource::TextureManager::Get(clr, piece)
             ));
-            entity->setPos(SquarePosition::GetPos(sqr)).setSize(square_size);
+            entity->setPos(model::Square::GetPos(sqr)).setSize(square_size);
         }
     }
 }

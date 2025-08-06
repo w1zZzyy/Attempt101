@@ -1,6 +1,7 @@
 #include "view.hpp"
 
-#include "../entity/view.hpp"
+#include "../models/entity.hpp"
+#include "../models/square.hpp"
 
 namespace ui
 {
@@ -21,14 +22,15 @@ BoardRenderer &BoardRenderer::setSquareSize(sf::Vector2f s) noexcept
 
 void BoardRenderer::Render(sf::RenderWindow &window) const
 {
-    using namespace game::logic;
-
     sf::RectangleShape rect_sqr(square_shape);
     rect_sqr.setSize(square_shape);
 
-    for(Square sqr = Square::Start(); sqr <= Square::End(); ++sqr) {
-        rect_sqr.setPosition(SquarePosition::GetPos(sqr));
-        rect_sqr.setFillColor(square_clr[SquarePosition::GetSquareColor(sqr)]);
+    for(
+        game::logic::Square sqr = game::logic::Square::Start(); 
+        sqr <= game::logic::Square::End(); ++sqr
+    ) {
+        rect_sqr.setPosition(model::Square::GetPos(sqr));
+        rect_sqr.setFillColor(square_clr[model::Square::GetSquareColor(sqr)]);
         window.draw(rect_sqr);
     }
 }

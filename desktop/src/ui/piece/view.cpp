@@ -20,7 +20,7 @@ PieceEntity &PieceEntity::setPiece(game::logic::Color c, game::logic::Piece p)
     return *this;
 }
 
-Entity &PieceEntity::setSize(sf::Vector2f newSize)
+model::Entity &PieceEntity::setSize(sf::Vector2f newSize)
 {
     auto currSize = sprite.getTexture().getSize();
 
@@ -32,7 +32,7 @@ Entity &PieceEntity::setSize(sf::Vector2f newSize)
     return *this;
 }
 
-Entity &PieceEntity::setPos(sf::Vector2f newPos)
+model::Entity &PieceEntity::setPos(sf::Vector2f newPos)
 {
     sprite.setPosition(newPos);
     return *this;
