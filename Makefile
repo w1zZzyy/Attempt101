@@ -9,7 +9,7 @@ build-debug: build-impl-debug
 build-release: build-impl-release
 
 
-run-desktop-impl-%:
+run-desktop-impl-%: docker-build-%
 	@./build_$*/desktop/ChessDesktop
 
 run-desktop-debug: run-desktop-impl-debug 
