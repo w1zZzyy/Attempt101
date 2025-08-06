@@ -5,6 +5,7 @@
 #include "resources/config_manager/view.hpp"
 #include "logic/src/position.hpp"
 #include "logic/src/movelist.hpp"
+#include "manager/view.hpp"
 
 #include <vector>
 
@@ -30,18 +31,12 @@ public:
 
 private:
 
-    void update_game();
-
-private:
-
     game::logic::Color player_side;
 
     BoardRenderer board;
     std::vector<model::EntityPtr> entities;
 
-    game::logic::Position pos;
-    game::logic::MoveList legal_moves;
-    game::logic::GameStatus status;
+    game::LogicManager game_logic;
 
 };
 

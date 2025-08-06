@@ -26,36 +26,17 @@ void GameScene::ReadConfig(const resource::BoardConfigManager &config)
         .setSquareColor(BLACK, config.BlackSquare())
         .setSquareSize(square_size);
 
-    pos.set_fen(config.InitalFen());
-    update_game();
+    game_logic.Init(config.InitalFen());
 
     for(Square sqr = Square::Start(); sqr <= Square::End(); ++sqr) {
-        if(auto piece = pos.piece_on(sqr); piece.isValid()) 
+        if(auto piece = game_logic.getPieceOn(sqr); piece.isValid()) 
         {
-            auto clr = pos.piece_clr_on(sqr);
+            auto clr = game_logic.getPieceClr(sqr);
             auto& entity = entities.emplace_back(model::CreateEntity<PieceEntity>(
                 *resource::TextureManager::Get(clr, piece)
             ));
             entity->setPos(model::Square::GetPos(sqr)).setSize(square_size);
         }
-    }
-}
-
-void GameScene::update_game()
-{
-    using namespace game::logic;
-
-    pos.compute_enemy_attackers().compute_pins_from_sliders();
-    legal_moves.generate(pos);
-
-    if(pos.is_check()) {
-        status = legal_moves.empty() 
-        ?  static_cast<GameStatus>(int(pos.get_side().opp()))
-        : GameStatus::Draw;
-    } else if(pos.is_draw()) {
-        status = GameStatus::Draw;
-    } else {
-        status = GameStatus::InProgress;
     }
 }
 

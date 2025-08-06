@@ -27,6 +27,7 @@ target_link_libraries(${PROJECT_NAME}Scene_lib PUBLIC
     ${PROJECT_NAME}Piece_lib
     Logic_lib
     Engine_lib 
+    LogicManager_lib
     ResourceTexture_lib 
     ResourceConfig_lib 
 )
