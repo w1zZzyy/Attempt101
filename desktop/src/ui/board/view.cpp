@@ -20,6 +20,12 @@ BoardRenderer &BoardRenderer::setSquareSize(sf::Vector2f s) noexcept
     return *this;
 }
 
+BoardRenderer &BoardRenderer::setHighlighColor(sf::Color color) noexcept
+{
+    highligh = color;
+    return *this;
+}
+
 void BoardRenderer::Render(sf::RenderWindow &window) const
 {
     sf::RectangleShape rect_sqr(square_shape);

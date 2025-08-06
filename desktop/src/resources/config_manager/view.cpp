@@ -24,6 +24,15 @@ ConfigManager::ConfigManager(std::string_view config_name)
     file >> config;
 }
 
+sf::Color BoardConfigManager::Highlight() const
+{
+    const auto& hl = config["highlight"];
+    return sf::Color{
+        hl["red"], hl["green"], hl["blue"], 
+        hl["alpha"]
+    };
+}
+
 sf::Vector2f BoardConfigManager::SquareSize() const
 {
     return sf::Vector2f{

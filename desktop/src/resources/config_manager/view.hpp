@@ -20,6 +20,7 @@ public:
     BoardConfigManager() : ConfigManager("board_config") {}
     sf::Color WhiteSquare() const {return SquareColor("white");}
     sf::Color BlackSquare() const {return SquareColor("black");}
+    sf::Color Highlight() const;
     sf::Vector2f SquareSize() const;
     sf::Vector2f LeftBottomSquare() const;
     std::string InitalFen() const;
