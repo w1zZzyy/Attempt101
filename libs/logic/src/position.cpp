@@ -15,9 +15,14 @@ using namespace game::logic;
 
 void game::logic::Position::Init()
 {
-    SetupAttacks();
-    Square::Setup();
-    Zobrist::Setup();
+    static bool init = false;
+    if(!init)
+    {
+        SetupAttacks();
+        Square::Setup();
+        Zobrist::Setup();
+        init = true;
+    }
 }
 
 
