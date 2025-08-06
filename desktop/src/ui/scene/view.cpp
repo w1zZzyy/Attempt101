@@ -33,7 +33,7 @@ void GameScene::ReadConfig(const resource::BoardConfigManager &config)
         if(auto piece = pos.piece_on(sqr); piece.isValid()) 
         {
             auto clr = pos.piece_clr_on(sqr);
-            auto entity = entities.emplace_back(std::make_shared<PieceEntity>(
+            auto& entity = entities.emplace_back(model::CreateEntity<PieceEntity>(
                 *resource::TextureManager::Get(clr, piece)
             ));
             entity->setPos(model::Square::GetPos(sqr)).setSize(square_size);
