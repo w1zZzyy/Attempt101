@@ -1,5 +1,6 @@
 #pragma once
 
+#include <SFML/Graphics.hpp>
 #include <optional>
 #include <concepts>
 #include <type_traits>
@@ -16,18 +17,23 @@ struct IEvent {
     virtual ~IEvent() = default;
 };
 
-struct CellSelectedEvent : IEvent {
-    CellSelectedEvent(game::logic::Square s) : selected(s) {} 
-    game::logic::Square selected; 
-};
+
+// CELL
+
 struct CellHighlightedEvent : IEvent { 
     CellHighlightedEvent(game::logic::Square s) : highlighted(s) {}
     game::logic::Square highlighted; 
 };
 
+
+// PROMOTION 
+
 struct ShowPromotionDialog : IEvent {
     ShowPromotionDialog() = default;
 };
+
+
+// MOVE 
 
 struct MoveEvent : IEvent {
     MoveEvent(
@@ -39,36 +45,51 @@ struct MoveEvent : IEvent {
     std::optional<game::logic::MoveFlag> flag;
 };
 
-struct PieceAddEvent : IEvent {
-    PieceAddEvent(
+
+// PIECE 
+
+struct PieceAddedEvent : IEvent {
+    PieceAddedEvent(
         game::logic::Piece p,
         game::logic::Color c,
-        game::logic::Square s, 
-        float width, float height
-    ) : 
-        piece(p), color(c), square(s), 
-        width(width), height(height) {}
+        game::logic::Square s
+    ) : piece(p), color(c), square(s) {}
     game::logic::Piece piece;
     game::logic::Color color;
     game::logic::Square square;
-    float width, height;
 };
-struct PieceRemoveEvent : IEvent {
-    PieceRemoveEvent(game::logic::Square rm_from) : square(rm_from) {}
-    game::logic::Square square;
+struct PieceRemovedEvent : IEvent {
+    PieceRemovedEvent(game::logic::Square rm_from) : captured_on(rm_from) {}
+    game::logic::Square captured_on;
 };
-struct PieceReplaceEvent : IEvent {
-    PieceReplaceEvent(
-        game::logic::Square s, 
-        game::logic::Piece new_p
-    ) : square(s), new_piece(new_p) {}
-    game::logic::Square square;
-    game::logic::Piece new_piece;
+struct PieceMoveEvent : IEvent {
+    PieceMoveEvent(
+        game::logic::Square f, 
+        game::logic::Square t, 
+        std::optional<game::logic::Piece> prom = std::nullopt
+    ) : from(f), targ(t), promotion(prom) {}
+    game::logic::Square from, targ;
+    std::optional<game::logic::Piece> promotion;
 };
+
+
+
+struct GameStartedAsWhite {};
+
 
 
 template<typename T>
 concept EventType = std::is_base_of_v<IEvent, T>;
+
+
+using EventPtr = std::unique_ptr<IEvent>;
+
+template<EventType ET, typename... Args>
+EventPtr CreateEvent(Args&&... args) {
+    return std::make_unique<ET>(
+        std::forward<Args>(args)...;
+    )
+};
 
 
 }
