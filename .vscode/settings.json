@@ -1,6 +1,7 @@
 {
     "C_Cpp.intelliSenseEngine": "default",
     "C_Cpp.default.compileCommands": "${workspaceFolder}/build_debug/compile_commands.json",
+    "C_Cpp.default.cppStandard": "c++23",
     "files.associations": {
         "fstream": "cpp",
         "iosfwd": "cpp",
@@ -75,6 +76,8 @@
         "cinttypes": "cpp",
         "typeinfo": "cpp",
         "valarray": "cpp",
-        "variant": "cpp"
+        "variant": "cpp",
+        "text_encoding": "cpp",
+        "typeindex": "cpp"
     }
 }
