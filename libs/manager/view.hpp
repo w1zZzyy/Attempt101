@@ -9,7 +9,7 @@ namespace game
 {
 
 enum class LogicException {
-    MoveAmbiguity, 
+    PromotionFlagNeeded, 
     MoveNotFound,
     GameStatusError
 };
@@ -22,9 +22,10 @@ public:
     logic::Piece getPieceOn(logic::Square sqr) const {return pos.piece_on(sqr);}
     logic::Color getPieceClr(logic::Square sqr) const {return pos.piece_clr_on(sqr);}
     logic::GameStatus getStatus() const noexcept {return status;}
+    logic::Piece getCaptured() const {return pos.get_captured();}
     std::vector<logic::Move> MovesFrom(logic::Square sqr) const;
 
-    std::expected<logic::GameStatus, LogicException> DoMove(
+    std::expected<logic::Move, LogicException> DoMove(
         logic::Square from, 
         logic::Square targ,
         std::optional<logic::MoveFlag> flag = std::nullopt
@@ -33,7 +34,7 @@ public:
 private:
 
     void UpdateStatus();
-    logic::GameStatus DoMove(logic::Move move);
+    void DoMove(logic::Move move);
 
 private:
 

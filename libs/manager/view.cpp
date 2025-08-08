@@ -24,7 +24,7 @@ std::vector<logic::Move> LogicManager::MovesFrom(logic::Square sqr) const
     return result;
 }
 
-std::expected<logic::GameStatus, LogicException> LogicManager::DoMove(
+std::expected<logic::Move, LogicException> LogicManager::DoMove(
     logic::Square from, logic::Square targ,
     std::optional<logic::MoveFlag> flag
 ) {
@@ -37,16 +37,17 @@ std::expected<logic::GameStatus, LogicException> LogicManager::DoMove(
         logic::Move m = legal_moves[i];
         if(m.from() == from && m.targ() == targ)
         {
-            if(flag) { if(*flag == m.flag()) return DoMove(m); }        
+            if(flag) { if(*flag == m.flag()) { DoMove(m); return m; }}        
             else if(!move) move = m; 
-            else return std::unexpected(LogicException::MoveAmbiguity);
+            else return std::unexpected(LogicException::PromotionFlagNeeded);
         }
     }
 
     if(!move)
         return std::unexpected(LogicException::MoveNotFound);
 
-    return DoMove(*move);
+    DoMove(*move);
+    return *move;
 }
 
 void LogicManager::UpdateStatus()
@@ -65,10 +66,9 @@ void LogicManager::UpdateStatus()
     }
 }
 
-logic::GameStatus LogicManager::DoMove(logic::Move move)
+void LogicManager::DoMove(logic::Move move)
 {
     pos.do_move(move);
     UpdateStatus();
-    return status;
 }
 }
