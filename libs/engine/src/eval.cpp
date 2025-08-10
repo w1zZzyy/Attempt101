@@ -172,8 +172,8 @@ void Eval::Setup()
         for(Square sqr = Square::Start(); sqr <= Square::End(); ++sqr) {
             mg_table[WHITE][p][sqr] = mg_value[p] + mg_piece_table[p][sqr];
             eg_table[WHITE][p][sqr] = eg_value[p] + eg_piece_table[p][sqr];
-            mg_table[BLACK][p][sqr] = mg_value[p] + mg_piece_table[p][sqr ^ 56];
-            eg_table[BLACK][p][sqr] = eg_value[p] + eg_piece_table[p][sqr ^ 56];
+            mg_table[BLACK][p][sqr] = mg_value[p] + mg_piece_table[p][sqr.flip()];
+            eg_table[BLACK][p][sqr] = eg_value[p] + eg_piece_table[p][sqr.flip()];
         }
     }
 }

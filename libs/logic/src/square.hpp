@@ -78,6 +78,10 @@ public:
     
     constexpr bool isValid() const noexcept {return index != NO_SQUARE;}
 
+    constexpr Square flip() const noexcept {return Square(index ^ 56);}
+    constexpr Square rank() const noexcept {return Square(index / 8);}
+    constexpr Square file() const noexcept {return Square(index % 8);}
+
     Bitboard bitboard() const noexcept;
 
     std::string to_string() const noexcept {
