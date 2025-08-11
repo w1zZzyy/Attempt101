@@ -54,6 +54,14 @@ std::string BoardConfigManager::InitalFen() const
     return config["initial_fen"];
 }
 
+game::logic::Color BoardConfigManager::BoardView() const
+{
+    using namespace game::logic;
+    if(config["board_view"] == "white") return WHITE;
+    if(config["board_view"] == "black") return BLACK;
+    throw std::runtime_error("invalid board_view field");
+}
+
 sf::Color BoardConfigManager::SquareColor(std::string_view clr) const
 {
     const auto& sqr = config["square_color"];

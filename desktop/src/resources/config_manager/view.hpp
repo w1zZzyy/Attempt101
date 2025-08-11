@@ -2,6 +2,7 @@
 
 #include <nlohmann/json.hpp>
 #include <SFML/Graphics.hpp>
+#include "logic/src/defs.hpp"
 
 namespace resource
 {
@@ -9,6 +10,7 @@ namespace resource
 
 class ConfigManager {
 public:
+    virtual ~ConfigManager() = default;
     ConfigManager(std::string_view config_name);
 protected:
     nlohmann::json config;
@@ -24,6 +26,7 @@ public:
     sf::Vector2f SquareSize() const;
     sf::Vector2f LeftBottomSquare() const;
     std::string InitalFen() const;
+    game::logic::Color BoardView() const;
 private:
     sf::Color SquareColor(std::string_view clr) const;
 };
