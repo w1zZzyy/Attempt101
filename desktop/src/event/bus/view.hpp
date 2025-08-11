@@ -5,7 +5,7 @@
 #include <vector>
 #include <functional>
 #include <queue>
-#include "event_type.hpp"
+#include "../models/event_type.hpp"
 
 namespace event
 {
@@ -44,18 +44,18 @@ private:
 template <EventType ET>
 inline void Bus::subscribe(const Handler<ET> &handler)
 {
-    auto key = typeid(ET);
+    std::type_index key = typeid(ET);
     subscribers[key].emplace_back(
         [handler](const IEvent& event) {
             handler(static_cast<const ET&>(event));
-        };
+        }
     );
 }
 
 template <EventType ET>
 inline void Bus::publish(const ET &event) const
 {
-    auto key = typeid(ET);
+    std::type_index key = typeid(ET);
     auto it = subscribers.find(key);
     if(it != subscribers.end()) {
         for(const Handler<ET>& handler : it->second) {
@@ -67,7 +67,7 @@ inline void Bus::publish(const ET &event) const
 template <EventType ET, typename... Args>
 inline void Bus::enqueue(Args &&...args)
 {
-    event_queue.emplace(CreateEvent<ET>(std::forward<Args>(args...)));
+    event_queue.emplace(CreateEvent<ET>(std::forward<Args>(args)...));
 }
 
 }

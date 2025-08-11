@@ -62,8 +62,8 @@ struct PieceRemovedEvent : IEvent {
     PieceRemovedEvent(game::logic::Square rm_from) : captured_on(rm_from) {}
     game::logic::Square captured_on;
 };
-struct PieceMoveEvent : IEvent {
-    PieceMoveEvent(
+struct PieceMovedEvent : IEvent {
+    PieceMovedEvent(
         game::logic::Square f, 
         game::logic::Square t, 
         std::optional<game::logic::Piece> prom = std::nullopt
@@ -71,11 +71,6 @@ struct PieceMoveEvent : IEvent {
     game::logic::Square from, targ;
     std::optional<game::logic::Piece> promotion;
 };
-
-
-
-struct GameStartedAsWhite {};
-
 
 
 template<typename T>
@@ -87,8 +82,8 @@ using EventPtr = std::unique_ptr<IEvent>;
 template<EventType ET, typename... Args>
 EventPtr CreateEvent(Args&&... args) {
     return std::make_unique<ET>(
-        std::forward<Args>(args)...;
-    )
+        std::forward<Args>(args)...
+    );
 };
 
 
