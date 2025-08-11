@@ -1,17 +1,16 @@
 #pragma once
 
-#include "scene/view.hpp"
+#include "scene/manager/view.hpp"
 
-class Application
-{
+class Application {
 public:
-    
+
     Application();
     void run();
-
+    
 private:
 
-    ui::SceneManager scene;
-    sf::RenderWindow window;
+    scene::SceneManager SceneController;
+    sf::RenderWindow Window;
 
 };

@@ -1,28 +1,35 @@
 #include "view.hpp"
 
+#include "logic/src/position.hpp"
+
 Application::Application()
 {
-    resource::WindowConfigManager config;
-    window.create(
-        sf::VideoMode(config.WindowSize()), 
-        config.Title()
+    game::logic::Position::Init();
+
+    resource::WindowConfigManager window_config;
+    resource::BoardConfigManager board_config;
+
+    Window.create(
+        sf::VideoMode(window_config.WindowSize()), 
+        window_config.Title()
     );
-    window.setFramerateLimit(config.FPS());
+    Window.setFramerateLimit(window_config.FPS());
+
+    SceneController.Load(board_config);
 }
+
 
 void Application::run()
 {
-    while(window.isOpen())
+    while(Window.isOpen())
     {
-        while(auto event = window.pollEvent())
+        while(auto event = Window.pollEvent())
         {
             if(event->is<sf::Event::Closed>()) {
-                window.close();
+                Window.close();
             }
         }
 
-        window.clear();
-        scene.Render(window);
-        window.display();
+        SceneController.Display(Window);
     }
 }

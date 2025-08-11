@@ -2,8 +2,6 @@
 
 int main() 
 {
-    game::logic::Position::Init();
-
     Application app;
     app.run();
 
