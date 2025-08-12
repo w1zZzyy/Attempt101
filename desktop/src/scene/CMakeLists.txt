@@ -11,6 +11,7 @@ target_link_libraries(${PROJECT_NAME}Game_lib PUBLIC
     ResourceConfig_lib 
     ControllerGame_lib 
     ControllerUI_lib
+    ControllerInput_lib
 )
 
 add_library(${PROJECT_NAME}Manager_lib STATIC manager/view.hpp manager/view.cpp)

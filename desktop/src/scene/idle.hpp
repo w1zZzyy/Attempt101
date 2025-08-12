@@ -15,6 +15,7 @@ public:
     virtual ~IScene() = default;
     virtual void Display(sf::RenderWindow& window) = 0;
     virtual void ParseConfig(const resource::ConfigManager& config) = 0;
+    virtual void HandleEvents(sf::RenderWindow& window) = 0;
 };
 
 using ScenePtr = std::unique_ptr<IScene>;
