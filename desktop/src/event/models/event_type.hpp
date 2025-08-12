@@ -18,11 +18,25 @@ struct IEvent {
 };
 
 
-// CELL
+// CLICK
 
-struct CellHighlightedEvent : IEvent { 
-    CellHighlightedEvent(game::logic::Square s) : highlighted(s) {}
-    game::logic::Square highlighted; 
+struct MousePressedEvent : IEvent {
+    MousePressedEvent(sf::Vector2f pos) : pos(pos) {}
+    sf::Vector2f pos;
+};
+
+struct ClickedOnBoardEvent : IEvent {
+    ClickedOnBoardEvent(game::logic::Square sqr) : square(sqr) {}
+    game::logic::Square square;
+};
+
+struct PieceSelectedEvent : IEvent {
+    PieceSelectedEvent(
+        game::logic::Square sqr, 
+        std::vector<game::logic::Move>&& moves
+    ) : piece_on(sqr), moves(std::move(moves)) {}
+    game::logic::Square piece_on;
+    std::vector<game::logic::Move> moves;
 };
 
 
