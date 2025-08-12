@@ -4,8 +4,6 @@
 
 Application::Application()
 {
-    game::logic::Position::Init();
-
     resource::WindowConfigManager window_config;
     resource::BoardConfigManager board_config;
 
