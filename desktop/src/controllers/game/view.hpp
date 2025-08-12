@@ -17,8 +17,11 @@ public:
 private:
 
     void SubscribeOnMoveEvent();
-    void HandleMoveError(game::LogicException err) const;
+    void HandleMoveError(game::logic::Square attempted_targ, game::LogicException err) const;
     void HandleMove(game::logic::Move move);
+
+    void SubscribeOnBoardClickedEvent();
+    void MaybePieceClick(game::logic::Square sqr) const;
 
 private:
 

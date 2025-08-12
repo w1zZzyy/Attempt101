@@ -29,11 +29,17 @@ private:
     void SubscribeOnPieceAddedEvent();
     void SubscribeOnPieceRemovedEvent();
     void SubscribeOnPieceMovedEvent();
+    void SubscribeOnMousePressedEvent();
+    void SubscribeOnPieceSelectedEvent();
+    void ResetSelected();
 
 private:
 
     event::Bus& bus;
+
     std::array<std::optional<ui::PieceEntity>, game::logic::SQUARE_COUNT> pieces;
+    std::optional<game::logic::Square> selected;
+
     ui::BoardRenderer board;
     ui::BoardViewPtr board_view;
 
