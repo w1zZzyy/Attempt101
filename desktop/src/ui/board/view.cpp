@@ -17,6 +17,21 @@ sf::RectangleShape BoardView::CreateHighlightedCell() const
     return cell;
 }
 
+
+std::optional<game::logic::Square> BoardView::ToSquare(sf::Vector2f pos)
+{
+    sf::RectangleShape cell = CreateCell();
+
+    using namespace game::logic;
+    
+    for(Square sqr = Square::Start(); sqr <= Square::End(); ++sqr) {
+        cell.setPosition(GetPosition(sqr));
+        if(cell.getGlobalBounds().contains(pos)) return sqr;
+    }
+
+    return std::nullopt;
+}
+
 sf::Vector2f BoardView::GetPosition(game::logic::Square sqr) const
 {
     int rank = sqr.rank();
@@ -65,11 +80,29 @@ sf::Vector2f ReversedBoardView::GetPosition(game::logic::Square sqr) const
 void BoardRenderer::Render(sf::RenderWindow &window) const
 {
     assert(board_view);
+    RenderCommonSquares(window);
+    RenderHighlightedSquares(window);
+}
+
+void BoardRenderer::RenderCommonSquares(sf::RenderWindow &window) const
+{
     sf::RectangleShape cell = board_view->CreateCell();
 
     using namespace game::logic;
+    
     for(Square sqr = Square::Start(); sqr <= Square::End(); ++sqr) {
         cell.setFillColor(board_view->GetColor(sqr));
+        cell.setPosition(board_view->GetPosition(sqr));
+        window.draw(cell);
+    }
+}
+void BoardRenderer::RenderHighlightedSquares(sf::RenderWindow &window) const
+{
+    sf::RectangleShape cell = board_view->CreateHighlightedCell();
+
+    using namespace game::logic;
+    
+    for(auto& sqr : highlighted) {
         cell.setPosition(board_view->GetPosition(sqr));
         window.draw(cell);
     }
