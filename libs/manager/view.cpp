@@ -9,7 +9,7 @@ namespace game
 
 void LogicManager::Init(const std::string &fen)
 {
-    logic::Position::Init();
+    PositionDynamicMemory::Init();
 
     pos.set_fen(fen);
     UpdateStatus();

@@ -6,11 +6,13 @@
 #include "move.hpp"
 #include "square.hpp"
 
-using namespace game::logic;
+namespace game::logic
+{
 
 constexpr auto prom_list = {Q_PROMOTION_MF, K_PROMOTION_MF, B_PROMOTION_MF, R_PROMOTION_MF};
 
-void game::logic::MoveList::generate(const Position &pos)
+template<StorageType T>
+void MoveList::generate(const Position<T> &pos)
 {
     size = 0;
     
@@ -22,7 +24,8 @@ void game::logic::MoveList::generate(const Position &pos)
         : pawn_moves<BLACK>(pos);
 }
 
-void game::logic::MoveList::piece_moves(const Position& pos)
+template<StorageType T>
+void MoveList::piece_moves(const Position<T>& pos)
 {
     if(pos.is_double_check()) 
         return;
@@ -58,7 +61,8 @@ void game::logic::MoveList::piece_moves(const Position& pos)
     }
 }
 
-void game::logic::MoveList::king_moves(const Position &pos)
+template<StorageType T>
+void MoveList::king_moves(const Position<T> &pos)
 {
     const Color     us              =   pos.get_side();
     const Square    ksq             =   pos.get_pieces(us, KING).lsb();
@@ -78,8 +82,8 @@ void game::logic::MoveList::king_moves(const Position &pos)
 }
 
 
-template<ColorType Us>
-inline void game::logic::MoveList::pawn_moves(const Position &pos)
+template<ColorType Us, StorageType T>
+inline void MoveList::pawn_moves(const Position<T> &pos)
 {
     if(pos.is_double_check()) 
         return;
@@ -131,8 +135,8 @@ inline void game::logic::MoveList::pawn_moves(const Position &pos)
     en_passant_moves<Us, false>(pawns, pos);
 }
 
-template <ColorType Us>
-void game::logic::MoveList::pinned_pawn_moves(Bitboard pawns, const Position& pos)
+template <ColorType Us, StorageType T>
+void MoveList::pinned_pawn_moves(Bitboard pawns, const Position<T>& pos)
 {
     if(pos.is_check())
         return;
@@ -178,8 +182,8 @@ void game::logic::MoveList::pinned_pawn_moves(Bitboard pawns, const Position& po
     }
 }
 
-template <ColorType Us, bool Pinned>
-void game::logic::MoveList::en_passant_moves(Bitboard pawns, const Position& pos)
+template <ColorType Us, bool Pinned, StorageType T>
+void MoveList::en_passant_moves(Bitboard pawns, const Position<T>& pos)
 {
     if(pos.get_passant() == NO_SQUARE)
         return;
@@ -221,7 +225,7 @@ void game::logic::MoveList::en_passant_moves(Bitboard pawns, const Position& pos
 }
 
 
-void game::logic::MoveList::pawn_move_generic(
+void MoveList::pawn_move_generic(
     Bitboard                        moves, 
     std::initializer_list<MoveFlag> flags, 
     int                             offset_from
@@ -265,4 +269,33 @@ std::optional<Move> MoveList::find(std::string_view notation) const
     }
 
     return std::nullopt;
+}
+
+
+
+// waaaaaa :(
+template void MoveList::generate<DynamicStorage>(const PositionDynamicMemory&);
+template void MoveList::generate<StaticStorage>(const PositionFixedMemory&);
+template void MoveList::piece_moves<DynamicStorage>(const PositionDynamicMemory&);
+template void MoveList::piece_moves<StaticStorage>(const PositionFixedMemory&);
+template void MoveList::king_moves<DynamicStorage>(const PositionDynamicMemory&);
+template void MoveList::king_moves<StaticStorage>(const PositionFixedMemory&);
+template void MoveList::pawn_moves<WHITE, DynamicStorage>(const PositionDynamicMemory&);
+template void MoveList::pawn_moves<BLACK, DynamicStorage>(const PositionDynamicMemory&);
+template void MoveList::pawn_moves<WHITE, StaticStorage>(const PositionFixedMemory&);
+template void MoveList::pawn_moves<BLACK, StaticStorage>(const PositionFixedMemory&);
+template void MoveList::pinned_pawn_moves<WHITE, DynamicStorage>(Bitboard, const PositionDynamicMemory&);
+template void MoveList::pinned_pawn_moves<BLACK, DynamicStorage>(Bitboard, const PositionDynamicMemory&);
+template void MoveList::pinned_pawn_moves<WHITE, StaticStorage>(Bitboard, const PositionFixedMemory&);
+template void MoveList::pinned_pawn_moves<BLACK, StaticStorage>(Bitboard, const PositionFixedMemory&);
+template void MoveList::en_passant_moves<WHITE, true, DynamicStorage>(Bitboard, const PositionDynamicMemory&);
+template void MoveList::en_passant_moves<WHITE, false, DynamicStorage>(Bitboard, const PositionDynamicMemory&);
+template void MoveList::en_passant_moves<BLACK, true, DynamicStorage>(Bitboard, const PositionDynamicMemory&);
+template void MoveList::en_passant_moves<BLACK, false, DynamicStorage>(Bitboard, const PositionDynamicMemory&);
+template void MoveList::en_passant_moves<WHITE, true, StaticStorage>(Bitboard, const PositionFixedMemory&);
+template void MoveList::en_passant_moves<WHITE, false, StaticStorage>(Bitboard, const PositionFixedMemory&);
+template void MoveList::en_passant_moves<BLACK, true, StaticStorage>(Bitboard, const PositionFixedMemory&);
+template void MoveList::en_passant_moves<BLACK, false, StaticStorage>(Bitboard, const PositionFixedMemory&);
+
+
 }

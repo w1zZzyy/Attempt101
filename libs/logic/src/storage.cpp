@@ -3,12 +3,7 @@
 namespace game::logic
 {
 
-
-namespace
-{
-
-
-void stcopy(State& dst, const State& src)
+void IStateStorage::stcopy(State &dst, const State &src)
 {
     dst.hash = src.hash;
     dst.castle = src.castle;
@@ -19,60 +14,70 @@ void stcopy(State& dst, const State& src)
     dst.captured = NO_PIECE;
 }
 
-
-}
-
-
-State &StateStorage::create()
+bool IStateStorage::repetition_help(const State *curr, const State* begin) const
 {
-    int curr = size - 1;
+    assert(curr);
 
-    if(size != 0) {
-        stcopy(history[size], history[curr]);
-    }
-    
-    ++size;
-
-    return history[curr + 1];
-}
-
-State &StateStorage::rollback()
-{
-    --size;
-    return history[size - 1];
-}
-
-State &StateStorage::top()
-{
-    return history[size - 1];
-}
-
-const State &StateStorage::top() const
-{
-    return history[size - 1];
-}
-
-bool StateStorage::repetition() const
-{
-    int curr = size - 1;
     int counter = 1;
+    const Zobrist& hash = curr->hash;
+    const int rule50 = curr->rule50;
 
-    for(int iter = curr - 2; iter >= 0; iter -= 2) 
-    {
-        if(history[iter].hash == history[curr].hash) 
-        {
+    for(const State* hist = curr - 2; hist >= begin; hist -= 2) {
+        if(hist->hash == hash) {
             counter++;
-            if(counter == 3) 
+            if(counter == 3)
                 return true;
         }
-        
 
-        if(history[iter].rule50 != history[curr].rule50 - (curr - iter)) 
+        if(hist->rule50 != rule50 - (curr - hist)) 
             return false;
     }
 
     return false;
 }
 
+State& StaticStorage::create() 
+{
+    State* next = curr + 1;
+    assert(next < history + MAX_HISTORY_SIZE);
+
+    stcopy(*next, *curr);
+    curr = next;
+
+    return *curr;
+}
+
+State& StaticStorage::rollback()
+{
+    assert(curr > history);
+    --curr;
+    return *curr;
+}
+
+
+State& DynamicStorage::create() 
+{
+    State& next = history.emplace_back();
+    const int size = history.size();
+
+    if(size == 1)
+        return next;
+
+    stcopy(next, history[size - 2]);
+    return next;
+}
+
+State& DynamicStorage::rollback()
+{
+    assert(history.size() > 1);
+    history.pop_back();
+    return history.back();
+}
+
+bool DynamicStorage::repetition() const
+{
+    const State* back = &history.back();
+    return repetition_help(back, history.data());
+}
 
 }

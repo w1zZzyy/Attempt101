@@ -17,7 +17,7 @@ bool isnum(std::string_view str)
 
 int main()
 {
-    game::logic::Position::Init();
+    PositionFixedMemory::Init();
     game::engine::Eval::Setup();
 
     game::engine::Search search;

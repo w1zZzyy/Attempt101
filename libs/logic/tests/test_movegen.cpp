@@ -12,7 +12,7 @@
 
 using namespace game::logic;
 
-size_t CountNodes(game::logic::Position& pos, size_t depth)
+size_t CountNodes(PositionFixedMemory& pos, size_t depth)
 {
     if(depth == 0) {
         return 1;
@@ -63,7 +63,7 @@ void NodesCountTest::parse_file(std::ifstream& file)
 
 void NodesCountTest::run() 
 {
-    Position pos(fen);
+    PositionFixedMemory pos(fen);
 
     auto start = std::chrono::high_resolution_clock::now();
     size_t actual_nodes = CountNodes(pos, depth);
@@ -96,7 +96,7 @@ void BranchesCountTest::parse_file(std::ifstream& file)
 
 void BranchesCountTest::run() 
 {
-    Position pos(fen);
+    PositionFixedMemory pos(fen);
 
     MoveList moves;
     moves.generate(pos);

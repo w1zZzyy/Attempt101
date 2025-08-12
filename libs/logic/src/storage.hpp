@@ -4,9 +4,8 @@
 #include "zobrist.hpp"
 
 #include <cassert>
-#include <deque>
 #include <memory>
-#include <array>
+#include <vector>
 
 namespace game::logic
 {
@@ -91,23 +90,67 @@ struct State
     Piece captured{NO_PIECE};
 };
 
-class StateStorage
-{
+class IStateStorage {
+protected:
+    void stcopy(State& dst, const State& src);
+    bool repetition_help(const State* curr, const State* begin) const;
+};
+
+
+
+// STATIC STORAGE (using stack)
+class StaticStorage : public IStateStorage {
 public:
 
     State& create();
     State& rollback();
 
-    State& top();
-    const State& top() const;
+    State& top() {return *curr;}
+    const State& top() const {return *curr;}
+
+    bool repetition() const {return repetition_help(curr, history);}
+
+private:
+
+    State history[MAX_HISTORY_SIZE];
+    State* curr = history;
+
+};
+
+
+
+// DYNAMIC STORAGE (using heap)
+class DynamicStorage : public IStateStorage {
+public:
+
+    State& create();
+    State& rollback();
+
+    State& top() {return history.back();}
+    const State& top() const {return history.back();}
 
     bool repetition() const;
 
 private:
 
-    State history[MAX_HISTORY_SIZE];
-    size_t size{0};
+    std::vector<State> history;
 
+};
+
+
+
+// STORAGE POLIC
+
+template<typename T>
+concept StorageType = std::is_base_of_v<IStateStorage, T>;
+
+template<StorageType StoragePolicy>
+class StateStorage : public StoragePolicy {
+public:
+    using StoragePolicy::create;
+    using StoragePolicy::rollback;
+    using StoragePolicy::top;
+    using StoragePolicy::repetition;
 };
 
 

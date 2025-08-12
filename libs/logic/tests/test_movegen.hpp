@@ -9,8 +9,7 @@
 #include "../src/position.hpp"
 #include "../src/move.hpp"
 
-
-size_t CountNodes(game::logic::Position& pos, size_t depth);
+size_t CountNodes(PositionFixedMemory& pos, size_t depth);
 
 
 class ITest

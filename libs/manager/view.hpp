@@ -38,7 +38,7 @@ private:
 
 private:
 
-    logic::Position pos;
+    PositionDynamicMemory pos;
     logic::MoveList legal_moves;
     logic::GameStatus status;
 

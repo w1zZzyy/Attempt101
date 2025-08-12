@@ -5,7 +5,7 @@
 
 int main()
 {
-    game::logic::Position::Init();
+    PositionFixedMemory::Init();
     TestPtr test = std::make_unique<NodesCountTest>();
 
     for(size_t i = 1; i <= 6; ++i)

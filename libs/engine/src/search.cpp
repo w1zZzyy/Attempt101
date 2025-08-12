@@ -8,7 +8,7 @@ namespace game::engine
 
 SearchResults Search::start(const SearchOptions &options)
 {
-    logic::Position pos(options.fen);
+    PositionFixedMemory pos(options.fen);
 
     pos.compute_enemy_attackers().compute_pins_from_sliders();
 
@@ -38,8 +38,11 @@ SearchResults Search::start(const SearchOptions &options)
 }
 
 
-int Search::negamax(logic::Position &pos, int depth, Eval& eval, int alpha, int beta)
-{
+int Search::negamax(
+    PositionFixedMemory& pos, 
+    int depth, Eval& eval, 
+    int alpha, int beta
+) {
     using namespace game::logic;
 
     if(depth == 0) 

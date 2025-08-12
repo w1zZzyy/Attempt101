@@ -178,7 +178,7 @@ void Eval::Setup()
     }
 }
 
-void Eval::init(const logic::Position &pos) 
+void Eval::init(const PositionFixedMemory& pos) 
 {
     using namespace logic;
 
@@ -200,7 +200,7 @@ void Eval::init(const logic::Position &pos)
 }
 
 
-void Eval::update(const logic::Position& pos, logic::Move move)
+void Eval::update(const PositionFixedMemory& pos, logic::Move move)
 {
     using namespace logic;
 
@@ -257,7 +257,7 @@ void Eval::update(const logic::Position& pos, logic::Move move)
 }
 
 
-int Eval::score(const logic::Position& pos) const
+int Eval::score(const PositionFixedMemory& pos) const
 {
     using namespace logic;
 
