@@ -27,12 +27,7 @@ public:
     template<EventType ET, typename... Args>
     void enqueue(Args&& ... args);
 
-    void publish_all() {
-        while(!event_queue.empty()) {
-            publish(*event_queue.front());
-            event_queue.pop();
-        }
-    }
+    void publish_all();
 
 private:
 
@@ -56,8 +51,7 @@ template <EventType ET>
 inline void Bus::publish(const ET &event) const
 {
     std::type_index key = typeid(ET);
-    auto it = subscribers.find(key);
-    if(it != subscribers.end()) {
+    if(auto it = subscribers.find(key); it != subscribers.end()) {
         for(const Handler<ET>& handler : it->second) {
             handler(event);
         }
