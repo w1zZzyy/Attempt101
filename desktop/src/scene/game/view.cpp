@@ -4,7 +4,8 @@ namespace scene
 {
 GameScene::GameScene() : 
     GameController(bus),
-    UIController(bus)
+    UIController(bus),
+    InputController(bus)
 {}
 
 void GameScene::Display(sf::RenderWindow &window)
@@ -30,6 +31,11 @@ void GameScene::ParseConfig(const resource::ConfigManager &config)
         .SetHighlightedCellColor(board_config->Highlight());
 
     GameController.Init(board_config->InitalFen());
+}
+
+void GameScene::HandleEvents(sf::RenderWindow &window)
+{
+    InputController.HandleEvents(window);
 }
 
 }

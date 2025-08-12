@@ -5,16 +5,14 @@
 namespace game::engine
 {
 
-
-
 class Eval
 {
 public:
 
     static void Setup();
     
-    void init(const logic::Position& pos);
-    void update(const logic::Position& pos, logic::Move move);
+    void init(const PositionFixedMemory& pos);
+    void update(const PositionFixedMemory& pos, logic::Move move);
 
     Eval& set_mg(logic::Color c, int val) noexcept {mg[c] = val; return *this;}
     Eval& set_eg(logic::Color c, int val) noexcept {eg[c] = val; return *this;}
@@ -24,7 +22,7 @@ public:
     int get_eg(logic::Color c) const noexcept {return eg[c];}
     int get_phase() const noexcept {return game_phase;}
 
-    int score(const logic::Position& pos) const;
+    int score(const PositionFixedMemory& pos) const;
 
 private:
 

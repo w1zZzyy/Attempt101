@@ -10,7 +10,8 @@ class MoveList
 {
 public:
 
-    void generate(const Position& p);
+    template<StorageType T>
+    void generate(const Position<T>& p);
     bool empty() const noexcept {return size == 0;}
     size_t get_size() const noexcept {return size;}
     Move operator [] (size_t i) const {
@@ -31,17 +32,20 @@ private:
         ++size;
     }
     
-    void piece_moves(const Position& pos);
-    void king_moves(const Position& pos);
+    template<StorageType T>
+    void piece_moves(const Position<T>& pos);
 
-    template<ColorType Us>
-    void pawn_moves(const Position& pos);
+    template<StorageType T>
+    void king_moves(const Position<T>& pos);
 
-    template<ColorType Us>
-    void pinned_pawn_moves(Bitboard pawns, const Position& pos);
+    template<ColorType Us, StorageType T>
+    void pawn_moves(const Position<T>& pos);
+
+    template<ColorType Us, StorageType T>
+    void pinned_pawn_moves(Bitboard pawns, const Position<T>& pos);
     
-    template<ColorType Us, bool Pinned>
-    void en_passant_moves(Bitboard pawns, const Position& pos);
+    template<ColorType Us, bool Pinned, StorageType T>
+    void en_passant_moves(Bitboard pawns, const Position<T>& pos);
     
     void pawn_move_generic(Bitboard moves, std::initializer_list<MoveFlag> flags, int offset_from);
 };

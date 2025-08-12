@@ -8,6 +8,8 @@ UIBoardManager::UIBoardManager(event::Bus &bus) : bus(bus)
     SubscribeOnPieceAddedEvent();
     SubscribeOnPieceRemovedEvent();
     SubscribeOnPieceMovedEvent();
+    SubscribeOnMousePressedEvent();
+    SubscribeOnPieceSelectedEvent();
 }
 
 UIBoardManager &UIBoardManager::SetBoardView(game::logic::Color side)
@@ -64,7 +66,7 @@ void UIBoardManager::SubscribeOnPieceAddedEvent()
 {
     bus.subscribe<event::PieceAddedEvent>(
         [this](const event::PieceAddedEvent& event) {
-            assert(board_view);
+            assert(board_view && !pieces[event.square]);
             pieces[event.square]
                 .emplace(event.color, event.piece)
                 .setSize(board_view->GetCellShape())
@@ -77,6 +79,7 @@ void UIBoardManager::SubscribeOnPieceRemovedEvent()
 {
     bus.subscribe<event::PieceRemovedEvent>(
         [this](const event::PieceRemovedEvent& event) {
+            if(selected && *selected == event.captured_on) ResetSelected();             
             pieces[event.captured_on].reset();
         }
     );
@@ -87,8 +90,13 @@ void UIBoardManager::SubscribeOnPieceMovedEvent()
     bus.subscribe<event::PieceMovedEvent>(
         [this](const event::PieceMovedEvent& event) {
             assert(board_view);
+
+            if(selected)
+                ResetSelected();
+
             if(event.promotion)
                 pieces[event.from]->replacePiece(*event.promotion);
+
             pieces[event.targ] = std::move(pieces[event.from]);
             pieces[event.targ]->setPos(board_view->GetPosition(event.targ));
             pieces[event.from].reset();
@@ -96,4 +104,46 @@ void UIBoardManager::SubscribeOnPieceMovedEvent()
     );
 }
 
+void UIBoardManager::SubscribeOnMousePressedEvent()
+{
+    bus.subscribe<event::MousePressedEvent>(
+        [this](const event::MousePressedEvent& event) {
+            assert(board_view);
+            if(auto targ = board_view->ToSquare(event.pos)) {
+                if(selected) {
+                    auto from = *selected;
+                    bus.publish<event::MoveEvent>({from, *targ});
+                }
+                else {
+                    bus.publish<event::ClickedOnBoardEvent>({*targ});
+                } 
+            }
+        }
+    );
+}
+
+void UIBoardManager::SubscribeOnPieceSelectedEvent()
+{
+    bus.subscribe<event::PieceSelectedEvent>(
+        [this](const event::PieceSelectedEvent& event) 
+        {
+            if(selected && *selected == event.piece_on) {
+                ResetSelected();
+                return;
+            }
+
+            selected.emplace(event.piece_on);
+            board.CleanHighlighted();
+            
+            for(auto& move : event.moves) 
+                board.AddHighlighted(move.targ());
+        }
+    );
+}
+
+void UIBoardManager::ResetSelected()
+{
+    board.CleanHighlighted();
+    selected.reset();
+}
 }

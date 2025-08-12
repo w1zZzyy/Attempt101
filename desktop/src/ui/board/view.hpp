@@ -23,6 +23,8 @@ public:
     sf::RectangleShape CreateCell() const;
     sf::RectangleShape CreateHighlightedCell() const;
 
+    std::optional<game::logic::Square> ToSquare(sf::Vector2f pos);
+
 protected:
 
     sf::Vector2f lb_sqr_pos;
@@ -54,10 +56,18 @@ public:
 
     void SetBoardView(BoardViewPtr& bvp) {board_view = bvp;}
     void Render(sf::RenderWindow& window) const;
+    void AddHighlighted(game::logic::Square sqr) {highlighted.push_back(sqr);}
+    void CleanHighlighted() noexcept {highlighted.clear();}
+
+private:
+
+    void RenderCommonSquares(sf::RenderWindow& window) const;
+    void RenderHighlightedSquares(sf::RenderWindow& window) const;
 
 private:
 
     BoardViewPtr board_view;
+    std::vector<game::logic::Square> highlighted;
 
 };
 

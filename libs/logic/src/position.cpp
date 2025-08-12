@@ -11,9 +11,11 @@
 #include <string>
 
 
-using namespace game::logic;
+namespace game::logic
+{
 
-void game::logic::Position::Init()
+template<StorageType Policy>
+void Position<Policy>::Init()
 {
     static bool init = false;
     if(!init)
@@ -25,13 +27,14 @@ void game::logic::Position::Init()
     }
 }
 
-
-game::logic::Position::Position(std::string_view fen)
+template<StorageType Policy>
+Position<Policy>::Position(std::string_view fen)
 {
     set_fen(fen);
 }
 
-Position& Position::set_fen(std::string_view fen)
+template<StorageType Policy>
+Position<Policy>& Position<Policy>::set_fen(std::string_view fen)
 {
     auto& new_st = st.create();
 
@@ -108,7 +111,8 @@ Position& Position::set_fen(std::string_view fen)
     return *this;
 }
 
-void game::logic::Position::do_move(Move move)
+template<StorageType Policy>
+void Position<Policy>::do_move(Move move)
 {
     State& old_st = st.top();
     if(old_st.passant.isValid())
@@ -170,7 +174,8 @@ void game::logic::Position::do_move(Move move)
     new_st.hash.updateSide();
 }
 
-void game::logic::Position::undo_move()
+template<StorageType Policy>
+void Position<Policy>::undo_move()
 {
     constexpr bool HashUpdate = false;
 
@@ -212,8 +217,8 @@ void game::logic::Position::undo_move()
     }
 }
 
-
-bool game::logic::Position::can_castle(CastleType ct, Bitboard enemy_attacks) const
+template<StorageType Policy>
+bool Position<Policy>::can_castle(CastleType ct, Bitboard enemy_attacks) const
 {
     const Castle cr = st.top().castle.extract(side, ct);
     return 
@@ -222,14 +227,16 @@ bool game::logic::Position::can_castle(CastleType ct, Bitboard enemy_attacks) co
         !(cr.clear_path() & get_occupied(WHITE, BLACK));
 }
 
-void game::logic::Position::update_passant(Square sqr)
+template<StorageType Policy>
+void Position<Policy>::update_passant(Square sqr)
 {
     State& curr_st = st.top();
     curr_st.hash.updateEnPassant(sqr);
     curr_st.passant = sqr;
 }
 
-void game::logic::Position::update_castle(Color c, CastleType ct)
+template<StorageType Policy>
+void Position<Policy>::update_castle(Color c, CastleType ct)
 {
     State& curr_st = st.top();
     const CastleRightsType cr = curr_st.castle.extract(c, ct);
@@ -242,7 +249,8 @@ void game::logic::Position::update_castle(Color c, CastleType ct)
     curr_st.hash.updateCastle(curr_st.castle);
 }
 
-void game::logic::Position::try_to_update_castle(Color c, Square maybe_rook)
+template<StorageType Policy>
+void Position<Policy>::try_to_update_castle(Color c, Square maybe_rook)
 {
     if(types[maybe_rook].is(ROOK)) {
         if(auto ct = Castle::ByRookSquare(c, maybe_rook)) {
@@ -251,8 +259,8 @@ void game::logic::Position::try_to_update_castle(Color c, Square maybe_rook)
     }
 }
 
-
-std::string game::logic::Position::fen() const noexcept
+template<StorageType Policy>
+std::string Position<Policy>::fen() const noexcept
 {
     std::ostringstream res;
 
@@ -321,13 +329,14 @@ std::string game::logic::Position::fen() const noexcept
     return res.str();
 }
 
-
-bool Position::is_draw() const
+template<StorageType Policy>
+bool Position<Policy>::is_draw() const
 {
     return not_enough_pieces() || st.repetition() || st.top().rule50 == 50;
 }
 
-bool Position::not_enough_pieces() const noexcept
+template<StorageType Policy>
+bool Position<Policy>::not_enough_pieces() const noexcept
 {
     int total_pieces = get_occupied(WHITE, BLACK).count();
     return (
@@ -339,8 +348,8 @@ bool Position::not_enough_pieces() const noexcept
     );
 }
 
-
-Position& game::logic::Position::compute_enemy_attackers()
+template<StorageType Policy>
+Position<Policy>& Position<Policy>::compute_enemy_attackers()
 {
     this->attackers = Bitboard::Null();
     this->checkers = Bitboard::Null();
@@ -394,7 +403,8 @@ Position& game::logic::Position::compute_enemy_attackers()
     return *this;
 }
 
-Position& game::logic::Position::compute_pins_from_sliders()
+template<StorageType Policy>
+Position<Policy>& Position<Policy>::compute_pins_from_sliders()
 {
     this->king_blockers = Bitboard::Null();
     this->pinned = Bitboard::Null();
@@ -428,7 +438,8 @@ Position& game::logic::Position::compute_pins_from_sliders()
     return *this;
 }
 
-bool game::logic::Position::exposes_discovered_check(Square from, Square targ) const
+template<StorageType Policy>
+bool Position<Policy>::exposes_discovered_check(Square from, Square targ) const
 {
     if(!same_rank(from, targ)) {
         return false;
@@ -446,7 +457,8 @@ bool game::logic::Position::exposes_discovered_check(Square from, Square targ) c
     return false;
 }
 
-Bitboard game::logic::Position::pin_mask(Square sqr) const
+template<StorageType Policy>
+Bitboard Position<Policy>::pin_mask(Square sqr) const
 {
     if(!(pinned & sqr.bitboard())) {
         return Bitboard::Null();
@@ -458,42 +470,7 @@ Bitboard game::logic::Position::pin_mask(Square sqr) const
 }
 
 
-std::ostream& operator<<(std::ostream& out, const game::logic::Position& position)
-{
-    constexpr char PieceName[COLOR_COUNT][PIECE_COUNT] =
-	{
-		{'K', 'Q', 'P', 'N', 'B', 'R'},
-		{'k', 'q', 'p', 'n', 'b', 'r'}
-	};
+template class Position<DynamicStorage>;
+template class Position<StaticStorage>;
 
-    for (int y = 7; y >= 0; --y)
-	{
-		for (int x = 0; x < 7; ++x)
-			out << "-----";
-
-		out << "\n";
-		out << y + 1 << " | ";
-
-		for (int x = 0; x < 8; ++x)
-		{
-			Square sqr(y * 8 + x);
-			Piece piece = position.piece_on(sqr);
-
-			if (piece != NO_PIECE)
-			{
-				Bitboard piece_bb = sqr.bitboard();
-
-                out << ((piece_bb & position.get_occupied(WHITE)) 
-                    ? PieceName[WHITE][piece] 
-                    : PieceName[BLACK][piece]);
-			}
-			else 
-                out << ' ';
-
-			out << " | ";
-		}
-		out << "\n";
-	}
-
-    return out;
 }

@@ -14,3 +14,6 @@ add_library(${PROJECT_NAME}UI_lib STATIC
     ui/board/view.cpp
 )
 target_link_libraries(${PROJECT_NAME}UI_lib PUBLIC EventBus_lib UI_lib)
+
+add_library(${PROJECT_NAME}Input_lib STATIC input/view.hpp input/view.cpp)
+target_link_libraries(${PROJECT_NAME}Input_lib PUBLIC EventBus_lib SFML::Graphics)

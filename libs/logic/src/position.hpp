@@ -14,7 +14,7 @@
 namespace game::logic
 {
 
-
+template<StorageType Policy>
 class Position
 {
 public:
@@ -107,7 +107,7 @@ private:
     Bitboard occupied[COLOR_COUNT];
     Piece types[SQUARE_COUNT];
     Color side;
-    StateStorage st;
+    StateStorage<Policy> st;
 
     Bitboard attackers; 
     Bitboard checkers;
@@ -118,8 +118,9 @@ private:
 };
 
 
+template<StorageType Policy>
 template <bool HashUpdate>
-inline void Position::add_piece(Color color, Piece piece, Square sqr)
+inline void Position<Policy>::add_piece(Color color, Piece piece, Square sqr)
 {
     Bitboard new_piece = sqr.bitboard();
 
@@ -131,8 +132,9 @@ inline void Position::add_piece(Color color, Piece piece, Square sqr)
         st.top().hash.updateSquare(color, piece, sqr);
 }
 
+template<StorageType Policy>
 template <bool HashUpdate>
-inline void Position::remove_piece(Color color, Square sqr)
+inline void Position<Policy>::remove_piece(Color color, Square sqr)
 {
     Bitboard del_b = sqr.bitboard();
     Piece piece = types[sqr];
@@ -147,8 +149,9 @@ inline void Position::remove_piece(Color color, Square sqr)
         st.top().hash.updateSquare(color, piece, sqr);
 }
 
+template<StorageType Policy>
 template <bool HashUpdate>
-inline void Position::move_piece(Square from, Square targ)
+inline void Position<Policy>::move_piece(Square from, Square targ)
 {
     Piece piece = types[from];
     Bitboard move_bb = from.bitboard() | targ.bitboard();
@@ -167,8 +170,9 @@ inline void Position::move_piece(Square from, Square targ)
     }
 }
 
+template<StorageType Policy>
 template <bool HashUpdate>
-inline void Position::replace(Piece new_p, Square s)
+inline void Position<Policy>::replace(Piece new_p, Square s)
 {
     Bitboard piece_bb = s.bitboard();
     Piece old_p = types[s];
@@ -186,8 +190,9 @@ inline void Position::replace(Piece new_p, Square s)
     }
 }
 
+template<StorageType Policy>
 template <typename... Squares>
-inline bool Position::is_blocker(Squares... sqr) const noexcept
+inline bool Position<Policy>::is_blocker(Squares... sqr) const noexcept
 {
     Bitboard blockers = Bitboard::FromSquares(sqr...);
     return (king_blockers & blockers) == blockers;
@@ -196,6 +201,48 @@ inline bool Position::is_blocker(Squares... sqr) const noexcept
 
 }
 
+template<game::logic::StorageType Policy>
+std::ostream& operator<<(std::ostream& out, const game::logic::Position<Policy>& position)
+{
+    using namespace game::logic;
 
-std::ostream& operator<<(std::ostream& out, const game::logic::Position& position);
+    constexpr char PieceName[COLOR_COUNT][PIECE_COUNT] =
+	{
+		{'K', 'Q', 'P', 'N', 'B', 'R'},
+		{'k', 'q', 'p', 'n', 'b', 'r'}
+	};
 
+    for (int y = 7; y >= 0; --y)
+	{
+		for (int x = 0; x < 7; ++x)
+			out << "-----";
+
+		out << "\n";
+		out << y + 1 << " | ";
+
+		for (int x = 0; x < 8; ++x)
+		{
+			Square sqr(y * 8 + x);
+			Piece piece = position.piece_on(sqr);
+
+			if (piece != NO_PIECE)
+			{
+				Bitboard piece_bb = sqr.bitboard();
+
+                out << ((piece_bb & position.get_occupied(WHITE)) 
+                    ? PieceName[WHITE][piece] 
+                    : PieceName[BLACK][piece]);
+			}
+			else 
+                out << ' ';
+
+			out << " | ";
+		}
+		out << "\n";
+	}
+
+    return out;
+}
+
+using PositionFixedMemory = game::logic::Position<game::logic::StaticStorage>;
+using PositionDynamicMemory = game::logic::Position<game::logic::DynamicStorage>;

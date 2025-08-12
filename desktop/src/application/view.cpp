@@ -4,8 +4,6 @@
 
 Application::Application()
 {
-    game::logic::Position::Init();
-
     resource::WindowConfigManager window_config;
     resource::BoardConfigManager board_config;
 
@@ -18,18 +16,11 @@ Application::Application()
     SceneController.Load(board_config);
 }
 
-
 void Application::run()
 {
     while(Window.isOpen())
     {
-        while(auto event = Window.pollEvent())
-        {
-            if(event->is<sf::Event::Closed>()) {
-                Window.close();
-            }
-        }
-
+        SceneController.HandleEvents(Window);
         SceneController.Display(Window);
     }
 }

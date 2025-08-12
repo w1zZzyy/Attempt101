@@ -1,12 +1,15 @@
 #include "view.hpp"
 
+#include <ranges>
+#include <iostream>
+
 namespace game
 {
 
 
 void LogicManager::Init(const std::string &fen)
 {
-    logic::Position::Init();
+    PositionDynamicMemory::Init();
 
     pos.set_fen(fen);
     UpdateStatus();
@@ -31,23 +34,35 @@ std::expected<logic::Move, LogicException> LogicManager::DoMove(
     if(status != logic::GameStatus::InProgress) 
         return std::unexpected(LogicException::GameStatusError);
 
-    std::optional<logic::Move> move;
+    std::vector<logic::Move> candidates;
+    candidates.reserve(8);
+
     for(size_t i = 0; i < legal_moves.get_size(); ++i)
     {
-        logic::Move m = legal_moves[i];
-        if(m.from() == from && m.targ() == targ)
-        {
-            if(flag) { if(*flag == m.flag()) { DoMove(m); return m; }}        
-            else if(!move) move = m; 
-            else return std::unexpected(LogicException::PromotionFlagNeeded);
-        }
+        const auto m = legal_moves[i]; 
+        if (m.from() == from && m.targ() == targ)
+            candidates.push_back(m);
     }
 
-    if(!move)
+    if (candidates.empty())
         return std::unexpected(LogicException::MoveNotFound);
 
-    DoMove(*move);
-    return *move;
+    if(candidates.size() == 1) {
+        DoMove(candidates[0]);
+        return candidates[0];
+    }
+    
+    if(!flag) 
+        return std::unexpected(LogicException::PromotionFlagNeeded);
+
+    if(
+        auto it = std::ranges::find_if(candidates, [&](const logic::Move& m) {
+            return m.flag() == *flag;
+        });
+        it != candidates.end() 
+    ) { return *it; }
+
+    return std::unexpected(LogicException::MoveNotFound);
 }
 
 void LogicManager::UpdateStatus()
@@ -55,8 +70,8 @@ void LogicManager::UpdateStatus()
     pos.compute_enemy_attackers().compute_pins_from_sliders();
     legal_moves.generate(pos);
 
-    if(pos.is_check()) {
-        status = legal_moves.empty() 
+    if(legal_moves.empty()) {
+        status = pos.is_check()
         ?  static_cast<logic::GameStatus>(int(pos.get_side().opp()))
         : logic::GameStatus::Draw;
     } else if(pos.is_draw()) {
