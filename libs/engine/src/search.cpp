@@ -1,50 +1,111 @@
 #include "search.hpp"
 
 #include "movelist.hpp"
+#include <format>
+#include <iostream>
+#include <algorithm>
 
 namespace game::engine
 {
 
+using namespace logic;
 
-SearchResults Search::start(const SearchOptions &options)
+Search &Search::SetMaxDepth(int d)
 {
-    PositionFixedMemory pos(options.fen);
-
-    pos.compute_enemy_attackers().compute_pins_from_sliders();
-
-    logic::MoveList moves; 
-    moves.generate(pos);
-
-    SearchResults res;
-    res.score = -logic::INF;
-
-    for(size_t i = 0; i < moves.get_size(); ++i)
-    {
-        pos.do_move(moves[i]);
-
-        Eval eval;
-        eval.init(pos);
-
-        int score = -negamax(pos, options.depth - 1, eval);
-        if(score > res.score) {
-            res.score = score;
-            res.move = moves[i];
-        }
-
-        pos.undo_move();
+    if(d >= MAX_HISTORY_SIZE) {
+        throw std::runtime_error(std::format(
+            "depth cant be more than {}\n", 
+            MAX_HISTORY_SIZE
+        ));
     }
-
-    return res;
+    maxDepth = d;
+    return *this;
 }
 
+Search &Search::StartSearchWorker(const std::function<void(RootMove)> &callback)
+{
+    search_thread = std::thread([&]()
+    {
+        while(!stop.load()) {
+            std::unique_lock<std::mutex> ul(mtx);
+            cv.wait(ul, [this](){return can_search.load();});
 
-int Search::negamax(
-    PositionFixedMemory& pos, 
-    int depth, Eval& eval, 
-    int alpha, int beta
-) {
-    using namespace game::logic;
+            if(stop.load()) 
+                break;
 
+            if(auto best_move = BestMove())
+                callback(*best_move);
+
+            can_search.store(false);
+        }
+    });
+
+    return *this;
+}
+
+void Search::FindBestMove(const std::string &fen)
+{
+    if(can_search.load()) {
+        std::cout << "wait for search to finish\n";
+        return;
+    }
+
+    this->fen = fen;
+    this->variations.clear();
+    can_search.store(true);
+    cv.notify_one();
+}
+
+void Search::Stop()
+{
+    stop.store(true);
+    can_search.store(true);
+
+    cv.notify_one();
+
+    if(search_thread.joinable()) 
+        search_thread.join();
+}
+
+std::optional<Search::RootMove> Search::BestMove()
+{
+    PositionFixedMemory pos(fen);
+    MoveList moves;
+
+
+    pos.compute_enemy_attackers().compute_pins_from_sliders();
+    eval.init(pos);
+    moves.generate(pos);
+
+
+    if(moves.empty()) return std::nullopt;
+    
+    for(size_t i = 0; i < moves.get_size(); ++i) 
+        variations.emplace_back(RootMove{moves[i], 0});
+
+    for(size_t depth = 1; depth <= maxDepth; ++depth)
+    {
+        std::sort(variations.begin(), variations.end(), 
+        [](const RootMove& r1, const RootMove& r2){ return r1.score > r2.score; });
+
+        for(auto& var : variations) 
+        {
+            pos.do_move(var.move);
+            eval.update(pos, var.move);
+
+            var.score = -Negamax(pos, depth - 1, -INF, INF);
+
+            eval.rollback(pos, var.move);
+            pos.undo_move();
+        }
+    }
+
+
+    return variations[0];
+}
+
+int Search::Negamax(PositionFixedMemory &pos, int depth, int alpha, int beta)
+{
     if(depth == 0) 
         return eval.score(pos);
 
@@ -58,27 +119,23 @@ int Search::negamax(
             pos.is_check() ? -INF + MAX_HISTORY_SIZE - depth :
             0
         );
+    } 
+    else if(pos.is_draw()) {
+        return 0;
     }
 
     for(size_t i = 0; i < moves.get_size(); ++i) 
     {
-        pos.do_move(moves[i]);
-        eval.update(pos, moves[i]);
+        Move move = moves[i];
 
-        int mg[COLOR_COUNT] = {eval.get_mg(WHITE), eval.get_mg(BLACK)};
-        int eg[COLOR_COUNT] = {eval.get_eg(WHITE), eval.get_eg(BLACK)};
-        int phase = eval.get_phase();
+        pos.do_move(move);
+        eval.update(pos, move);
 
-        int score = -negamax(pos, depth - 1, eval, -beta, -alpha);
+        int score = -Negamax(pos, depth - 1, -beta, -alpha);
         alpha = std::max(alpha, score);
 
+        eval.rollback(pos, move);
         pos.undo_move();
-        eval
-            .set_mg(WHITE, mg[WHITE])
-            .set_mg(BLACK, mg[BLACK])
-            .set_eg(WHITE, eg[WHITE])
-            .set_eg(BLACK, eg[BLACK])
-            .set_phase(phase);
 
         if(alpha >= beta) {
             return beta;
@@ -87,6 +144,5 @@ int Search::negamax(
 
     return alpha;
 }
-
 
 }

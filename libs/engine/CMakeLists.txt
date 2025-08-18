@@ -17,7 +17,3 @@ set(
 add_library(${PROJECT_NAME}_lib STATIC ${Header} ${Source})
 target_link_libraries(${PROJECT_NAME}_lib PUBLIC Logic_lib)
 target_include_directories(${PROJECT_NAME}_lib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../logic/src/)
-
-add_executable(${PROJECT_NAME}_exe main.cpp)
-target_link_libraries(${PROJECT_NAME}_exe PRIVATE ${PROJECT_NAME}_lib)
-target_include_directories(${PROJECT_NAME}_exe PRIVATE src)
