@@ -1,18 +1,14 @@
-cmake_minimum_required(VERSION 3.20)
-
-project(Logic LANGUAGES CXX) 
-
 set (
     Header 
-    src/attack.hpp
-    src/defs.hpp
-    src/bitboard.hpp
-    src/move.hpp
-    src/movelist.hpp
-	src/position.hpp
-    src/zobrist.hpp
-    src/square.hpp 
-    src/storage.hpp
+    include/attack.hpp
+    include/defs.hpp
+    include/bitboard.hpp
+    include/move.hpp
+    include/movelist.hpp
+	include/position.hpp
+    include/zobrist.hpp
+    include/square.hpp 
+    include/storage.hpp
 )
 
 set(
@@ -28,11 +24,11 @@ set(
     src/storage.cpp
 )
 
-add_library(${PROJECT_NAME}_lib STATIC ${Header} ${Source})
-
+add_library(Logic_lib STATIC ${Header} ${Source})
+target_include_directories(Logic_lib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include/)
 
 if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
-	target_compile_options(${PROJECT_NAME}_lib PUBLIC -mbmi2 -mbmi)
+	target_compile_options(Logic_lib PUBLIC -mbmi2 -mbmi)
 endif()
 
 set(
@@ -46,5 +42,5 @@ file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/tests/tests_data DESTINATION ${CMAKE_CURRE
 add_definitions(-DLOGIC_TESTS_DATA_PATH="${CMAKE_CURRENT_BINARY_DIR}/tests_data")
 
 add_executable(tests_exe ${Tests})
-target_link_libraries(tests_exe PRIVATE ${PROJECT_NAME}_lib)
+target_link_libraries(tests_exe PRIVATE Logic_lib)
 target_include_directories(tests_exe PRIVATE src)

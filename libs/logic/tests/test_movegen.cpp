@@ -1,5 +1,5 @@
 #include "test_movegen.hpp"
-#include "../src/movelist.hpp"
+#include "movelist.hpp"
 #include "position.hpp"
 #include "storage.hpp"
 #include <cassert>
