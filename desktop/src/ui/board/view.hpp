@@ -2,7 +2,7 @@
 
 #include <SFML/Graphics.hpp>
 #include <memory>
-#include "logic/src/defs.hpp"
+#include "logic/defs.hpp"
 
 namespace ui
 {

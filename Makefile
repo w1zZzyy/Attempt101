@@ -3,14 +3,14 @@
 build-impl-%:
 	@mkdir -p build_$*
 	@cd build_$* && cmake -DCMAKE_BUILD_TYPE=$* .. 
-	@cmake --build build_$*
+	@cmake --build build_$* 
 
 build-debug: build-impl-debug
 build-release: build-impl-release
 
 
 run-desktop-impl-%: docker-build-%
-	@./build_$*/desktop/ChessDesktop
+	@./build_$*/desktop/AttemptDesktop
 
 run-desktop-debug: run-desktop-impl-debug 
 run-desktop-release: run-desktop-impl-release 

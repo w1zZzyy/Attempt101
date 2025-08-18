@@ -1,18 +1,11 @@
-cmake_minimum_required(VERSION 3.20)
-project(Scene LANGUAGES CXX)
-
-include_directories(
-    ${CMAKE_CURRENT_SOURCE_DIR}/../
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../libs/
-)
-
-add_library(${PROJECT_NAME}Game_lib STATIC game/view.hpp game/view.cpp)
-target_link_libraries(${PROJECT_NAME}Game_lib PUBLIC 
+add_library(SceneGame_lib STATIC game/view.hpp game/view.cpp)
+target_link_libraries(SceneGame_lib PUBLIC 
     ResourceConfig_lib 
     ControllerGame_lib 
     ControllerUI_lib
-    ControllerInput_lib
+    ControllerInput_lib 
 )
+target_include_directories(SceneGame_lib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/)
 
-add_library(${PROJECT_NAME}Manager_lib STATIC manager/view.hpp manager/view.cpp)
-target_link_libraries(${PROJECT_NAME}Manager_lib PUBLIC ${PROJECT_NAME}Game_lib)
+add_library(SceneManager_lib STATIC manager/view.hpp manager/view.cpp)
+target_link_libraries(SceneManager_lib PUBLIC SceneGame_lib)

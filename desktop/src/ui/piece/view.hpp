@@ -2,7 +2,7 @@
 
 #include <SFML/Graphics.hpp>
 #include <array>
-#include "event/bus/view.hpp"
+#include "logic/defs.hpp"
 
 namespace ui
 {

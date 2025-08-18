@@ -8,13 +8,11 @@ build-impl-%:
 clean:
 	@rm -rf build_release build_debug
 
-run-test-impl-%: 
-	@./build_$*/$*/tests_exe
+test-impl-%: build-impl-%
+	@./build_$*/tests_exe
 
-test-logic: build-impl-release
-	@$(MAKE) run-test-impl-logic
-test-logic-debug: build-impl-debug
-	@$(MAKE) run-test-impl-logic
+test-logic: test-impl-release
+test-logic-debug: test-impl-debug
 
 build-release: build-impl-release
 build-debug: build-impl-debug

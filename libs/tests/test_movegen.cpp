@@ -1,7 +1,7 @@
 #include "test_movegen.hpp"
-#include "movelist.hpp"
-#include "position.hpp"
-#include "storage.hpp"
+#include "logic/movelist.hpp"
+#include "logic/position.hpp"
+#include "logic/storage.hpp"
 #include <cassert>
 #include <cstddef>
 #include <fstream>

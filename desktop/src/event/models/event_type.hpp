@@ -6,8 +6,8 @@
 #include <type_traits>
 #include <memory>
 
-#include "logic/src/defs.hpp"
-#include "logic/src/move.hpp"
+#include "logic/defs.hpp"
+#include "logic/move.hpp"
 
 namespace event
 {

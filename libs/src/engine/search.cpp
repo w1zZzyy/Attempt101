@@ -1,6 +1,6 @@
 #include "search.hpp"
 
-#include "movelist.hpp"
+#include "logic/movelist.hpp"
 #include <format>
 #include <iostream>
 #include <algorithm>

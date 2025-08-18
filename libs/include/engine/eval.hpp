@@ -1,6 +1,6 @@
 #pragma once
 
-#include "position.hpp"
+#include "logic/position.hpp"
 
 namespace game::engine
 {

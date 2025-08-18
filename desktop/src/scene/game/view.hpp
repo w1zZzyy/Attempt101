@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../idle.hpp"
+#include "idle.hpp"
 #include "controllers/game/view.hpp"
 #include "controllers/ui/board/view.hpp"
 #include "controllers/input/view.hpp"
