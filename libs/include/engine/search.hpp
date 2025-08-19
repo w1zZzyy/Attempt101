@@ -48,7 +48,6 @@ private:
     Eval eval;
 
     std::string fen;
-    std::vector<RootMove> variations;
 
     std::thread search_thread;
     std::condition_variable cv;
