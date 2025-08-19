@@ -4,6 +4,8 @@ target_link_libraries(SceneGame_lib PUBLIC
     ControllerGame_lib 
     ControllerUI_lib
     ControllerInput_lib 
+    ControllerHuman_lib 
+    ControllerAI_lib
 )
 target_include_directories(SceneGame_lib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/)
 
