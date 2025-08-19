@@ -1,0 +1,41 @@
+{
+    "board" : {
+        "square_color": {
+            "white": {
+                "red": 232,
+                "green": 235,
+                "blue": 239
+            }, 
+            "black": {
+                "red": 125,
+                "green": 135,
+                "blue": 150
+            }
+        },
+        "square_size": {
+            "width": 100,
+            "height": 80
+        },
+        "highlight": {
+            "red": 0, 
+            "green": 255,
+            "blue": 0,
+            "alpha": 100
+        },
+        "left_bottom_square": {
+            "x": 0,
+            "y": 560
+        }
+    }, 
+    "window" : {
+        "width": 800,
+        "height": 640,
+        "title": "FinalAttempt", 
+        "fps": 60
+    }, 
+    "game" : {
+        "start_position": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+        "player_side": "white", 
+        "search_depth": 6
+    }
+}

@@ -1,19 +1,15 @@
 #include "view.hpp"
 
-#include <format>
-#include <fstream>
 #include <iostream>
+#include <fstream>
 
 namespace resource
 {
 
 
-ConfigManager::ConfigManager(std::string_view config_name)
+ConfigManager::ConfigManager()
 {
-    std::string path = ASSETS_PATH + std::format(
-        "/configs/{}.json",
-        config_name
-    );
+    std::string path = ASSETS_PATH + std::string{"/configs/static_config.json"};
 
     std::ifstream file(path);
     if (!file.is_open()) {
@@ -24,47 +20,58 @@ ConfigManager::ConfigManager(std::string_view config_name)
     file >> config;
 }
 
-sf::Color BoardConfigManager::Highlight() const
+sf::Color ConfigManager::Highlight() const
 {
-    const auto& hl = config["highlight"];
+    const auto& hl = config["board"]["highlight"];
     return sf::Color{
         hl["red"], hl["green"], hl["blue"], 
         hl["alpha"]
     };
 }
 
-sf::Vector2f BoardConfigManager::SquareSize() const
+sf::Vector2f ConfigManager::SquareSize() const
 {
+    const auto& sqr = config["board"]["square_size"];
     return sf::Vector2f{
-        config["square_size"]["width"], 
-        config["square_size"]["height"]
+        sqr["width"], 
+        sqr["height"]
     };
 }
 
-sf::Vector2f BoardConfigManager::LeftBottomSquare() const
+sf::Vector2f ConfigManager::LeftBottomSquare() const
 {
+    const auto& sqr = config["board"]["left_bottom_square"];
     return sf::Vector2f{
-        config["left_bottom_square"]["x"],
-        config["left_bottom_square"]["y"]
+        sqr["x"],
+        sqr["y"]
     };
 }
 
-std::string BoardConfigManager::InitalFen() const
+std::string ConfigManager::InitalFen() const
 {
-    return config["initial_fen"];
+    return config["game"]["start_position"];
 }
 
-game::logic::Color BoardConfigManager::BoardView() const
+game::logic::Color ConfigManager::BoardView() const
 {
     using namespace game::logic;
-    if(config["board_view"] == "white") return WHITE;
-    if(config["board_view"] == "black") return BLACK;
-    throw std::runtime_error("invalid board_view field");
+
+    const auto& plr = config["game"]["player_side"];
+
+    if(plr == "white") return WHITE;
+    if(plr == "black") return BLACK;
+
+    throw std::runtime_error("invalid player_side field");
 }
 
-sf::Color BoardConfigManager::SquareColor(std::string_view clr) const
+int ConfigManager::EngineSearchDepth() const
 {
-    const auto& sqr = config["square_color"];
+    return config["game"]["search_depth"];
+}
+
+sf::Color ConfigManager::SquareColor(std::string_view clr) const
+{
+    const auto& sqr = config["board"]["square_color"];
     return sf::Color{
         sqr[clr]["red"], 
         sqr[clr]["green"],
@@ -72,22 +79,23 @@ sf::Color BoardConfigManager::SquareColor(std::string_view clr) const
     };
 }
 
-sf::Vector2u WindowConfigManager::WindowSize() const
+sf::Vector2u ConfigManager::WindowSize() const
 {
+    const auto& win = config["window"];
     return sf::Vector2u{
-        config["width"], 
-        config["height"]
+        win["width"], 
+        win["height"]
     };
 }
 
-std::string WindowConfigManager::Title() const
+std::string ConfigManager::Title() const
 {
-    return config["title"];
+    return config["window"]["title"];
 }
 
-int WindowConfigManager::FPS() const
+int ConfigManager::FPS() const
 {
-    return config["fps"];
+    return config["window"]["fps"];
 }
 
 }
