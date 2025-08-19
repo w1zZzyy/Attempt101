@@ -1,6 +1,6 @@
 #include "view.hpp"
 
-#include "../game/view.hpp"
+#include "game/view.hpp"
 
 namespace scene
 {

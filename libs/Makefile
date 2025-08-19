@@ -1,23 +1,21 @@
 .PHONY: build-release build-debug clean test-logic test-logic-debug build-impl-% run-test-impl-%
 
 build-impl-%: 
-	@mkdir -p build
-	@cd build && cmake -DCMAKE_BUILD_TYPE=$* ..
-	@cmake --build build
+	@mkdir -p build_$*
+	@cd build_$* && cmake -DCMAKE_BUILD_TYPE=$* ..
+	@cmake --build build_$*
 
 clean:
-	@rm -rf build
+	@rm -rf build_release build_debug
 
-run-test-impl-%: 
-	@./build/$*/tests_exe
+test-impl-%: build-impl-%
+	@./build_$*/tests_exe
 
-test-logic: build-impl-Release
-	@$(MAKE) run-test-impl-logic
-test-logic-debug: build-impl-Debug
-	@$(MAKE) run-test-impl-logic
+test-logic: test-impl-release
+test-logic-debug: test-impl-debug
 
-build-release: build-impl-Release
-build-debug: build-impl-Debug
+build-release: build-impl-release
+build-debug: build-impl-debug
 
 run-engine-release: build-release
 	@./build/engine/Engine_exe

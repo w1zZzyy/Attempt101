@@ -1,7 +1,7 @@
 #pragma once
 
-#include "logic/src/position.hpp"
-#include "logic/src/movelist.hpp"
+#include "logic/position.hpp"
+#include "logic/movelist.hpp"
 #include <vector>
 #include <expected>
 

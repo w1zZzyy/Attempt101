@@ -179,14 +179,14 @@ void Position<Policy>::undo_move()
 {
     constexpr bool HashUpdate = false;
 
-    Move last_move = st.top().move;
-    Piece captured = st.top().captured;
+    const Move last_move = st.top().move;
+    const Piece captured = st.top().captured;
     
-    Square from = last_move.from();
-    Square targ = last_move.targ();
-    MoveFlag flag = last_move.flag();
+    const Square from = last_move.from();
+    const Square targ = last_move.targ();
+    const MoveFlag flag = last_move.flag();
 
-    State& old_st = st.rollback();
+    st.rollback();
     side.swap();
 
     switch (flag)

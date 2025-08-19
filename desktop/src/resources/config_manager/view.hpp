@@ -2,7 +2,7 @@
 
 #include <nlohmann/json.hpp>
 #include <SFML/Graphics.hpp>
-#include "logic/src/defs.hpp"
+#include "logic/defs.hpp"
 
 namespace resource
 {

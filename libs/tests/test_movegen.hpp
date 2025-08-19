@@ -6,8 +6,8 @@
 #include <unordered_map>
 #include <string>
 
-#include "../src/position.hpp"
-#include "../src/move.hpp"
+#include "logic/position.hpp"
+#include "logic/move.hpp"
 
 size_t CountNodes(PositionFixedMemory& pos, size_t depth);
 

@@ -1,6 +1,6 @@
 #include "view.hpp"
 
-#include "logic/src/position.hpp"
+#include "logic/position.hpp"
 
 Application::Application()
 {

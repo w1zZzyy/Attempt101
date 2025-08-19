@@ -5,7 +5,7 @@
 #include <vector>
 #include <functional>
 #include <queue>
-#include "../models/event_type.hpp"
+#include "event_type.hpp"
 
 namespace event
 {

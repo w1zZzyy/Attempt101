@@ -1,7 +1,7 @@
 #pragma once
 
 #include "event/bus/view.hpp"
-#include "manager/view.hpp"
+#include "manager/logic.hpp" 
 
 namespace controller
 {

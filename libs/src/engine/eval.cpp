@@ -160,14 +160,14 @@ constexpr int eg_piece_table[logic::PIECE_COUNT][logic::SQUARE_COUNT] =
     }
 };
 
-int mg_table[logic::COLOR_COUNT][logic::PIECE_COUNT][logic::SQUARE_COUNT];
-int eg_table[logic::COLOR_COUNT][logic::PIECE_COUNT][logic::SQUARE_COUNT];
+using namespace logic;
+
+int mg_table[COLOR_COUNT][PIECE_COUNT][SQUARE_COUNT];
+int eg_table[COLOR_COUNT][PIECE_COUNT][SQUARE_COUNT];
 
 
 void Eval::Setup()
 {
-    using namespace logic;
-
     for(Piece p = KING; p <= ROOK; p.next()) {
         for(Square sqr = Square::Start(); sqr <= Square::End(); ++sqr) {
             mg_table[WHITE][p][sqr] = mg_value[p] + mg_piece_table[p][sqr];
@@ -180,8 +180,6 @@ void Eval::Setup()
 
 void Eval::init(const PositionFixedMemory& pos) 
 {
-    using namespace logic;
-
     game_phase = 0;
     mg[WHITE] = 0;
     mg[BLACK] = 0;
@@ -191,48 +189,30 @@ void Eval::init(const PositionFixedMemory& pos)
     for(Square sqr = Square::Start(); sqr <= Square::End(); ++sqr) {
         Piece p = pos.piece_on(sqr);
         Color c = pos.piece_clr_on(sqr);
-        if(p.isValid()) {
-            mg[c] += mg_table[c][p][sqr];
-            eg[c] += eg_table[c][p][sqr];
-            game_phase += gamephaseInc[p];
-        }
+        if(p.isValid()) add_piece(c, p, sqr);
     }
 }
 
 
 void Eval::update(const PositionFixedMemory& pos, logic::Move move)
 {
-    using namespace logic;
-
     Square from = move.from();
     Square targ = move.targ();
     MoveFlag flag = move.flag();
 
-    const Color side_moved = pos.get_side().opp();
+    const Color side_curr = pos.get_side();
+    const Color side_moved = side_curr.opp();
     
-    if(Piece captured = pos.get_captured(); captured.isValid()) {
-        const Color side_curr = side_moved.opp();
-        Square targ_ = (flag != EN_PASSANT_MF) 
-            ? targ 
-            : where_passant(from, targ);
-        mg[side_curr] -= mg_table[side_curr][captured][targ_];
-        eg[side_curr] -= eg_table[side_curr][captured][targ_];
-        game_phase -= gamephaseInc[captured];
-    }
+    if(const Piece captured = pos.get_captured(); captured.isValid()) remove_piece(side_curr, captured, targ);
+    else if(flag == EN_PASSANT_MF) remove_piece(side_curr, PAWN, where_passant(from, targ));
 
     switch (flag)
     {
     case S_CASTLE_MF:
-        mg[side_moved] += mg_table[side_moved][KING][targ] - mg_table[side_moved][KING][from];
-        eg[side_moved] += eg_table[side_moved][KING][targ] - eg_table[side_moved][KING][from];
-        mg[side_moved] += mg_table[side_moved][ROOK][from + EAST] - mg_table[side_moved][ROOK][targ + EAST];
-        eg[side_moved] += eg_table[side_moved][ROOK][from + EAST] - eg_table[side_moved][ROOK][targ + EAST];
+        castle(side_moved, from, targ, targ + EAST, from + EAST);
         break;
     case L_CASTLE_MF:
-        mg[side_moved] += mg_table[side_moved][KING][targ] - mg_table[side_moved][KING][from];
-        eg[side_moved] += eg_table[side_moved][KING][targ] - eg_table[side_moved][KING][from];
-        mg[side_moved] += mg_table[side_moved][ROOK][from + WEST] - mg_table[side_moved][ROOK][targ + 2 * WEST];
-        eg[side_moved] += eg_table[side_moved][ROOK][from + WEST] - eg_table[side_moved][ROOK][targ + 2 * WEST];
+        castle(side_moved, from, targ, targ + 2 * WEST, from + WEST);
         break;
     case Q_PROMOTION_MF:
     case R_PROMOTION_MF:
@@ -247,20 +227,51 @@ void Eval::update(const PositionFixedMemory& pos, logic::Move move)
     }
     default:
     {
-        const Piece p = pos.piece_on(targ);
-        mg[side_moved] += mg_table[side_moved][p][targ] - mg_table[side_moved][p][from];
-        eg[side_moved] += eg_table[side_moved][p][targ] - eg_table[side_moved][p][from];
+        update_piece(side_moved, pos.piece_on(targ), from, targ);
         break;
     }
     
     }
 }
 
+void Eval::rollback(const PositionFixedMemory &pos, logic::Move move)
+{
+    const Color side_curr = pos.get_side();
+    const Color side_moved = side_curr.opp();
+    const Square from = move.from();
+    const Square targ = move.targ();
+    const MoveFlag flag = move.flag();
+
+    if(const Piece captured = pos.get_captured(); captured.isValid()) add_piece(side_curr, captured, targ);
+    else if(flag == EN_PASSANT_MF) add_piece(side_curr, PAWN, where_passant(from, targ));
+
+    switch (flag)
+    {
+    case S_CASTLE_MF:
+        castle(side_moved, targ, from, from + EAST, targ + EAST);
+        break;
+    case L_CASTLE_MF:
+        castle(side_moved, targ, from, from + WEST, targ + 2 * WEST);
+        break;
+    case Q_PROMOTION_MF:
+    case R_PROMOTION_MF:
+    case K_PROMOTION_MF:
+    case B_PROMOTION_MF:
+    {
+        const Piece p = pos.piece_on(targ);
+        mg[side_moved] -= mg_table[side_moved][p][targ] + mg_table[side_moved][PAWN][from];
+        eg[side_moved] -= eg_table[side_moved][p][targ] + eg_table[side_moved][PAWN][from];
+        game_phase -= gamephaseInc[p] + gamephaseInc[PAWN];
+        break;
+    }
+    default:
+        update_piece(side_moved, pos.piece_on(targ), targ, from);
+        break;
+    }
+}
 
 int Eval::score(const PositionFixedMemory& pos) const
 {
-    using namespace logic;
-
     const Color side = pos.get_side();
 
     int mg_score = mg[side] - mg[side.opp()];
@@ -270,6 +281,32 @@ int Eval::score(const PositionFixedMemory& pos) const
     int eg_phase = 24 - mg_phase;
 
     return (mg_score * mg_phase + eg_score * eg_phase) / 24;
-}   
+}
+
+void Eval::update_piece(logic::Color side, logic::Piece piece, logic::Square from, logic::Square targ)
+{
+    mg[side] += mg_table[side][piece][targ] - mg_table[side][piece][from];
+    eg[side] += eg_table[side][piece][targ] - eg_table[side][piece][from];
+}
+
+void Eval::add_piece(logic::Color side, logic::Piece piece, logic::Square sqr)
+{
+    mg[side] += mg_table[side][piece][sqr];
+    eg[side] += eg_table[side][piece][sqr];
+    game_phase += gamephaseInc[piece];
+}
+
+void Eval::remove_piece(logic::Color side, logic::Piece piece, logic::Square from)
+{
+    mg[side] -= mg_table[side][piece][from];
+    eg[side] -= eg_table[side][piece][from];
+    game_phase -= gamephaseInc[piece];
+}
+
+void Eval::castle(logic::Color side, logic::Square kf, logic::Square kt, logic::Square rf, logic::Square rt)
+{
+    update_piece(side, KING, kf, kt);
+    update_piece(side, ROOK, rf, rt);
+}
 
 }

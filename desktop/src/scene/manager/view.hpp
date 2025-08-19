@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../idle.hpp"
+#include "idle.hpp"
 
 namespace scene
 {

@@ -1,16 +1,75 @@
-cmake_minimum_required(VERSION 3.12)
-project(libs LANGUAGES CXX)
+# ЛОГИКА
 
-set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-set(CMAKE_CXX_FLAGS_RELEASE "-O3 -march=native -flto")
+add_library(Logic_lib STATIC 
+    include/logic/attack.hpp
+    include/logic/defs.hpp
+    include/logic/bitboard.hpp
+    include/logic/move.hpp
+    include/logic/movelist.hpp
+	include/logic/position.hpp
+    include/logic/zobrist.hpp
+    include/logic/square.hpp 
+    include/logic/storage.hpp
+    src/logic/attack.cpp
+    src/logic/defs.cpp
+    src/logic/bitboard.cpp
+    src/logic/move.cpp
+    src/logic/movelist.cpp
+	src/logic/position.cpp
+    src/logic/zobrist.cpp
+    src/logic/square.cpp 
+    src/logic/storage.cpp
+)
+target_include_directories(Logic_lib PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include/logic)
+target_include_directories(Logic_lib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+	target_compile_options(
+        Logic_lib PRIVATE 
+        -mbmi2 -mbmi 
+        $<$<CONFIG:Release>: -O3 -march=native -flto -DNDEBUG>
+    )
+endif()
 
-add_subdirectory(logic)
-add_subdirectory(engine)
 
-add_library(LogicManager_lib STATIC manager/view.hpp manager/view.cpp)
-target_link_libraries(LogicManager_lib PUBLIC Logic_lib)
-target_include_directories(LogicManager_lib PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/)
-target_compile_features(LogicManager_lib PUBLIC cxx_std_23)
+# ДВИЖОК
+
+add_library(Engine_lib STATIC 
+    include/engine/eval.hpp
+    include/engine/search.hpp
+    src/engine/eval.cpp
+    src/engine/search.cpp
+)
+target_include_directories(Engine_lib PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include/engine)
+target_include_directories(Engine_lib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(Engine_lib PUBLIC Logic_lib)
+target_compile_options(Engine_lib PRIVATE 
+    $<$<CONFIG:Release>: -O3 -march=native -flto -DNDEBUG>
+)
+
+
+# ТЕСТЫ
+
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/tests/tests_data DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+
+add_executable(tests_exe 
+    tests/test_movegen.hpp 
+    tests/test_movegen.cpp 
+    tests/main.cpp
+)
+target_link_libraries(tests_exe PRIVATE Logic_lib)
+target_compile_definitions(tests_exe PRIVATE 
+    -DLOGIC_TESTS_DATA_PATH="${CMAKE_CURRENT_BINARY_DIR}/tests_data"
+)
+
+
+
+# УПРАВЛЕНИЕ ЛОГИКОЙ
+
+add_library(LogicManager_lib STATIC 
+    include/manager/logic.hpp 
+    src/manager/logic.cpp
+)
+target_link_libraries(LogicManager_lib PUBLIC Logic_lib) 
+target_include_directories(LogicManager_lib PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include/manager)
+
 
