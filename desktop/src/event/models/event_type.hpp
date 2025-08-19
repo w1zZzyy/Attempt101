@@ -40,11 +40,15 @@ struct PieceSelectedEvent : IEvent {
 };
 
 
+// INPUT STATUS CHANGED 
+
+struct InputWasBlocked : IEvent {};
+struct InputWasAllowed : IEvent {};
+
+
 // PROMOTION 
 
-struct ShowPromotionDialog : IEvent {
-    ShowPromotionDialog() = default;
-};
+struct ShowPromotionDialog : IEvent {};
 
 
 // MOVE 
@@ -59,6 +63,14 @@ struct MoveEvent : IEvent {
     std::optional<game::logic::MoveFlag> flag;
 };
 
+struct PositionWasUpdated : IEvent {
+    PositionWasUpdated(const std::string& fen, game::logic::Color side) : 
+        new_fen(fen), 
+        new_side(side)
+    {}
+    std::string new_fen;
+    game::logic::Color new_side;
+};
 
 // PIECE 
 

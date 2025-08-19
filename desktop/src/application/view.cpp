@@ -4,16 +4,15 @@
 
 Application::Application()
 {
-    resource::WindowConfigManager window_config;
-    resource::BoardConfigManager board_config;
+    resource::ConfigManager config;
 
     Window.create(
-        sf::VideoMode(window_config.WindowSize()), 
-        window_config.Title()
+        sf::VideoMode(config.WindowSize()), 
+        config.Title()
     );
-    Window.setFramerateLimit(window_config.FPS());
+    Window.setFramerateLimit(config.FPS());
 
-    SceneController.Load(board_config);
+    SceneController.Load(config);
 }
 
 void Application::run()

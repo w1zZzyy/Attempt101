@@ -24,7 +24,7 @@ Search &Search::SetMaxDepth(int d)
 
 Search &Search::StartSearchWorker(const std::function<void(RootMove)> &callback)
 {
-    search_thread = std::thread([&]()
+    search_thread = std::thread([this, callback]()
     {
         while(!stop.load()) {
             std::unique_lock<std::mutex> ul(mtx);
@@ -51,7 +51,6 @@ void Search::FindBestMove(const std::string &fen)
     }
 
     this->fen = fen;
-    this->variations.clear();
     can_search.store(true);
     cv.notify_one();
 }
@@ -72,36 +71,40 @@ std::optional<Search::RootMove> Search::BestMove()
     PositionFixedMemory pos(fen);
     MoveList moves;
 
-
     pos.compute_enemy_attackers().compute_pins_from_sliders();
     eval.init(pos);
     moves.generate(pos);
 
+    if(moves.empty()) 
+        return std::nullopt;
 
-    if(moves.empty()) return std::nullopt;
-    
+    RootMove best;
+    best.score = -INF;
+
+    int mg[COLOR_COUNT] = {eval.get_mg(WHITE), eval.get_mg(BLACK)};
+    int eg[COLOR_COUNT] = {eval.get_eg(WHITE), eval.get_eg(BLACK)};
+    int phase = eval.get_phase();
+
     for(size_t i = 0; i < moves.get_size(); ++i) 
-        variations.emplace_back(RootMove{moves[i], 0});
-
-    for(size_t depth = 1; depth <= maxDepth; ++depth)
     {
-        std::sort(variations.begin(), variations.end(), 
-        [](const RootMove& r1, const RootMove& r2){ return r1.score > r2.score; });
+        auto move = moves[i];
 
-        for(auto& var : variations) 
-        {
-            pos.do_move(var.move);
-            eval.update(pos, var.move);
+        pos.do_move(move);
+        eval.update(pos, move);
 
-            var.score = -Negamax(pos, depth - 1, -INF, INF);
+        if(int score = -Negamax(pos, maxDepth - 1, -INF, INF); score > best.score) 
+            best = {move, score};
 
-            eval.rollback(pos, var.move);
-            pos.undo_move();
-        }
+        pos.undo_move();
+        eval
+            .set_mg(WHITE, mg[WHITE]) 
+            .set_mg(BLACK, mg[BLACK]) 
+            .set_eg(WHITE, eg[WHITE]) 
+            .set_eg(BLACK, eg[BLACK]) 
+            .set_phase(phase);
     }
 
-
-    return variations[0];
+    return best;
 }
 
 int Search::Negamax(PositionFixedMemory &pos, int depth, int alpha, int beta)
@@ -124,6 +127,10 @@ int Search::Negamax(PositionFixedMemory &pos, int depth, int alpha, int beta)
         return 0;
     }
 
+    int mg[COLOR_COUNT] = {eval.get_mg(WHITE), eval.get_mg(BLACK)};
+    int eg[COLOR_COUNT] = {eval.get_eg(WHITE), eval.get_eg(BLACK)};
+    int phase = eval.get_phase();
+
     for(size_t i = 0; i < moves.get_size(); ++i) 
     {
         Move move = moves[i];
@@ -134,8 +141,13 @@ int Search::Negamax(PositionFixedMemory &pos, int depth, int alpha, int beta)
         int score = -Negamax(pos, depth - 1, -beta, -alpha);
         alpha = std::max(alpha, score);
 
-        eval.rollback(pos, move);
         pos.undo_move();
+        eval
+            .set_mg(WHITE, mg[WHITE]) 
+            .set_mg(BLACK, mg[BLACK]) 
+            .set_eg(WHITE, eg[WHITE]) 
+            .set_eg(BLACK, eg[BLACK]) 
+            .set_phase(phase);
 
         if(alpha >= beta) {
             return beta;

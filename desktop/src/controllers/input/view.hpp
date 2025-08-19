@@ -16,7 +16,13 @@ public:
 
 private:
 
+    void SubscribeOnInputBlockedEvent();
+    void SubscribeOnInputAllowedEvent();
+
+private:
+
     event::Bus& bus;
+    bool isBlocked{true};
 
 };
 

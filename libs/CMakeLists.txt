@@ -1,5 +1,7 @@
 # ЛОГИКА
 
+set(CMAKE_CXX_FLAGS_RELEASE "-O3 -march=native -flto -DNDEBUG")
+
 add_library(Logic_lib STATIC 
     include/logic/attack.hpp
     include/logic/defs.hpp
@@ -25,8 +27,7 @@ target_include_directories(Logic_lib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
 	target_compile_options(
         Logic_lib PRIVATE 
-        -mbmi2 -mbmi 
-        $<$<CONFIG:Release>: -O3 -march=native -flto -DNDEBUG>
+        -mbmi2 -mbmi
     )
 endif()
 
@@ -42,9 +43,6 @@ add_library(Engine_lib STATIC
 target_include_directories(Engine_lib PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include/engine)
 target_include_directories(Engine_lib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(Engine_lib PUBLIC Logic_lib)
-target_compile_options(Engine_lib PRIVATE 
-    $<$<CONFIG:Release>: -O3 -march=native -flto -DNDEBUG>
-)
 
 
 # ТЕСТЫ

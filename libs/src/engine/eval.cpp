@@ -196,10 +196,9 @@ void Eval::init(const PositionFixedMemory& pos)
 
 void Eval::update(const PositionFixedMemory& pos, logic::Move move)
 {
-    Square from = move.from();
-    Square targ = move.targ();
-    MoveFlag flag = move.flag();
-
+    const Square from = move.from();
+    const Square targ = move.targ();
+    const MoveFlag flag = move.flag();
     const Color side_curr = pos.get_side();
     const Color side_moved = side_curr.opp();
     

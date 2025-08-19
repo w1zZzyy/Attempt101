@@ -90,6 +90,7 @@ void GameManager::HandleMove(game::logic::Move move)
     }
 
     bus.enqueue<event::PieceMovedEvent>(from, targ);
+    bus.enqueue<event::PositionWasUpdated>(manager.getPositionFen(), manager.getSide2Move());
 
     bus.publish_all();
 }

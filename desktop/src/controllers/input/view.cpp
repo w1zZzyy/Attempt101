@@ -4,7 +4,11 @@ namespace controller
 {
 
 
-InputManager::InputManager(event::Bus &bus) : bus(bus) {}
+InputManager::InputManager(event::Bus &bus) : bus(bus) 
+{
+    SubscribeOnInputBlockedEvent();
+    SubscribeOnInputAllowedEvent();
+}
 
 void InputManager::HandleEvents(sf::RenderWindow &window)
 {
@@ -16,6 +20,8 @@ void InputManager::HandleEvents(sf::RenderWindow &window)
         }
 
         if (const auto* mouseButtonPressed = event->getIf<sf::Event::MouseButtonPressed>()) {
+            if(isBlocked) 
+                continue;
             if (mouseButtonPressed->button == sf::Mouse::Button::Left) {
                 bus.publish<event::MousePressedEvent>(sf::Vector2f{
                     (float)mouseButtonPressed->position.x, 
@@ -24,6 +30,24 @@ void InputManager::HandleEvents(sf::RenderWindow &window)
             }
         }
     }
+}
+
+void InputManager::SubscribeOnInputBlockedEvent()
+{
+    bus.subscribe<event::InputWasBlocked>({
+        [this](const event::InputWasBlocked&) {
+            this->isBlocked = true;
+        }
+    });
+}
+
+void InputManager::SubscribeOnInputAllowedEvent()
+{
+    bus.subscribe<event::InputWasAllowed>({
+        [this](const event::InputWasAllowed&) {
+            this->isBlocked = false;
+        }
+    });
 }
 
 }
