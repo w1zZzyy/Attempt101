@@ -2,7 +2,7 @@
 
 build-impl-%: 
 	@mkdir -p build_$*
-	@cd build_$* && cmake -DCMAKE_BUILD_TYPE=$* ..
+	@cd build_$* && cmake -DCMAKE_BUILD_TYPE=$* -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ .. 
 	@cmake --build build_$*
 
 clean:
