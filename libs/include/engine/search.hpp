@@ -1,9 +1,10 @@
 #pragma once
 
 #include "eval.hpp"
+#include "moveordering.hpp"
+
 #include <string>
 #include <thread>
-#include <vector>
 #include <mutex>
 #include <atomic>
 #include <condition_variable>
@@ -44,8 +45,11 @@ private:
 
 private:
 
+    long long nodes = 0;
     int maxDepth;
+
     Eval eval;
+    MoveOrderer orderer;
 
     std::string fen;
 

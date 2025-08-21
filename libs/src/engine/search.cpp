@@ -33,24 +33,27 @@ Search &Search::StartSearchWorker(const std::function<void(RootMove)> &callback)
             if(stop.load()) 
                 break;
 
-            if(auto best_move = BestMove())
+            if(std::optional best_move = BestMove())
                 callback(*best_move);
 
             can_search.store(false);
+            std::cout << "Nodes Counted: " << nodes << '\n';
         }
     });
 
     return *this;
 }
 
-void Search::FindBestMove(const std::string &fen)
+void Search::FindBestMove(const std::string &fen_)
 {
     if(can_search.load()) {
         std::cout << "wait for search to finish\n";
         return;
     }
 
-    this->fen = fen;
+    this->fen = fen_;
+    this->nodes = 0;
+
     can_search.store(true);
     cv.notify_one();
 }
@@ -74,6 +77,7 @@ std::optional<Search::RootMove> Search::BestMove()
     pos.compute_enemy_attackers().compute_pins_from_sliders();
     eval.init(pos);
     moves.generate(pos);
+    orderer.setPosition(pos);
 
     if(moves.empty()) 
         return std::nullopt;
@@ -87,7 +91,7 @@ std::optional<Search::RootMove> Search::BestMove()
 
     for(size_t i = 0; i < moves.get_size(); ++i) 
     {
-        auto move = moves[i];
+        Move move = moves[i];
 
         pos.do_move(move);
         eval.update(pos, move);
@@ -109,6 +113,8 @@ std::optional<Search::RootMove> Search::BestMove()
 
 int Search::Negamax(PositionFixedMemory &pos, int depth, int alpha, int beta)
 {
+    ++nodes;
+    
     if(depth == 0) 
         return eval.score(pos);
 
@@ -126,10 +132,12 @@ int Search::Negamax(PositionFixedMemory &pos, int depth, int alpha, int beta)
     else if(pos.is_draw()) {
         return 0;
     }
-
+    
     int mg[COLOR_COUNT] = {eval.get_mg(WHITE), eval.get_mg(BLACK)};
     int eg[COLOR_COUNT] = {eval.get_eg(WHITE), eval.get_eg(BLACK)};
     int phase = eval.get_phase();
+
+    orderer.OrderCaptures(moves);
 
     for(size_t i = 0; i < moves.get_size(); ++i) 
     {

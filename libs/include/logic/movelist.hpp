@@ -20,6 +20,7 @@ public:
         return moves[i];
     }
     std::optional<Move> find(std::string_view notation) const;
+    Move* data() noexcept {return moves;}
 
 private:
 

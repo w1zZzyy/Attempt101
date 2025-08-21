@@ -1,6 +1,7 @@
-# ЛОГИКА
+set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_FLAGS_RELEASE "-O3 -ffast-math -march=native -flto -DNDEBUG")
 
-set(CMAKE_CXX_FLAGS_RELEASE "-O3 -march=native -flto -DNDEBUG")
+# ЛОГИКА
 
 add_library(Logic_lib STATIC 
     include/logic/attack.hpp
@@ -25,10 +26,7 @@ add_library(Logic_lib STATIC
 target_include_directories(Logic_lib PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include/logic)
 target_include_directories(Logic_lib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
-	target_compile_options(
-        Logic_lib PRIVATE 
-        -mbmi2 -mbmi
-    )
+	target_compile_options(Logic_lib PRIVATE -mbmi -mbmi2)
 endif()
 
 
@@ -36,9 +34,11 @@ endif()
 
 add_library(Engine_lib STATIC 
     include/engine/eval.hpp
-    include/engine/search.hpp
+    include/engine/search.hpp 
+    include/engine/moveordering.hpp
     src/engine/eval.cpp
     src/engine/search.cpp
+    src/engine/moveordering.cpp
 )
 target_include_directories(Engine_lib PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include/engine)
 target_include_directories(Engine_lib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
@@ -56,7 +56,7 @@ add_executable(tests_exe
 )
 target_link_libraries(tests_exe PRIVATE Logic_lib)
 target_compile_definitions(tests_exe PRIVATE 
-    -DLOGIC_TESTS_DATA_PATH="${CMAKE_CURRENT_BINARY_DIR}/tests_data"
+    LOGIC_TESTS_DATA_PATH="${CMAKE_CURRENT_BINARY_DIR}/tests_data"
 )
 
 
