@@ -10,6 +10,7 @@
 #include <cassert>
 #include <ostream>
 #include <string_view>
+#include <iostream>
 
 namespace game::logic
 {
@@ -43,6 +44,8 @@ public:
         constexpr bool isPiece      =   (std::is_same_v<Pieces, Piece> && ...);
         constexpr bool isPieceType  =   (std::is_same_v<Pieces, PieceType> && ...);
         static_assert((isPiece || isPieceType), "All template arguments must be of type Piece or PieceType");
+        if(c == ANY_COLOR) 
+            return Bitboard(((pieces[WHITE][p] | pieces[BLACK][p]) | ...));
         return Bitboard((pieces[c][p] | ...));
     }
     template<typename... Colors>
@@ -67,6 +70,8 @@ public:
     template<typename... Squares>
     bool is_blocker(Squares... sqr) const noexcept;
     bool is_attacker(Square sqr) const noexcept {return checkers & sqr.bitboard();}
+    
+    Bitboard attacks_to(Square sqr, Bitboard occ) const;
 
     // оч редкая ситуация (при взятии на проходе шах нашему королю например)
     // используется для взятия на проходе

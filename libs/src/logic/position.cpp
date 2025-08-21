@@ -316,7 +316,7 @@ std::string Position<Policy>::fen() const noexcept
     
     if(curr_st.castle != NO_CASTLING) {
         if(curr_st.castle.available(K_CASTLING)) res << 'K';
-        if(curr_st.castle.available(k_CASTLING)) res << 'Q';
+        if(curr_st.castle.available(k_CASTLING)) res << 'k';
         if(curr_st.castle.available(Q_CASTLING)) res << 'Q';
         if(curr_st.castle.available(q_CASTLING)) res << 'q';
     } else {
@@ -468,6 +468,33 @@ Bitboard Position<Policy>::pin_mask(Square sqr) const
 
     return line_bb(ksq, sqr);
 }
+
+template<StorageType Policy>
+Bitboard Position<Policy>::attacks_to(Square sqr, Bitboard occ) const
+{
+    AttackParams params;
+    params
+        .set_attacker(sqr) 
+        .set_blockers(occ);
+
+    Bitboard attacks;
+
+    for(Color clr = WHITE; clr.isValid(); clr.next()) 
+    {
+        params.set_color(clr);
+        attacks |= (GetFastAttack(PAWN, params) & get_pieces(clr.opp(), PAWN));
+    }
+
+    attacks 
+        |= (GetFastAttack(ROOK, params) & get_pieces(ANY_COLOR, ROOK, QUEEN)) 
+        |= (GetFastAttack(BISHOP, params) & get_pieces(ANY_COLOR, BISHOP, QUEEN)) 
+        |= (GetFastAttack(KNIGHT, params) & get_pieces(ANY_COLOR, KNIGHT)) 
+        |= (GetFastAttack(BISHOP, params) & get_pieces(ANY_COLOR, BISHOP)) 
+        |= (GetFastAttack(KING, params) & get_pieces(ANY_COLOR, KING));
+
+    return attacks;
+}
+
 
 
 template class Position<DynamicStorage>;
