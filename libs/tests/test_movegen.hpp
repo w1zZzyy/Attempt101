@@ -9,7 +9,9 @@
 #include "logic/position.hpp"
 #include "logic/move.hpp"
 
-size_t CountNodes(PositionFixedMemory& pos, size_t depth);
+using TPosition = PositionFixedMemory;
+
+size_t CountNodes(TPosition& pos, size_t depth);
 
 
 class ITest

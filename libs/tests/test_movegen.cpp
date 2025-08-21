@@ -1,18 +1,16 @@
 #include "test_movegen.hpp"
 #include "logic/movelist.hpp"
 #include "logic/position.hpp"
-#include "logic/storage.hpp"
 #include <cassert>
 #include <cstddef>
 #include <fstream>
 #include <iostream>
-#include <memory>
 #include <vector>
 #include <chrono>
 
 using namespace game::logic;
 
-size_t CountNodes(PositionFixedMemory& pos, size_t depth)
+size_t CountNodes(TPosition& pos, size_t depth)
 {
     if(depth == 0) {
         return 1;
@@ -63,7 +61,7 @@ void NodesCountTest::parse_file(std::ifstream& file)
 
 void NodesCountTest::run() 
 {
-    PositionFixedMemory pos(fen);
+    TPosition pos(fen);
 
     auto start = std::chrono::high_resolution_clock::now();
     size_t actual_nodes = CountNodes(pos, depth);
@@ -96,7 +94,7 @@ void BranchesCountTest::parse_file(std::ifstream& file)
 
 void BranchesCountTest::run() 
 {
-    PositionFixedMemory pos(fen);
+    TPosition pos(fen);
 
     MoveList moves;
     moves.generate(pos);
