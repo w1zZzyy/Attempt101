@@ -1,8 +1,5 @@
 #include "logic.hpp"
 
-#include <ranges>
-#include <iostream>
-
 namespace game
 {
 
@@ -40,7 +37,7 @@ std::expected<logic::Move, LogicException> LogicManager::DoMove(
     for(size_t i = 0; i < legal_moves.get_size(); ++i)
     {
         const auto m = legal_moves[i]; 
-        if (m.from() == from && m.targ() == targ)
+        if (m.from() == from && m.targ() == targ) 
             candidates.push_back(m);
     }
 
@@ -60,7 +57,10 @@ std::expected<logic::Move, LogicException> LogicManager::DoMove(
             return m.flag() == *flag;
         });
         it != candidates.end() 
-    ) { return *it; }
+    ) { 
+        DoMove(*it);
+        return *it; 
+    }
 
     return std::unexpected(LogicException::MoveNotFound);
 }
