@@ -27,6 +27,11 @@ void GameManager::Init(const std::string& fen)
     bus.publish_all();
 }
 
+void GameManager::Update() const
+{
+    bus.publish<event::PositionWasUpdated>({manager.getPositionFen(), manager.getSide2Move()});
+}
+
 void GameManager::SubscribeOnMoveEvent()
 {
     bus.subscribe<event::MoveEvent>(
@@ -68,9 +73,11 @@ void GameManager::HandleMove(game::logic::Move move)
     switch (flag)
     {
     case MoveFlag::S_CASTLE_MF:
+        bus.enqueue<event::PieceMovedEvent>(from, targ);
         bus.enqueue<event::PieceMovedEvent>(targ + EAST, from + EAST);
         break;
     case MoveFlag::L_CASTLE_MF:
+        bus.enqueue<event::PieceMovedEvent>(from, targ);
         bus.enqueue<event::PieceMovedEvent>(targ + 2 * WEST, from + WEST);
         break;
     case MoveFlag::Q_PROMOTION_MF:
@@ -78,21 +85,20 @@ void GameManager::HandleMove(game::logic::Move move)
         break;
     case MoveFlag::K_PROMOTION_MF:
         bus.enqueue<event::PieceMovedEvent>(from, targ, KNIGHT);
-        return;
+        break;
     case MoveFlag::B_PROMOTION_MF:
         bus.enqueue<event::PieceMovedEvent>(from, targ, BISHOP);
-        return;
+        break;
     case MoveFlag::R_PROMOTION_MF:
         bus.enqueue<event::PieceMovedEvent>(from, targ, ROOK);
-        return;
+        break;
     default:
+        bus.enqueue<event::PieceMovedEvent>(from, targ);
         break;
     }
 
-    bus.enqueue<event::PieceMovedEvent>(from, targ);
-    bus.enqueue<event::PositionWasUpdated>(manager.getPositionFen(), manager.getSide2Move());
-
     bus.publish_all();
+    Update();
 }
 
 void GameManager::SubscribeOnBoardClickedEvent()
