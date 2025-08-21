@@ -1,4 +1,4 @@
-#include "test_movegen.hpp"
+#include "test.hpp"
 #include "logic/movelist.hpp"
 #include "logic/position.hpp"
 #include <cassert>

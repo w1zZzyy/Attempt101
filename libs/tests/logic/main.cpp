@@ -1,4 +1,4 @@
-#include "test_movegen.hpp"
+#include "movegen/test.hpp"
 
 #include <format>
 #include <string>
