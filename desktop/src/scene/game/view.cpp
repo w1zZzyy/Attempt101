@@ -40,7 +40,7 @@ void GameScene::ParseConfig(const resource::ConfigManager &config)
         .SetSearchDepth(config.EngineSearchDepth())
         .LaunchSearchWorker();
 
-    bus.publish<event::PositionWasUpdated>({fen, side});
+    GameController.Update();
 }
 
 void GameScene::HandleEvents(sf::RenderWindow &window)

@@ -3,7 +3,7 @@
 namespace game::logic
 {
 
-void IStateStorage::stcopy(State &dst, const State &src)
+void stcopy(State &dst, const State &src)
 {
     dst.hash = src.hash;
     dst.castle = src.castle;
@@ -14,7 +14,7 @@ void IStateStorage::stcopy(State &dst, const State &src)
     dst.captured = NO_PIECE;
 }
 
-bool IStateStorage::repetition_help(const State *curr, const State* begin) const
+bool repetition_help(const State *curr, const State* begin)
 {
     assert(curr);
 
@@ -54,6 +54,10 @@ State& StaticStorage::rollback()
     return *curr;
 }
 
+bool StaticStorage::repetition() const
+{
+    return repetition_help(curr, history);
+}
 
 State& DynamicStorage::create() 
 {

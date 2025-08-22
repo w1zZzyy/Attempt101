@@ -1,11 +1,11 @@
-#include "test_movegen.hpp"
+#include "movegen/test.hpp"
 
 #include <format>
 #include <string>
 
 int main()
 {
-    PositionFixedMemory::Init();
+    TPosition::Init();
     TestPtr test = std::make_unique<NodesCountTest>();
 
     for(size_t i = 1; i <= 6; ++i)

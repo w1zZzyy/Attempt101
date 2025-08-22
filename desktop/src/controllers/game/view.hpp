@@ -13,6 +13,7 @@ public:
 
     GameManager(event::Bus& bus);
     void Init(const std::string& fen);
+    void Update() const;
 
 private:
 
