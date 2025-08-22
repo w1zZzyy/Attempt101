@@ -18,7 +18,7 @@ size_t CountNodes(TPosition& pos, size_t depth)
     pos.update();
 
     MoveList moves;
-    moves.generate(pos);
+    moves.generate<MoveGenType::NotForced>(pos);
 
     size_t nodes = 0;
 
@@ -96,7 +96,7 @@ void BranchesCountTest::run()
     TPosition pos(fen);
 
     MoveList moves;
-    moves.generate(pos);
+    moves.generate<MoveGenType::NotForced>(pos);
 
     std::vector<std::string> bad_fens;
 

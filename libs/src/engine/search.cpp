@@ -76,7 +76,7 @@ std::optional<Search::RootMove> Search::BestMove()
 
     pos.update();
     eval.init(pos);
-    moves.generate(pos);
+    moves.generate<MoveGenType::NotForced>(pos);
     orderer.setPosition(pos);
 
     if(moves.empty()) 
@@ -121,7 +121,7 @@ int Search::Negamax(PositionFixedMemory &pos, int depth, int alpha, int beta)
     pos.update();
 
     MoveList moves;
-    moves.generate(pos);
+    moves.generate<MoveGenType::NotForced>(pos);
 
     if(moves.empty()) {
         return (

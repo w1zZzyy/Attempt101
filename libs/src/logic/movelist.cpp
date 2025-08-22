@@ -9,35 +9,24 @@
 namespace game::logic
 {
 
-constexpr auto prom_list = {Q_PROMOTION_MF, K_PROMOTION_MF, B_PROMOTION_MF, R_PROMOTION_MF};
-
-template<StorageType T>
-void MoveList::generate(const Position<T> &pos)
+namespace
 {
-    size = 0;
-    
-    piece_moves(pos);
-    king_moves(pos);
 
-    pos.get_side().is(WHITE) 
-        ? pawn_moves<WHITE>(pos)
-        : pawn_moves<BLACK>(pos);
+constexpr auto prom_list = {Q_PROMOTION_MF, K_PROMOTION_MF, B_PROMOTION_MF, R_PROMOTION_MF};
+enum class MoveType {All, Force, Dodge};
+
+void add(Square from, Square targ, MoveFlag flag, Move*& curr) {
+    *curr = Move(from, targ, flag); 
+    curr++;
 }
 
-template<StorageType T>
-void MoveList::piece_moves(const Position<T>& pos)
+template<StorageType ST>
+void piece_moves(const Position<ST>& pos, Move*& curr, Bitboard target) 
 {
-    if(pos.is_double_check()) 
-        return;
-
     const Color us = pos.get_side();
     AttackParams ap; ap.set_blockers(
         pos.get_occupied(WHITE, BLACK)
     );
-    
-    Bitboard target = ~pos.get_occupied(us);
-    if(pos.is_check()) 
-        target &= pos.defensive_squares();
 
     Bitboard pieces = pos.get_pieces(
         us,
@@ -57,137 +46,44 @@ void MoveList::piece_moves(const Position<T>& pos)
             moves &= pin_mask;
 
         while(moves) 
-            add(from, moves.poplsb(), DEFAULT_MF);
+            add(from, moves.poplsb(), DEFAULT_MF, curr);
     }
 }
 
-template<StorageType T>
-void MoveList::king_moves(const Position<T> &pos)
+template<MoveType MT, StorageType T>
+void king_moves(const Position<T> &pos, Move*& curr, Bitboard target)
 {
     const Color     us              =   pos.get_side();
     const Square    ksq             =   pos.get_pieces(us, KING).lsb();
     const Bitboard  enemy_attacks   =   pos.get_attacks(us.opp());
 
-    AttackParams ap; 
-    ap.set_attacker(ksq);
-
-    Bitboard moves = GetFastAttack(KING, ap) & ~enemy_attacks & ~pos.get_occupied(us);
+    Bitboard moves = GetFastAttack(KING, AttackParams{}.set_attacker(ksq)) & ~enemy_attacks & target;
     while(moves)
-        add(ksq, moves.poplsb(), DEFAULT_MF);
+        add(ksq, moves.poplsb(), DEFAULT_MF, curr);
+
+    if constexpr (MT != MoveType::All) 
+        return;
 
     if(pos.can_castle(KING_SIDE_CASTLING, enemy_attacks)) 
-        add(ksq, ksq + 2 * EAST, S_CASTLE_MF);
+        add(ksq, ksq + 2 * EAST, S_CASTLE_MF, curr);
     if(pos.can_castle(QUEEN_SIDE_CASTLING, enemy_attacks)) 
-        add(ksq, ksq + 2 * WEST, L_CASTLE_MF);
+        add(ksq, ksq + 2 * WEST, L_CASTLE_MF, curr);
 }
 
-
-template<ColorType Us, StorageType T>
-inline void MoveList::pawn_moves(const Position<T> &pos)
+void pawn_move_generic(Bitboard moves, std::initializer_list<MoveFlag> flags, int offset_from, Move*& curr) 
 {
-    if(pos.is_double_check()) 
-        return;
-
-
-    constexpr ColorType     Them        =   (Us == WHITE) ? BLACK : WHITE;
-    constexpr DirectionType Up          =   (Us == WHITE) ? NORTH : SOUTH;
-    constexpr DirectionType Left        =   (Us == WHITE) ? NORTH_WEST : SOUTH_EAST;
-    constexpr DirectionType Right       =   (Us == WHITE) ? NORTH_EAST : SOUTH_WEST;
-    constexpr Bitboard      TRank3      =   (Us == WHITE) ? RankType::Rank3 : RankType::Rank6;
-    constexpr Bitboard      TRank8      =   (Us == WHITE) ? RankType::Rank8 : RankType::Rank1;
-
-    const Bitboard enemy = pos.get_occupied(Them);
-    const Bitboard empty = ~pos.get_occupied(WHITE, BLACK);
-
-    
-    Bitboard pawns  = pos.get_pieces(Us, PAWN);
-    Bitboard pinned = pos.get_pinned(Us) & pawns;
-    pawns ^= pinned;
-
-    pinned_pawn_moves<Us>(pinned, pos);
-
-    Bitboard single_up      = step<Up>(pawns)                   &   empty;
-    Bitboard double_up      = step<Up>(single_up & TRank3)      &   empty;
-    Bitboard capture_left   = step<Left>(pawns)                 &   enemy;
-    Bitboard capture_right  = step<Right>(pawns)                &   enemy;
-
-    if(pos.is_check()) {
-        Bitboard defense = pos.defensive_squares();
-        single_up &= defense, double_up &= defense,
-        capture_left &= defense, capture_right &= defense;
-    }
-
-    Bitboard prom_up    = single_up     & TRank8;   single_up      ^=  prom_up;
-    Bitboard prom_left  = capture_left  & TRank8;   capture_left   ^=  prom_left;
-    Bitboard prom_right = capture_right & TRank8;   capture_right  ^=  prom_right;
-
-
-    pawn_move_generic(single_up, {DEFAULT_MF}, Up);
-    pawn_move_generic(double_up, {DOUBLE_MF}, 2 * Up);
-    pawn_move_generic(capture_left, {DEFAULT_MF}, Left);
-    pawn_move_generic(capture_right, {DEFAULT_MF}, Right);
-
-    pawn_move_generic(prom_up, prom_list, Up);
-    pawn_move_generic(prom_left, prom_list, Left);
-    pawn_move_generic(prom_right, prom_list, Right);
-
-
-    en_passant_moves<Us, false>(pawns, pos);
-}
-
-template <ColorType Us, StorageType T>
-void MoveList::pinned_pawn_moves(Bitboard pawns, const Position<T>& pos)
-{
-    if(pos.is_check())
-        return;
-
-    constexpr ColorType     Them    =   (Us == WHITE) ? BLACK : WHITE;
-    constexpr DirectionType Up      =   (Us == WHITE) ? NORTH : SOUTH;
-    constexpr Bitboard      TRank3  =   (Us == WHITE) ? RankType::Rank3 : RankType::Rank6;
-    constexpr Bitboard      TRank8  =   (Us == WHITE) ? RankType::Rank8 : RankType::Rank1;
-
-    const Bitboard enemy_target = pos.get_occupied(Them);
-    const Bitboard empty_target = ~pos.get_occupied(WHITE, BLACK); 
-
-    en_passant_moves<Us, true>(pawns, pos);
-
-    AttackParams ap; 
-    ap.set_color(Us);
-
-    while(pawns)
+    while(moves)
     {
-        Square      from            =   pawns.poplsb();
-        Bitboard    pin_mask        =   pos.pin_mask(from);
-
-        Bitboard single_up = step<Up>(from.bitboard()) & empty_target;
-        Bitboard double_up = step<Up>(single_up & TRank3) & empty_target;
-        Bitboard captures  = GetFastAttack(PAWN, ap.set_attacker(from)) & enemy_target & pin_mask;
-
-        single_up &= pin_mask; 
-        double_up &= pin_mask;
-        
-        if(single_up) 
-            add(from, single_up.lsb(), DEFAULT_MF);
-        if(double_up)
-            add(from, double_up.lsb(), DOUBLE_MF);
-
-        if(captures & TRank8) {
-            Square targ = captures.lsb();
-            for(MoveFlag prom : prom_list) 
-                add(from, targ, prom);
-        }
-        else if(captures) 
-            add(from, captures.lsb(), DEFAULT_MF);
-        
+        Square targ = moves.poplsb();
+        Square from = targ - offset_from;
+        for(MoveFlag flag : flags)
+            add(from, targ, flag, curr);
     }
 }
 
 template <ColorType Us, bool Pinned, StorageType T>
-void MoveList::en_passant_moves(Bitboard pawns, const Position<T>& pos)
+void en_passant_moves(Bitboard pawns, const Position<T>& pos, Move*& curr)
 {
-    if(pos.get_passant() == NO_SQUARE)
-        return;
-
     constexpr ColorType     Them    =   (Us == WHITE) ? BLACK : WHITE;
     constexpr DirectionType Up      =   (Us == WHITE) ? NORTH : SOUTH;
 
@@ -220,82 +116,150 @@ void MoveList::en_passant_moves(Bitboard pawns, const Position<T>& pos)
             ) continue;
         }
 
-        add(from, passant, EN_PASSANT_MF);
+        add(from, passant, EN_PASSANT_MF, curr);
     }
 }
 
-
-void MoveList::pawn_move_generic(
-    Bitboard                        moves, 
-    std::initializer_list<MoveFlag> flags, 
-    int                             offset_from
-) {
-    while(moves)
-    {
-        Square targ = moves.poplsb();
-        Square from = targ - offset_from;
-        for(MoveFlag flag : flags)
-            add(from, targ, flag);
-    }
-}
-
-
-std::optional<Move> MoveList::find(std::string_view notation) const 
+template <MoveType MT, ColorType Us, StorageType T>
+void pinned_pawn_moves(Bitboard pawns, const Position<T>& pos, Move*& curr, Bitboard enemy, Bitboard empty)
 {
-    if(4 < notation.size() || notation.size() > 5) 
-        return std::nullopt;
+    constexpr ColorType     Them    =   (Us == WHITE) ? BLACK : WHITE;
+    constexpr DirectionType Up      =   (Us == WHITE) ? NORTH : SOUTH;
+    constexpr Bitboard      TRank3  =   (Us == WHITE) ? RankType::Rank3 : RankType::Rank6;
+    constexpr Bitboard      TRank8  =   (Us == WHITE) ? RankType::Rank8 : RankType::Rank1;
 
-    Square from = Square::ToSquare({notation.begin(), 2});
-    Square targ = Square::ToSquare({notation.begin() + 2, 2});
+    en_passant_moves<Us, true>(pawns, pos, curr);
+
+    AttackParams ap; 
+    ap.set_color(Us);
+
+    while(pawns)
+    {
+        Square from = pawns.poplsb();
+        Bitboard pin_mask = pos.pin_mask(from);
+
+        if constexpr(MT == MoveType::All)
+        {    
+            Bitboard single_up = step<Up>(from.bitboard()) & empty;
+            Bitboard double_up = step<Up>(single_up & TRank3) & empty;
+            single_up &= pin_mask; 
+            double_up &= pin_mask;
+            
+            if(single_up) 
+                add(from, single_up.lsb(), DEFAULT_MF, curr);
+            if(double_up)
+                add(from, double_up.lsb(), DOUBLE_MF, curr);
+        }
+
+        Bitboard captures = GetFastAttack(PAWN, ap.set_attacker(from)) & enemy & pin_mask;
+
+        if(captures & TRank8) {
+            Square targ = captures.lsb();
+            for(MoveFlag prom : prom_list) 
+                add(from, targ, prom, curr);
+        }
+        else if(captures) 
+            add(from, captures.lsb(), DEFAULT_MF, curr); 
+    }
+}
+
+template<MoveType MT, ColorType Us, StorageType T>
+void pawn_moves(const Position<T> &pos, Move*& curr)
+{
+    constexpr ColorType     Them        =   (Us == WHITE) ? BLACK : WHITE;
+    constexpr DirectionType Up          =   (Us == WHITE) ? NORTH : SOUTH;
+    constexpr DirectionType Left        =   (Us == WHITE) ? NORTH_WEST : SOUTH_EAST;
+    constexpr DirectionType Right       =   (Us == WHITE) ? NORTH_EAST : SOUTH_WEST;
+    constexpr Bitboard      TRank3      =   (Us == WHITE) ? RankType::Rank3 : RankType::Rank6;
+    constexpr Bitboard      TRank8      =   (Us == WHITE) ? RankType::Rank8 : RankType::Rank1;
+
+    const Bitboard enemy = pos.get_occupied(Them);
+    const Bitboard empty = ~pos.get_occupied(WHITE, BLACK);
+
     
-    std::optional<MoveFlag> flag;
-    if (notation.size() == 5) {
-        switch (notation.back()) {
-            case 'q': flag = Q_PROMOTION_MF; break;
-            case 'r': flag = R_PROMOTION_MF; break;
-            case 'k': flag = K_PROMOTION_MF; break;
-            case 'b': flag = B_PROMOTION_MF; break;
-            default: break;
+    Bitboard pawns  = pos.get_pieces(Us, PAWN);
+    Bitboard pinned = pos.get_pinned(Us) & pawns;
+    pawns ^= pinned;
+
+    if constexpr (MT != MoveType::Dodge)
+        pinned_pawn_moves<MT, Us>(pinned, pos, curr, enemy, empty);
+
+
+    Bitboard single_up = step<Up>(pawns) & empty;
+
+    if constexpr (MT != MoveType::Force) {
+        Bitboard double_up  = step<Up>(single_up & TRank3) & empty;
+        if constexpr (MT == MoveType::Dodge) {
+            Bitboard defense = pos.defensive_squares();
+            single_up &= defense, double_up &= defense;
         }
-        assert(flag);           
+        pawn_move_generic(double_up, {DOUBLE_MF}, 2 * Up, curr);
     }
 
-    for(size_t i = 0; i < size; ++i) {
-        if(moves[i].from() == from && moves[i].targ() == targ) {
-            if(flag && moves[i].flag() == *flag || !flag) {
-                return moves[i];
-            } 
-        }
+    Bitboard capture_left   = step<Left>(pawns) & enemy;
+    Bitboard capture_right  = step<Right>(pawns) & enemy;
+
+    if constexpr (MT == MoveType::Dodge) {
+        Bitboard defense = pos.defensive_squares();
+        capture_left &= defense, capture_right &= defense;
     }
 
-    return std::nullopt;
+    Bitboard prom_up    = single_up     & TRank8;   single_up      ^=  prom_up;
+    Bitboard prom_left  = capture_left  & TRank8;   capture_left   ^=  prom_left;
+    Bitboard prom_right = capture_right & TRank8;   capture_right  ^=  prom_right;
+
+    if constexpr (MT != MoveType::Force)
+        pawn_move_generic(single_up, {DEFAULT_MF}, Up, curr);
+
+    pawn_move_generic(capture_left, {DEFAULT_MF}, Left, curr);
+    pawn_move_generic(capture_right, {DEFAULT_MF}, Right, curr);
+    pawn_move_generic(prom_up, prom_list, Up, curr);
+    pawn_move_generic(prom_left, prom_list, Left, curr);
+    pawn_move_generic(prom_right, prom_list, Right, curr);
+
+
+    en_passant_moves<Us, false>(pawns, pos, curr);
+}
+
+template<MoveType MT, StorageType T>
+void pawn_moves(const Position<T> &pos, Move*& curr, Color us)
+{
+    us.is(WHITE) 
+        ? pawn_moves<MT, WHITE>(pos, curr) 
+        : pawn_moves<MT, BLACK>(pos, curr);
+}
+
+}
+
+template<MoveGenType MGT, StorageType ST>
+void MoveList::generate(const Position<ST> &pos)
+{
+    const Color us = pos.get_side();
+    constexpr bool IsForced = MGT == MoveGenType::Forced;
+    curr = moves;
+    Bitboard target = ~pos.get_occupied(us);
+
+    if(!pos.is_double_check()) 
+    {
+        const Bitboard deffense = (pos.is_check() ? target & pos.defensive_squares() : target);
+        piece_moves(pos, curr, deffense);
+
+        if(pos.is_check())              pawn_moves<MoveType::Dodge>(pos, curr, us);
+        else if constexpr (IsForced)    pawn_moves<MoveType::Force>(pos, curr, us);
+        else                            pawn_moves<MoveType::All>(pos, curr, us);
+    }
+
+    if constexpr(IsForced)  king_moves<MoveType::Force>(pos, curr, target);
+    else                    king_moves<MoveType::All>(pos, curr, target);
 }
 
 
+template void MoveList::generate<MoveGenType::Forced, DynamicStorage>(const PositionDynamicMemory&);
+template void MoveList::generate<MoveGenType::NotForced, DynamicStorage>(const PositionDynamicMemory&);
+template void MoveList::generate<MoveGenType::Forced, StaticStorage>(const PositionFixedMemory&);
+template void MoveList::generate<MoveGenType::NotForced, StaticStorage>(const PositionFixedMemory&);
 
-// waaaaaa :(
-template void MoveList::generate<DynamicStorage>(const PositionDynamicMemory&);
-template void MoveList::generate<StaticStorage>(const PositionFixedMemory&);
-template void MoveList::piece_moves<DynamicStorage>(const PositionDynamicMemory&);
-template void MoveList::piece_moves<StaticStorage>(const PositionFixedMemory&);
-template void MoveList::king_moves<DynamicStorage>(const PositionDynamicMemory&);
-template void MoveList::king_moves<StaticStorage>(const PositionFixedMemory&);
-template void MoveList::pawn_moves<WHITE, DynamicStorage>(const PositionDynamicMemory&);
-template void MoveList::pawn_moves<BLACK, DynamicStorage>(const PositionDynamicMemory&);
-template void MoveList::pawn_moves<WHITE, StaticStorage>(const PositionFixedMemory&);
-template void MoveList::pawn_moves<BLACK, StaticStorage>(const PositionFixedMemory&);
-template void MoveList::pinned_pawn_moves<WHITE, DynamicStorage>(Bitboard, const PositionDynamicMemory&);
-template void MoveList::pinned_pawn_moves<BLACK, DynamicStorage>(Bitboard, const PositionDynamicMemory&);
-template void MoveList::pinned_pawn_moves<WHITE, StaticStorage>(Bitboard, const PositionFixedMemory&);
-template void MoveList::pinned_pawn_moves<BLACK, StaticStorage>(Bitboard, const PositionFixedMemory&);
-template void MoveList::en_passant_moves<WHITE, true, DynamicStorage>(Bitboard, const PositionDynamicMemory&);
-template void MoveList::en_passant_moves<WHITE, false, DynamicStorage>(Bitboard, const PositionDynamicMemory&);
-template void MoveList::en_passant_moves<BLACK, true, DynamicStorage>(Bitboard, const PositionDynamicMemory&);
-template void MoveList::en_passant_moves<BLACK, false, DynamicStorage>(Bitboard, const PositionDynamicMemory&);
-template void MoveList::en_passant_moves<WHITE, true, StaticStorage>(Bitboard, const PositionFixedMemory&);
-template void MoveList::en_passant_moves<WHITE, false, StaticStorage>(Bitboard, const PositionFixedMemory&);
-template void MoveList::en_passant_moves<BLACK, true, StaticStorage>(Bitboard, const PositionFixedMemory&);
-template void MoveList::en_passant_moves<BLACK, false, StaticStorage>(Bitboard, const PositionFixedMemory&);
+
 
 
 }

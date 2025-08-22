@@ -68,7 +68,7 @@ std::expected<logic::Move, LogicException> LogicManager::DoMove(
 void LogicManager::UpdateStatus()
 {
     pos.update();
-    legal_moves.generate(pos);
+    legal_moves.generate<logic::MoveGenType::NotForced>(pos);
 
     if(legal_moves.empty()) {
         status = pos.is_check()
