@@ -1,6 +1,5 @@
 #include "position.hpp"
 
-#include "attack.hpp"
 #include "bitboard.hpp"
 #include "defs.hpp"
 #include "square.hpp"
@@ -349,68 +348,13 @@ bool Position<Policy>::not_enough_pieces() const noexcept
 }
 
 template<StorageType Policy>
-Position<Policy>& Position<Policy>::compute_enemy_attackers()
+Position<Policy>& Position<Policy>::compute_pins(Color us)
 {
-    this->attackers = Bitboard::Null();
-    this->checkers = Bitboard::Null();
-    this->defense = Bitboard::Full();
+    this->king_blockers[us] = Bitboard::Null();
+    this->pinned[us] = Bitboard::Null();
 
-    const Color opp = side.opp();
-
-    Bitboard    pawns   = get_pieces(opp, PAWN);
-    Bitboard    pieces  = get_occupied(opp) ^ pawns;
-    Bitboard    king    = get_pieces(side, KING);
-    Square      ksq     = king.lsb();
-
-    AttackParams attack_params;
-    attack_params.set_blockers(get_occupied(WHITE, BLACK) ^ king);
-
-    while(pieces)
-    {
-        Square  from = pieces.poplsb();
-        Piece   type = piece_on(from);
-        attack_params.set_attacker(from);
-        
-        Bitboard piece_attacks = GetFastAttack(type, attack_params);
-        this->attackers |= piece_attacks;
-
-        if(piece_attacks & king) {
-            this->checkers  |=  from.bitboard();
-            this->defense   &=  piece_on(from).is(KNIGHT) 
-                                ? from.bitboard() 
-                                : between(ksq, from);
-        }
-    }
-
-    Bitboard pawn_attacks = (opp.is(WHITE)) 
-                            ? step<NORTH_EAST>(pawns) | step<NORTH_WEST>(pawns)
-                            : step<SOUTH_EAST>(pawns) | step<SOUTH_WEST>(pawns);
-
-    this->attackers |= pawn_attacks;
-    
-    if (pawn_attacks & king) 
-    {
-        attack_params
-            .set_color(side)
-            .set_attacker(ksq);
-            
-        Bitboard pawn_checkers = GetFastAttack(PAWN, attack_params) & pawns;
-
-        this->checkers  |=  pawn_checkers;
-        this->defense   &=  pawn_checkers;
-    }
-
-    return *this;
-}
-
-template<StorageType Policy>
-Position<Policy>& Position<Policy>::compute_pins_from_sliders()
-{
-    this->king_blockers = Bitboard::Null();
-    this->pinned = Bitboard::Null();
-
-    const Color opp = side.opp();
-    const Square ksq = get_pieces(side, KING).lsb();
+    const Color opp = us.opp();
+    const Square ksq = get_pieces(us, KING).lsb();
 
     AttackParams attack_params;
     attack_params
@@ -428,9 +372,9 @@ Position<Policy>& Position<Policy>::compute_pins_from_sliders()
         Bitboard b = between(ksq, sniper) & occ;
 
         if(b) {
-            this->king_blockers |= b;
+            this->king_blockers[us] |= b;
             if(b.count() == 1 && b & get_occupied(side)) {
-                this->pinned |= b;
+                this->pinned[us] |= b;
             }
         }
     }
@@ -460,7 +404,7 @@ bool Position<Policy>::exposes_discovered_check(Square from, Square targ) const
 template<StorageType Policy>
 Bitboard Position<Policy>::pin_mask(Square sqr) const
 {
-    if(!(pinned & sqr.bitboard())) {
+    if(!(pinned[side] & sqr.bitboard())) {
         return Bitboard::Null();
     }
 
@@ -494,8 +438,6 @@ Bitboard Position<Policy>::attacks_to(Square sqr, Bitboard occ) const
 
     return attacks;
 }
-
-
 
 template class Position<DynamicStorage>;
 template class Position<StaticStorage>;

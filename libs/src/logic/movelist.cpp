@@ -66,7 +66,7 @@ void MoveList::king_moves(const Position<T> &pos)
 {
     const Color     us              =   pos.get_side();
     const Square    ksq             =   pos.get_pieces(us, KING).lsb();
-    const Bitboard  enemy_attacks   =   pos.enemy_attacks();
+    const Bitboard  enemy_attacks   =   pos.get_attacks(us.opp());
 
     AttackParams ap; 
     ap.set_attacker(ksq);
@@ -101,7 +101,7 @@ inline void MoveList::pawn_moves(const Position<T> &pos)
 
     
     Bitboard pawns  = pos.get_pieces(Us, PAWN);
-    Bitboard pinned = pos.pinned_pieces() & pawns;
+    Bitboard pinned = pos.get_pinned(Us) & pawns;
     pawns ^= pinned;
 
     pinned_pawn_moves<Us>(pinned, pos);
@@ -215,7 +215,7 @@ void MoveList::en_passant_moves(Bitboard pawns, const Position<T>& pos)
         else
         {
             if(
-                pos.is_blocker(from, targ_pawn) &&
+                pos.is_blocker(Us, from, targ_pawn) &&
                 pos.exposes_discovered_check(from, targ_pawn)
             ) continue;
         }

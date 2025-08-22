@@ -1,6 +1,5 @@
 #include "test.hpp"
 #include "logic/movelist.hpp"
-#include "logic/position.hpp"
 #include <cassert>
 #include <cstddef>
 #include <fstream>
@@ -16,7 +15,7 @@ size_t CountNodes(TPosition& pos, size_t depth)
         return 1;
     }
 
-    pos.compute_enemy_attackers().compute_pins_from_sliders();
+    pos.update();
 
     MoveList moves;
     moves.generate(pos);
