@@ -218,12 +218,12 @@ inline void Position<Policy>::update(Colors... clr)
         return;
     }
 
-    static_assert(((clr == WHITE || clr == BLACK) && ...), "clr can be either white or black");
+    assert(((clr == WHITE || clr == BLACK) && ...));
 
     (..., (
         clr == side 
-            ? compute_attackers<true>(clr.opp())
-            : compute_attackers<false>(clr.opp())
+            ? compute_attackers<true>(Color{clr}.opp())
+            : compute_attackers<false>(Color{clr}.opp())
         ).compute_pins(clr)
     );
 }
@@ -241,8 +241,8 @@ Position<Policy>& Position<Policy>::compute_attackers(Color attacker)
 
     const Color deffender = attacker.opp();
 
-    Bitboard    pawns   = get_pieces(deffender, PAWN);
-    Bitboard    pieces  = get_occupied(deffender) ^ pawns;
+    Bitboard    pawns   = get_pieces(attacker, PAWN);
+    Bitboard    pieces  = get_occupied(attacker) ^ pawns;
     Bitboard    king    = get_pieces(deffender, KING);
     Square      ksq     = king.lsb();
 
@@ -287,6 +287,8 @@ Position<Policy>& Position<Policy>::compute_attackers(Color attacker)
             this->defense   &=  pawn_checkers;
         }
     }
+
+    assert(attackers[attacker] & king && checkers || !(attackers[attacker] & king) && !checkers);
 
     return *this;
 }
