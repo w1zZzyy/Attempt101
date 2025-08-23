@@ -84,6 +84,9 @@ void pawn_move_generic(Bitboard moves, std::initializer_list<MoveFlag> flags, in
 template <ColorType Us, bool Pinned, StorageType T>
 void en_passant_moves(Bitboard pawns, const Position<T>& pos, Move*& curr)
 {
+    if(pos.get_passant() == NO_SQUARE)
+        return;
+
     constexpr ColorType     Them    =   (Us == WHITE) ? BLACK : WHITE;
     constexpr DirectionType Up      =   (Us == WHITE) ? NORTH : SOUTH;
 
@@ -127,7 +130,7 @@ void pinned_pawn_moves(Bitboard pawns, const Position<T>& pos, Move*& curr, Bitb
     constexpr DirectionType Up      =   (Us == WHITE) ? NORTH : SOUTH;
     constexpr Bitboard      TRank3  =   (Us == WHITE) ? RankType::Rank3 : RankType::Rank6;
     constexpr Bitboard      TRank8  =   (Us == WHITE) ? RankType::Rank8 : RankType::Rank1;
-
+    
     en_passant_moves<Us, true>(pawns, pos, curr);
 
     AttackParams ap; 
@@ -235,22 +238,30 @@ template<MoveGenType MGT, StorageType ST>
 void MoveList::generate(const Position<ST> &pos)
 {
     const Color us = pos.get_side();
+    const Color opp = us.opp();
     constexpr bool IsForced = MGT == MoveGenType::Forced;
     curr = moves;
     Bitboard target = ~pos.get_occupied(us);
 
     if(!pos.is_double_check()) 
     {
-        const Bitboard deffense = (pos.is_check() ? target & pos.defensive_squares() : target);
-        piece_moves(pos, curr, deffense);
-
-        if(pos.is_check())              pawn_moves<MoveType::Dodge>(pos, curr, us);
-        else if constexpr (IsForced)    pawn_moves<MoveType::Force>(pos, curr, us);
-        else                            pawn_moves<MoveType::All>(pos, curr, us);
+        if(pos.is_check()) {
+            piece_moves(pos, curr, target & pos.defensive_squares());
+            pawn_moves<MoveType::Dodge>(pos, curr, us);
+        }         
+        else if constexpr (IsForced) {
+            piece_moves(pos, curr, target & pos.get_occupied(opp));
+            pawn_moves<MoveType::Force>(pos, curr, us);
+        }
+        else {
+            piece_moves(pos, curr, target);
+            pawn_moves<MoveType::All>(pos, curr, us);
+        }
     }
 
-    if constexpr(IsForced)  king_moves<MoveType::Force>(pos, curr, target);
-    else                    king_moves<MoveType::All>(pos, curr, target);
+    if(pos.is_check()) king_moves<MoveType::Dodge>(pos, curr, target);
+    else if constexpr(IsForced) king_moves<MoveType::Force>(pos, curr, target & pos.get_occupied(opp));
+    else king_moves<MoveType::All>(pos, curr, target);
 }
 
 
