@@ -15,7 +15,7 @@ constexpr int COLOR_COUNT = 2;
 constexpr int CASTLE_COUNT = 63;
 constexpr int SQUARE_COUNT = 64;
 constexpr int MAX_MOVES_COUNT = 218;
-constexpr int MAX_HISTORY_SIZE = 20;
+constexpr int MAX_HISTORY_SIZE = 50;
 constexpr int INF = 1000000;
 
 
@@ -54,18 +54,17 @@ class Piece
 {
 public:
 	
-	Piece() noexcept : piece(NO_PIECE) {}
-	Piece(PieceType _p) noexcept : piece(_p) {}
-	Piece(const Piece& _p) noexcept : piece(_p.piece) {}
+	constexpr Piece() noexcept : piece(NO_PIECE) {}
+	constexpr Piece(PieceType _p) noexcept : piece(_p) {}
 
 	void set(PieceType _p) noexcept {piece = _p;}
-	void next() {piece = static_cast<PieceType>(piece + 1);}
-	bool is(PieceType p) const noexcept {return piece == p;}
-	bool isValid() const noexcept {return piece != NO_PIECE;}
+	constexpr void next() {piece = static_cast<PieceType>(piece + 1);}
+	constexpr bool is(PieceType p) const noexcept {return piece == p;}
+	constexpr bool isValid() const noexcept {return piece != NO_PIECE;}
 
-	PieceType type() const noexcept {return piece;}
+	constexpr PieceType type() const noexcept {return piece;}
 
-	operator int() const noexcept {return piece;}
+	constexpr operator int() const noexcept {return piece;}
 
 private:
 
@@ -85,12 +84,11 @@ class Color
 {
 public:
 	
-	Color() noexcept : color(ANY_COLOR) {}
-	Color(const Color& c) noexcept : color(c.color) {}
-	Color(ColorType _c) noexcept : color(_c) {}
-	Color(int _c) : color(static_cast<ColorType>(_c)) {}
+	constexpr Color() noexcept : color(ANY_COLOR) {}
+	constexpr Color(ColorType _c) noexcept : color(_c) {}
+	constexpr Color(int _c) : color(static_cast<ColorType>(_c)) {}
 
-	void next() noexcept {
+	constexpr void next() noexcept {
 		if(isValid()) 
 			color = ColorType(1 + int(color));
 	}
@@ -98,18 +96,18 @@ public:
 		color = (c == 'w') ? WHITE : (c == 'b') ? BLACK 
 		: ANY_COLOR;
 	}
-	void swap() noexcept {
+	constexpr void swap() noexcept {
 		color = ColorType(opp().color);
 	}
 
-	Color opp() const noexcept {
+	constexpr Color opp() const noexcept {
 		return ColorType(1 - int(color));
 	}
 
-	bool is(ColorType c) const noexcept {return color == c;}
-	bool isValid() const noexcept {return is(WHITE) || is(BLACK);}
+	constexpr bool is(ColorType c) const noexcept {return color == c;}
+	constexpr bool isValid() const noexcept {return is(WHITE) || is(BLACK);}
 
-	operator int() const noexcept {return int(color);}
+	constexpr operator int() const noexcept {return int(color);}
 
 private:
 
@@ -154,11 +152,10 @@ public:
 
 	static std::optional<CastleType> ByRookSquare(Color c, Square rook_sqr);
 
-	Castle() = default;
-	Castle(const Castle& c) : cr(c.cr) {}
-	Castle(CastleRightsType c) noexcept : cr(c) {}
+	constexpr Castle() = default;
+	constexpr Castle(CastleRightsType c) noexcept : cr(c) {}
 
-	void operator = (const Castle& c) noexcept {cr = c.cr;}
+	constexpr void operator = (const Castle& c) noexcept {cr = c.cr;}
 
 	Castle& add(CastleRightsType _cr) noexcept {
 		cr = static_cast<CastleRightsType>(cr | _cr);
@@ -182,7 +179,7 @@ public:
 
 	bool has_path() const noexcept;
 	
-	operator int() const noexcept {return cr;}
+	constexpr operator int() const noexcept {return cr;}
 
 private:
 
