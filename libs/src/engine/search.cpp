@@ -85,9 +85,7 @@ std::optional<Search::RootMove> Search::BestMove()
     RootMove best;
     best.score = -INF;
 
-    int mg[COLOR_COUNT] = {eval.get_mg(WHITE), eval.get_mg(BLACK)};
-    int eg[COLOR_COUNT] = {eval.get_eg(WHITE), eval.get_eg(BLACK)};
-    int phase = eval.get_phase();
+    Eval curr(eval);
 
     for(size_t i = 0; i < moves.get_size(); ++i) 
     {
@@ -100,12 +98,7 @@ std::optional<Search::RootMove> Search::BestMove()
             best = {move, score};
 
         pos.undo_move();
-        eval
-            .set_mg(WHITE, mg[WHITE]) 
-            .set_mg(BLACK, mg[BLACK]) 
-            .set_eg(WHITE, eg[WHITE]) 
-            .set_eg(BLACK, eg[BLACK]) 
-            .set_phase(phase);
+        eval = curr;
     }
 
     return best;
@@ -113,30 +106,25 @@ std::optional<Search::RootMove> Search::BestMove()
 
 int Search::Negamax(PositionFixedMemory &pos, int depth, int alpha, int beta)
 {
-    ++nodes;
-    
     if(depth == 0) 
-        return eval.score(pos);
+        return QSearch(pos, alpha, beta);
 
+    nodes++;
     pos.update();
 
     MoveList moves;
     moves.generate<MoveGenType::NotForced>(pos);
 
     if(moves.empty()) {
-        return (
-            pos.is_check() ? -INF + MAX_HISTORY_SIZE - depth :
-            0
-        );
+        if(pos.is_check())
+            return -INF + MAX_HISTORY_SIZE - depth;
+        return 0;
     } 
     else if(pos.is_draw()) {
         return 0;
     }
-    
-    int mg[COLOR_COUNT] = {eval.get_mg(WHITE), eval.get_mg(BLACK)};
-    int eg[COLOR_COUNT] = {eval.get_eg(WHITE), eval.get_eg(BLACK)};
-    int phase = eval.get_phase();
 
+    Eval curr(eval);
     orderer.OrderCaptures(moves);
 
     for(size_t i = 0; i < moves.get_size(); ++i) 
@@ -150,12 +138,43 @@ int Search::Negamax(PositionFixedMemory &pos, int depth, int alpha, int beta)
         alpha = std::max(alpha, score);
 
         pos.undo_move();
-        eval
-            .set_mg(WHITE, mg[WHITE]) 
-            .set_mg(BLACK, mg[BLACK]) 
-            .set_eg(WHITE, eg[WHITE]) 
-            .set_eg(BLACK, eg[BLACK]) 
-            .set_phase(phase);
+        eval = curr;
+
+        if(alpha >= beta) {
+            return beta;
+        }
+    }
+
+    return alpha;
+}
+
+int Search::QSearch(PositionFixedMemory &pos, int alpha, int beta)
+{
+    alpha = std::max(alpha, eval.score(pos));
+    if(alpha >= beta) 
+        return beta;
+
+    nodes++;
+    pos.update();
+
+    MoveList moves;
+    moves.generate<MoveGenType::Forced>(pos);
+
+    Eval curr(eval);
+    orderer.OrderCaptures(moves);
+
+    for(size_t i = 0; i < moves.get_size(); ++i) 
+    {
+        Move move = moves[i];
+    
+        pos.do_move(move);
+        eval.update(pos, move);
+
+        int score = -QSearch(pos, -beta, -alpha);
+        alpha = std::max(alpha, score);
+
+        pos.undo_move();
+        eval = curr;
 
         if(alpha >= beta) {
             return beta;
