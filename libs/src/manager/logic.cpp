@@ -67,8 +67,8 @@ std::expected<logic::Move, LogicException> LogicManager::DoMove(
 
 void LogicManager::UpdateStatus()
 {
-    pos.compute_enemy_attackers().compute_pins_from_sliders();
-    legal_moves.generate(pos);
+    pos.update();
+    legal_moves.generate<logic::MoveGenType::NotForced>(pos);
 
     if(legal_moves.empty()) {
         status = pos.is_check()

@@ -74,9 +74,9 @@ std::optional<Search::RootMove> Search::BestMove()
     PositionFixedMemory pos(fen);
     MoveList moves;
 
-    pos.compute_enemy_attackers().compute_pins_from_sliders();
+    pos.update();
     eval.init(pos);
-    moves.generate(pos);
+    moves.generate<MoveGenType::NotForced>(pos);
     orderer.setPosition(pos);
 
     if(moves.empty()) 
@@ -118,10 +118,10 @@ int Search::Negamax(PositionFixedMemory &pos, int depth, int alpha, int beta)
     if(depth == 0) 
         return eval.score(pos);
 
-    pos.compute_enemy_attackers().compute_pins_from_sliders();
+    pos.update();
 
     MoveList moves;
-    moves.generate(pos);
+    moves.generate<MoveGenType::NotForced>(pos);
 
     if(moves.empty()) {
         return (

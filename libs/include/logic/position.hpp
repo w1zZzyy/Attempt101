@@ -6,6 +6,7 @@
 #include "bitboard.hpp"
 #include "storage.hpp"
 #include "defs.hpp"
+#include "attack.hpp"
 
 #include <cassert>
 #include <ostream>
@@ -58,6 +59,8 @@ public:
     Color get_side() const noexcept {return side;}
     Square get_passant() const {return st.top().passant;}
     Piece get_captured() const {return st.top().captured;}
+    Bitboard get_attacks(Color attacker) const noexcept {return attackers[attacker];}
+    Bitboard get_pinned(Color us) const noexcept {return pinned[us];}
 
     bool can_castle(CastleType ct, Bitboard enemy_attacks) const;
 
@@ -68,7 +71,7 @@ public:
     bool is_double_check() const {return checkers.count() == 2;}
 
     template<typename... Squares>
-    bool is_blocker(Squares... sqr) const noexcept;
+    bool is_blocker(Color king_side, Squares... sqr) const noexcept;
     bool is_attacker(Square sqr) const noexcept {return checkers & sqr.bitboard();}
     
     Bitboard attacks_to(Square sqr, Bitboard occ) const;
@@ -78,15 +81,17 @@ public:
     // пример: Белый король: е5, Белая пешка: f5, Черная пешка: g5, Черная ладья: h5, (взятие на g6)
     bool exposes_discovered_check(Square from, Square targ) const;
 
-    Bitboard pinned_pieces() const noexcept {return pinned;}
     Bitboard pin_mask(Square sqr) const;
-    Bitboard enemy_attacks() const noexcept {return attackers;}
     Bitboard defensive_squares() const noexcept {return defense;}
 
-    Position& compute_enemy_attackers();
-    Position& compute_pins_from_sliders();
+    template<typename... Colors>
+    void update(Colors... clr);
 
 private:
+
+    template<bool UpdateCheckers>
+    Position& compute_attackers(Color attacker);
+    Position& compute_pins(Color us);
 
     template<bool HashUpdate = true>
     void add_piece(Color color, Piece piece, Square sqr);
@@ -114,10 +119,10 @@ private:
     Color side;
     StateStorage<Policy> st;
 
-    Bitboard attackers; 
+    Bitboard attackers[COLOR_COUNT]; 
+    Bitboard pinned[COLOR_COUNT];
+    Bitboard king_blockers[COLOR_COUNT];
     Bitboard checkers;
-    Bitboard pinned;
-    Bitboard king_blockers;
     Bitboard defense;
 
 };
@@ -197,12 +202,94 @@ inline void Position<Policy>::replace(Piece new_p, Square s)
 
 template<StorageType Policy>
 template <typename... Squares>
-inline bool Position<Policy>::is_blocker(Squares... sqr) const noexcept
+inline bool Position<Policy>::is_blocker(Color king_side, Squares... sqr) const noexcept
 {
     Bitboard blockers = Bitboard::FromSquares(sqr...);
-    return (king_blockers & blockers) == blockers;
+    return (king_blockers[king_side] & blockers) == blockers;
 }
 
+template<StorageType Policy>
+template <typename... Colors>
+inline void Position<Policy>::update(Colors... clr)
+{
+    if constexpr (sizeof...(clr) == 0) {
+        compute_attackers<true>(side.opp());
+        compute_pins(side);
+        return;
+    }
+
+    static_assert(((clr == WHITE || clr == BLACK) && ...), "clr can be either white or black");
+
+    (..., (
+        clr == side 
+            ? compute_attackers<true>(clr.opp())
+            : compute_attackers<false>(clr.opp())
+        ).compute_pins(clr)
+    );
+}
+
+template<StorageType Policy>
+template<bool UpdateCheckers>
+Position<Policy>& Position<Policy>::compute_attackers(Color attacker)
+{
+    this->attackers[attacker] = Bitboard::Null();
+
+    if constexpr (UpdateCheckers) {
+        this->checkers = Bitboard::Null();
+        this->defense = Bitboard::Full();
+    }
+
+    const Color deffender = attacker.opp();
+
+    Bitboard    pawns   = get_pieces(deffender, PAWN);
+    Bitboard    pieces  = get_occupied(deffender) ^ pawns;
+    Bitboard    king    = get_pieces(deffender, KING);
+    Square      ksq     = king.lsb();
+
+    AttackParams attack_params;
+    attack_params.set_blockers(get_occupied(WHITE, BLACK) ^ king);
+
+    while(pieces)
+    {
+        Square  from = pieces.poplsb();
+        Piece   type = piece_on(from);
+        attack_params.set_attacker(from);
+        
+        Bitboard piece_attacks = GetFastAttack(type, attack_params);
+        this->attackers[attacker] |= piece_attacks;
+
+        if constexpr (UpdateCheckers) {
+            if(piece_attacks & king) {
+                this->checkers  |=  from.bitboard();
+                this->defense   &=  piece_on(from).is(KNIGHT) 
+                                    ? from.bitboard() 
+                                    : between(ksq, from);
+            }
+        }
+    }
+
+    Bitboard pawn_attacks = (attacker.is(WHITE)) 
+                            ? step<NORTH_EAST>(pawns) | step<NORTH_WEST>(pawns)
+                            : step<SOUTH_EAST>(pawns) | step<SOUTH_WEST>(pawns);
+
+    this->attackers[attacker] |= pawn_attacks;
+    
+    if constexpr (UpdateCheckers) {
+        if (pawn_attacks & king) 
+        {
+            attack_params
+                .set_color(deffender)
+                .set_attacker(ksq);
+                
+            Bitboard pawn_checkers = GetFastAttack(PAWN, attack_params) & pawns;
+
+            this->checkers  |=  pawn_checkers;
+            this->defense   &=  pawn_checkers;
+        }
+    }
+
+    return *this;
+}
 
 }
 
