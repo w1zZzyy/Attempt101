@@ -42,6 +42,7 @@ private:
 
     std::optional<RootMove> BestMove();
     int Negamax(PositionFixedMemory& pos, int depth, int alpha, int beta);
+    int QSearch(PositionFixedMemory& pos, int alpha, int beta);
 
 private:
 
