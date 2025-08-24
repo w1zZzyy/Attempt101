@@ -61,6 +61,7 @@ public:
     Piece get_captured() const {return st.top().captured;}
     Bitboard get_attacks(Color attacker) const noexcept {return attackers[attacker];}
     Bitboard get_pinned(Color us) const noexcept {return pinned[us];}
+    Zobrist get_hash() const {return st.top().hash; }
 
     bool can_castle(CastleType ct, Bitboard enemy_attacks) const;
 
@@ -175,8 +176,9 @@ inline void Position<Policy>::move_piece(Square from, Square targ)
 
     if constexpr (HashUpdate) {
         State& curr_st = st.top();
-        curr_st.hash.updateSquare(side, piece, from);
-        curr_st.hash.updateSquare(side, piece, targ);
+        curr_st.hash
+            .updateSquare(side, piece, from)
+            .updateSquare(side, piece, targ);
     }
 }
 
@@ -195,8 +197,9 @@ inline void Position<Policy>::replace(Piece new_p, Square s)
 
     if constexpr (HashUpdate) {
         State& curr_st = st.top();
-        curr_st.hash.updateSquare(side, old_p, s);
-        curr_st.hash.updateSquare(side, new_p, s);
+        curr_st.hash
+            .updateSquare(side, old_p, s)
+            .updateSquare(side, new_p, s);
     }
 }
 

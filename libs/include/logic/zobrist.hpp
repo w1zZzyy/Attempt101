@@ -19,6 +19,7 @@ public:
     Zobrist& updateSide();
 
     bool operator == (const Zobrist& z) const noexcept {return hash == z.hash;}
+    constexpr operator Bitboard() const noexcept {return hash;}
 
 private:
 

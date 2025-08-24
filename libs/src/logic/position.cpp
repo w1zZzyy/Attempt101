@@ -83,7 +83,8 @@ Position<Policy>& Position<Policy>::set_fen(std::string_view fen)
     }
 
     side.set(clr);
-    new_st.hash.updateSide();
+    if(clr == 'w')
+        new_st.hash.updateSide();
 
     for (auto& c : castle)
 	{
@@ -113,12 +114,13 @@ Position<Policy>& Position<Policy>::set_fen(std::string_view fen)
 template<StorageType Policy>
 void Position<Policy>::do_move(Move move)
 {
-    State& old_st = st.top();
-    if(old_st.passant.isValid())
-        old_st.hash.updateEnPassant(old_st.passant);
+    const Square passant = st.top().passant;
 
     State& new_st   =   st.create();
     new_st.move     =   move;
+
+    if(passant.isValid()) 
+        new_st.hash.updateEnPassant(passant);
 
     Square from     =   move.from();
     Square targ     =   move.targ();
