@@ -38,6 +38,7 @@ void GameScene::ParseConfig(const resource::ConfigManager &config)
     AIController
         .SetSide(side.opp())
         .SetSearchDepth(config.EngineSearchDepth())
+        .SetTableSize(config.EngineTranspositionSize())
         .LaunchSearchWorker();
 
     GameController.Update();

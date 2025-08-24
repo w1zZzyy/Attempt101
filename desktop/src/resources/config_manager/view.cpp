@@ -64,9 +64,12 @@ game::logic::Color ConfigManager::BoardView() const
     throw std::runtime_error("invalid player_side field");
 }
 
-int ConfigManager::EngineSearchDepth() const
-{
-    return config["game"]["search_depth"];
+int ConfigManager::EngineSearchDepth() const {
+    return config["game"]["engine"]["search_depth"];
+}
+
+size_t ConfigManager::EngineTranspositionSize() const {
+    return config["game"]["engine"]["transpositions_mb"];
 }
 
 sf::Color ConfigManager::SquareColor(std::string_view clr) const
@@ -88,13 +91,11 @@ sf::Vector2u ConfigManager::WindowSize() const
     };
 }
 
-std::string ConfigManager::Title() const
-{
+std::string ConfigManager::Title() const {
     return config["window"]["title"];
 }
 
-int ConfigManager::FPS() const
-{
+int ConfigManager::FPS() const {
     return config["window"]["fps"];
 }
 
