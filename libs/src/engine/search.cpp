@@ -22,6 +22,11 @@ Search &Search::SetMaxDepth(int d)
     return *this;
 }
 
+Search& Search::SetTableSize(size_t mb) {
+    tt.resize(mb);
+    return *this;
+}
+
 Search &Search::StartSearchWorker(const std::function<void(RootMove)> &callback)
 {
     search_thread = std::thread([this, callback]()
@@ -94,7 +99,7 @@ std::optional<Search::RootMove> Search::BestMove()
         pos.do_move(move);
         eval.update(pos, move);
 
-        if(int score = -Negamax(pos, maxDepth - 1, -INF, INF); score > best.score) 
+        if(int score = -Negamax(pos, maxDepth - 1, best.score, INF); score > best.score) 
             best = {move, score};
 
         pos.undo_move();
@@ -109,43 +114,24 @@ int Search::Negamax(PositionFixedMemory &pos, int depth, int alpha, int beta)
     if(depth == 0) 
         return QSearch(pos, alpha, beta);
 
-    nodes++;
-    pos.update();
+    /* if(std::optional probe = tt.probe(pos.get_hash(), depth, alpha, beta)) {
+        std::cout << "PROBED\n";
+        return probe.value();
+    } */
 
-    MoveList moves;
-    moves.generate<MoveGenType::NotForced>(pos);
+    auto score = SearchMoves<MoveGenType::NotForced>(pos, alpha, beta, 
+        [depth, this](PositionFixedMemory &pos, int a, int b) {
+        return -Negamax(pos, depth - 1, -b, -a);
+    });
 
-    if(moves.empty()) {
-        if(pos.is_check())
-            return -INF + MAX_HISTORY_SIZE - depth;
-        return 0;
-    } 
-    else if(pos.is_draw()) {
-        return 0;
-    }
+    /* if (score < alpha) 
+        tt.store(pos.get_hash(), score, depth, move, EntryType::UpperBound);
+    else if(score > beta) 
+        tt.store(pos.get_hash(), score, depth, move, EntryType::LowerBound);
+    else 
+        tt.store(pos.get_hash(), score, depth, move, EntryType::Exact); */
 
-    Eval curr(eval);
-    orderer.OrderCaptures(moves);
-
-    for(size_t i = 0; i < moves.get_size(); ++i) 
-    {
-        Move move = moves[i];
-
-        pos.do_move(move);
-        eval.update(pos, move);
-
-        int score = -Negamax(pos, depth - 1, -beta, -alpha);
-        alpha = std::max(alpha, score);
-
-        pos.undo_move();
-        eval = curr;
-
-        if(alpha >= beta) {
-            return beta;
-        }
-    }
-
-    return alpha;
+    return score;
 }
 
 int Search::QSearch(PositionFixedMemory &pos, int alpha, int beta)
@@ -154,34 +140,12 @@ int Search::QSearch(PositionFixedMemory &pos, int alpha, int beta)
     if(alpha >= beta) 
         return beta;
 
-    nodes++;
-    pos.update();
+    auto score = SearchMoves<MoveGenType::Forced>(pos, alpha, beta, 
+        [this](PositionFixedMemory &pos, int a, int b) {
+        return -QSearch(pos, -b, -a);
+    });
 
-    MoveList moves;
-    moves.generate<MoveGenType::Forced>(pos);
-
-    Eval curr(eval);
-    orderer.OrderCaptures(moves);
-
-    for(size_t i = 0; i < moves.get_size(); ++i) 
-    {
-        Move move = moves[i];
-    
-        pos.do_move(move);
-        eval.update(pos, move);
-
-        int score = -QSearch(pos, -beta, -alpha);
-        alpha = std::max(alpha, score);
-
-        pos.undo_move();
-        eval = curr;
-
-        if(alpha >= beta) {
-            return beta;
-        }
-    }
-
-    return alpha;
+    return score;
 }
 
 }
