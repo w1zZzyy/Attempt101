@@ -61,7 +61,8 @@ public:
     Piece get_captured() const {return st.top().captured;}
     Bitboard get_attacks(Color attacker) const noexcept {return attackers[attacker];}
     Bitboard get_pinned(Color us) const noexcept {return pinned[us];}
-    Zobrist get_hash() const {return st.top().hash; }
+    Zobrist get_hash() const {return st.top().hash;}
+    size_t get_ply() const {return st.size();}
 
     bool can_castle(CastleType ct, Bitboard enemy_attacks) const;
 
