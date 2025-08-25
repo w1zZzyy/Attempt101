@@ -37,21 +37,21 @@ void GameManager::SubscribeOnMoveEvent()
     bus.subscribe<event::MoveEvent>(
         [this](const event::MoveEvent& event) {
             auto optmove = manager.DoMove(event.from, event.targ, event.flag);
-            if(!optmove) HandleMoveError(event.targ, optmove.error());
+            if(!optmove) HandleMoveError(event, optmove.error());
             else HandleMove(optmove.value());
         }
     );
 }
 
-void GameManager::HandleMoveError(game::logic::Square attempted_targ, game::LogicException err) const
+void GameManager::HandleMoveError(const event::MoveEvent& event, game::LogicException err) const
 {
     switch (err)
     {
     case game::LogicException::PromotionFlagNeeded:
-        bus.publish<event::ShowPromotionDialog>({});
+        bus.publish<event::MoveEvent>({event.from, event.targ, game::logic::Q_PROMOTION_MF});
         break;
     case game::LogicException::MoveNotFound:
-        MaybePieceClick(attempted_targ);
+        MaybePieceClick(event.targ);
         break;
     case game::LogicException::GameStatusError: break;
     default: break;
