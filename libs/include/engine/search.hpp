@@ -51,7 +51,8 @@ private:
 
 private:
 
-    long long nodes = 0;
+    long long nodes;
+    long long tt_cutoffs;
     int maxDepth;
 
     Eval eval;
@@ -109,7 +110,6 @@ Search::RootMove Search::SearchMoves(PositionFixedMemory& pos, int alpha, int be
 
         pos.do_move(move);
         eval.update(move);
-
 
         int score = std::forward<Func>(SearchFunc)(pos, rm.score, beta);
         if(score > rm.score) {

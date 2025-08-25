@@ -14,7 +14,7 @@ TEST_P(ZobristHashingTest, WithParams)
     auto [fen, move] = GetParam();
     PositionFixedMemory pos(fen);
 
-    Bitboard hash = pos.get_hash();
+   Zobrist hash = pos.get_hash();
 
     if(move) 
         pos.do_move(*move);
@@ -25,7 +25,7 @@ TEST_P(ZobristHashingTest, WithParams)
     if(move) 
         pos.undo_move();
 
-    EXPECT_EQ((Bitboard)pos.get_hash(), hash);
+    EXPECT_EQ(pos.get_hash(), hash);
 }
 
 INSTANTIATE_TEST_SUITE_P(
