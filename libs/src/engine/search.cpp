@@ -42,6 +42,8 @@ Search &Search::StartSearchWorker(const std::function<void(RootMove)> &callback)
 
             if(std::optional node = BestMove()) {
                 info += std::format("\tScore: {}\n\tMove: {}\n", node->score, node->move.to_string());
+                info += tt.load_info();
+                info += std::format("\tTT CutOffs: {}\n", tt_cutoffs);
                 callback(*node);
             }
 
@@ -63,6 +65,7 @@ void Search::FindBestMove(const std::string &fen_)
 
     this->fen = fen_;
     this->nodes = 0;
+    this->tt_cutoffs = 0;
 
     can_search.store(true);
     cv.notify_one();
@@ -119,7 +122,7 @@ std::optional<Search::RootMove> Search::BestMove()
 int Search::Negamax(PositionFixedMemory &pos, int depth, int alpha, int beta)
 {
     if(std::optional ttVal = tt.probe(pos.get_hash(), depth, alpha, beta)) {
-        std::cout << "ttVal: " << ttVal.value() << '\n';
+        tt_cutoffs++;
         return ttVal.value();
     }
 

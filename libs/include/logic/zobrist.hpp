@@ -18,14 +18,13 @@ public:
     Zobrist& updateEnPassant(Square sqr);
     Zobrist& updateSide();
 
+    operator U64() const noexcept {return hash;}
     bool operator == (const Zobrist& z) const noexcept {return hash == z.hash;}
-    constexpr operator Bitboard() const noexcept {return hash;}
 
 private:
 
-    Bitboard hash {0};
+    U64 hash {0};
 
 };
-
 
 }
