@@ -3,16 +3,16 @@
 build-impl-%: 
 	@mkdir -p build_$*
 	@cd build_$* && cmake -DCMAKE_BUILD_TYPE=$* -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ .. 
-	@cmake --build build_$*
+	@cmake --build build_$* 
 
 clean:
 	@rm -rf build_release build_debug
 
 test-impl-%: build-impl-%
-	@./build_$*/tests_exe
+	@./build_$*/tests/tests_exe 
 
-test-logic: test-impl-release
-test-logic-debug: test-impl-debug
+test-release: test-impl-release
+test-debug: test-impl-debug
 
 build-release: build-impl-release
 build-debug: build-impl-debug

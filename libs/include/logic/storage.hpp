@@ -32,6 +32,8 @@ public:
 
     bool repetition() const;
 
+    size_t size() const {return curr - history;}
+
 private:
 
     State history[MAX_HISTORY_SIZE];
@@ -53,6 +55,8 @@ public:
 
     bool repetition() const;
 
+    size_t size() const {return history.size();}
+
 private:
 
     std::vector<State> history;
@@ -69,6 +73,7 @@ concept StorageType = requires (T t) {
     { t.rollback() };
     { t.top() };
     { t.repetition() };
+    { t.size() };
 };
 
 template<StorageType StoragePolicy>
@@ -78,6 +83,7 @@ public:
     using StoragePolicy::rollback;
     using StoragePolicy::top;
     using StoragePolicy::repetition;
+    using StoragePolicy::size;
 };
 
 

@@ -12,7 +12,8 @@ public:
 
     AIManager(event::Bus& bus);
     AIManager& SetSide(game::logic::Color _s) noexcept {side = _s; return *this;}
-    AIManager& SetSearchDepth(int depth) {search.SetMaxDepth(depth); return *this;}
+    AIManager& SetSearchDepth(int depth) {search.SetMaxDepth(depth); return *this;} 
+    AIManager& SetTableSize(size_t mb) {search.SetTableSize(mb); return *this;}
     AIManager& LaunchSearchWorker();
 
 private: 

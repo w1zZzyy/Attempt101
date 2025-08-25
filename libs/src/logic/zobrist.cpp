@@ -1,7 +1,6 @@
 #include "zobrist.hpp"
 
 #include <random>
-#include "bitboard.hpp"
 
 using namespace game::logic;
 
@@ -9,10 +8,10 @@ namespace
 {
 
 
-static Bitboard ZobristPieceTable[COLOR_COUNT][PIECE_COUNT][SQUARE_COUNT];
-static Bitboard ZobristCastleTable[CASTLE_COUNT];
-static Bitboard ZobristPassantTable[SQUARE_COUNT];
-static Bitboard ZobristSide;
+static U64 ZobristPieceTable[COLOR_COUNT][PIECE_COUNT][SQUARE_COUNT];
+static U64 ZobristCastleTable[CASTLE_COUNT];
+static U64 ZobristPassantTable[SQUARE_COUNT];
+static U64 ZobristSide;
 
 
 }

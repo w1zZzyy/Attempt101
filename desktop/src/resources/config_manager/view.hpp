@@ -21,6 +21,7 @@ public:
     std::string InitalFen() const;
     game::logic::Color BoardView() const;
     int EngineSearchDepth() const;
+    size_t EngineTranspositionSize() const;
 
     sf::Vector2u WindowSize() const;
     std::string Title() const;

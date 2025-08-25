@@ -22,6 +22,11 @@ Search &Search::SetMaxDepth(int d)
     return *this;
 }
 
+Search& Search::SetTableSize(size_t mb) {
+    tt.resize(mb);
+    return *this;
+}
+
 Search &Search::StartSearchWorker(const std::function<void(RootMove)> &callback)
 {
     search_thread = std::thread([this, callback]()
@@ -33,11 +38,18 @@ Search &Search::StartSearchWorker(const std::function<void(RootMove)> &callback)
             if(stop.load()) 
                 break;
 
-            if(std::optional best_move = BestMove())
-                callback(*best_move);
+            std::string info = "INFO:\n";
+
+            if(std::optional node = BestMove()) {
+                info += std::format("\tScore: {}\n\tMove: {}\n", node->score, node->move.to_string());
+                info += tt.load_info();
+                info += std::format("\tTT CutOffs: {}\n", tt_cutoffs);
+                callback(*node);
+            }
 
             can_search.store(false);
-            std::cout << "Nodes Counted: " << nodes << '\n';
+            info += std::format("\tNodes Counted: {}\n", nodes);
+            std::cout << info;
         }
     });
 
@@ -53,6 +65,7 @@ void Search::FindBestMove(const std::string &fen_)
 
     this->fen = fen_;
     this->nodes = 0;
+    this->tt_cutoffs = 0;
 
     can_search.store(true);
     cv.notify_one();
@@ -85,103 +98,64 @@ std::optional<Search::RootMove> Search::BestMove()
     RootMove best;
     best.score = -INF;
 
-    Eval curr(eval);
+    eval.push();
 
     for(size_t i = 0; i < moves.get_size(); ++i) 
     {
         Move move = moves[i];
 
         pos.do_move(move);
-        eval.update(pos, move);
+        eval.update(move);
 
-        if(int score = -Negamax(pos, maxDepth - 1, -INF, INF); score > best.score) 
+        if(int score = -Negamax(pos, maxDepth - 1, best.score, INF); score > best.score) 
             best = {move, score};
 
         pos.undo_move();
-        eval = curr;
+        eval.rollback();
     }
+
+    eval.pop();
 
     return best;
 }
 
 int Search::Negamax(PositionFixedMemory &pos, int depth, int alpha, int beta)
 {
+    if(std::optional ttVal = tt.probe(pos.get_hash(), depth, alpha, beta)) {
+        tt_cutoffs++;
+        return ttVal.value();
+    }
+
     if(depth == 0) 
         return QSearch(pos, alpha, beta);
 
-    nodes++;
-    pos.update();
+    auto [move, score] = SearchMoves<MoveGenType::NotForced>(pos, alpha, beta, 
+        [depth, this](PositionFixedMemory &pos, int a, int b) {
+        return -Negamax(pos, depth - 1, -b, -a);
+    });
 
-    MoveList moves;
-    moves.generate<MoveGenType::NotForced>(pos);
+    if (score < alpha) 
+        tt.store(pos.get_hash(), score, depth, move, EntryType::UpperBound);
+    else if(score > beta) 
+        tt.store(pos.get_hash(), score, depth, move, EntryType::LowerBound);
+    else 
+        tt.store(pos.get_hash(), score, depth, move, EntryType::Exact);
 
-    if(moves.empty()) {
-        if(pos.is_check())
-            return -INF + MAX_HISTORY_SIZE - depth;
-        return 0;
-    } 
-    else if(pos.is_draw()) {
-        return 0;
-    }
-
-    Eval curr(eval);
-    orderer.OrderCaptures(moves);
-
-    for(size_t i = 0; i < moves.get_size(); ++i) 
-    {
-        Move move = moves[i];
-
-        pos.do_move(move);
-        eval.update(pos, move);
-
-        int score = -Negamax(pos, depth - 1, -beta, -alpha);
-        alpha = std::max(alpha, score);
-
-        pos.undo_move();
-        eval = curr;
-
-        if(alpha >= beta) {
-            return beta;
-        }
-    }
-
-    return alpha;
+    return score;
 }
 
 int Search::QSearch(PositionFixedMemory &pos, int alpha, int beta)
 {
-    alpha = std::max(alpha, eval.score(pos));
+    alpha = std::max(alpha, eval.score());
     if(alpha >= beta) 
-        return beta;
+        return alpha;
 
-    nodes++;
-    pos.update();
+    auto [_, score] = SearchMoves<MoveGenType::Forced>(pos, alpha, beta, 
+        [this](PositionFixedMemory &pos, int a, int b) {
+        return -QSearch(pos, -b, -a);
+    });
 
-    MoveList moves;
-    moves.generate<MoveGenType::Forced>(pos);
-
-    Eval curr(eval);
-    orderer.OrderCaptures(moves);
-
-    for(size_t i = 0; i < moves.get_size(); ++i) 
-    {
-        Move move = moves[i];
-    
-        pos.do_move(move);
-        eval.update(pos, move);
-
-        int score = -QSearch(pos, -beta, -alpha);
-        alpha = std::max(alpha, score);
-
-        pos.undo_move();
-        eval = curr;
-
-        if(alpha >= beta) {
-            return beta;
-        }
-    }
-
-    return alpha;
+    return score;
 }
 
 }

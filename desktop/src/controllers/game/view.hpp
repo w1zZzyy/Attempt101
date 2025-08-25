@@ -18,7 +18,7 @@ public:
 private:
 
     void SubscribeOnMoveEvent();
-    void HandleMoveError(game::logic::Square attempted_targ, game::LogicException err) const;
+    void HandleMoveError(const event::MoveEvent& event, game::LogicException err) const;
     void HandleMove(game::logic::Move move);
 
     void SubscribeOnBoardClickedEvent();
