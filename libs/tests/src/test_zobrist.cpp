@@ -1,5 +1,6 @@
 #include "gtest/gtest.h"
 #include "logic/position.hpp"
+#include "logic/movelist.hpp"
 #include <tuple>
 
 using namespace game::logic;
@@ -45,3 +46,33 @@ INSTANTIATE_TEST_SUITE_P(
         std::make_tuple("3bb3/3b4/rr1rr2r/4k3/8/8/B4BB1/6K1 w - - 0 1", Move{a2, e6, DEFAULT_MF})
     )
 );
+
+void check_hash_stability(PositionFixedMemory &pos, int depth) 
+{
+    if (depth == 0) 
+        return;
+
+    MoveList moves;
+    moves.generate<MoveGenType::NotForced>(pos);
+
+    for (size_t i = 0; i < moves.get_size(); ++i) {
+        Move move = moves[i];
+        pos.do_move(move);
+        pos.update();
+
+        {
+            PositionDynamicMemory copy(pos.fen());
+            ASSERT_EQ(pos.get_hash(), copy.get_hash()) << pos.fen();
+        }
+
+        check_hash_stability(pos, depth - 1);
+
+        pos.undo_move();
+    }
+}
+
+TEST(ZobristHashingTest, OnDepth) {
+    PositionFixedMemory pos("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq -");
+    pos.update();
+    check_hash_stability(pos, 4);
+}
