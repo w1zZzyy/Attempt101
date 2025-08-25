@@ -15,18 +15,19 @@ void Transpositions::resize(size_t mb)
 void Transpositions::store(logic::Zobrist key, int score, int depth, logic::Move move, EntryType type)
 {
     TTEntry& entry = find(key);
-    if(depth > entry.depth) {
+    if (depth >= entry.depth || entry.key != key) {
         entry.depth = depth;
         entry.move = move;
         entry.score = score;
         entry.key = key;
         entry.type = type;
     }
+
 }
 
-std::optional<int> Transpositions::probe(logic::Zobrist key, int depth, int alpha, int beta) const 
+std::optional<int> Transpositions::probe(logic::Zobrist key, int depth, int alpha, int beta)
 {
-    TTEntry& entry = find(key);
+    const TTEntry& entry = find(key);
     if(entry.depth >= depth && entry.key == key) 
     {
         switch (entry.type) 
@@ -46,7 +47,7 @@ std::optional<int> Transpositions::probe(logic::Zobrist key, int depth, int alph
     return std::nullopt;
 }
 
-TTEntry& Transpositions::find(logic::Bitboard key) const {
+TTEntry& Transpositions::find(logic::Bitboard key) {
     assert(data);
     size_t index = key % size;
     return data[index];

@@ -47,7 +47,7 @@ private:
     int QSearch(PositionFixedMemory& pos, int alpha, int beta);
 
     template<logic::MoveGenType MGT, typename Func>
-    int SearchMoves(PositionFixedMemory& pos, int alpha, int beta, Func&& SearchFunc);
+    RootMove SearchMoves(PositionFixedMemory& pos, int alpha, int beta, Func&& SearchFunc);
 
 private:
 
@@ -69,47 +69,64 @@ private:
 };
 
 template<logic::MoveGenType MGT, typename Func>
-int Search::SearchMoves(PositionFixedMemory& pos, int alpha, int beta, Func&& SearchFunc) 
+Search::RootMove Search::SearchMoves(PositionFixedMemory& pos, int alpha, int beta, Func&& SearchFunc) 
 {
     using namespace logic;
 
     nodes++;
     pos.update();
 
+    RootMove rm;
+
+    if(pos.is_draw()) {
+        rm.score = 0;
+        return rm;
+    }
+
     MoveList moves;
     moves.generate<MGT>(pos);
 
     if(moves.empty()) {
-        if(pos.is_check())
-            return -INF + MAX_HISTORY_SIZE;
-        return 0;
+        if(pos.is_check()) 
+            rm.score = -INF + pos.get_ply();
+        else if constexpr (MGT == MoveGenType::Forced) 
+            rm.score = eval.score();
+        else 
+            rm.score = 0;
+        return rm;
     } 
-    else if(pos.is_draw()) {
-        return 0;
-    }
 
-    Eval curr(eval);
+    rm.score = alpha;
+
+    eval.push();
     orderer.OrderCaptures(moves);
+
+    const int score_curr = eval.score();
 
     for(size_t i = 0; i < moves.get_size(); ++i) 
     {
         Move move = moves[i];
 
         pos.do_move(move);
-        eval.update(pos, move);
+        eval.update(move);
 
-        int score = SearchFunc(pos, alpha, beta);
-        alpha = std::max(alpha, score);
+
+        int score = std::forward<Func>(SearchFunc)(pos, rm.score, beta);
+        if(score > rm.score) {
+            rm.score = score;
+            rm.move = move;
+        }
 
         pos.undo_move();
-        eval = curr;
+        eval.rollback();
 
-        if(alpha >= beta) {
-            return beta;
-        }
+        if(rm.score >= beta) 
+            break;
     }
 
-    return alpha;
+    eval.pop();
+
+    return rm;
 }
 
 }

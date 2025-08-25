@@ -38,11 +38,16 @@ Search &Search::StartSearchWorker(const std::function<void(RootMove)> &callback)
             if(stop.load()) 
                 break;
 
-            if(std::optional best_move = BestMove())
-                callback(*best_move);
+            std::string info = "INFO:\n";
+
+            if(std::optional node = BestMove()) {
+                info += std::format("\tScore: {}\n\tMove: {}\n", node->score, node->move.to_string());
+                callback(*node);
+            }
 
             can_search.store(false);
-            std::cout << "Nodes Counted: " << nodes << '\n';
+            info += std::format("\tNodes Counted: {}\n", nodes);
+            std::cout << info;
         }
     });
 
@@ -90,57 +95,59 @@ std::optional<Search::RootMove> Search::BestMove()
     RootMove best;
     best.score = -INF;
 
-    Eval curr(eval);
+    eval.push();
 
     for(size_t i = 0; i < moves.get_size(); ++i) 
     {
         Move move = moves[i];
 
         pos.do_move(move);
-        eval.update(pos, move);
+        eval.update(move);
 
         if(int score = -Negamax(pos, maxDepth - 1, best.score, INF); score > best.score) 
             best = {move, score};
 
         pos.undo_move();
-        eval = curr;
+        eval.rollback();
     }
+
+    eval.pop();
 
     return best;
 }
 
 int Search::Negamax(PositionFixedMemory &pos, int depth, int alpha, int beta)
 {
+    if(std::optional ttVal = tt.probe(pos.get_hash(), depth, alpha, beta)) {
+        std::cout << "ttVal: " << ttVal.value() << '\n';
+        return ttVal.value();
+    }
+
     if(depth == 0) 
         return QSearch(pos, alpha, beta);
 
-    /* if(std::optional probe = tt.probe(pos.get_hash(), depth, alpha, beta)) {
-        std::cout << "PROBED\n";
-        return probe.value();
-    } */
-
-    auto score = SearchMoves<MoveGenType::NotForced>(pos, alpha, beta, 
+    auto [move, score] = SearchMoves<MoveGenType::NotForced>(pos, alpha, beta, 
         [depth, this](PositionFixedMemory &pos, int a, int b) {
         return -Negamax(pos, depth - 1, -b, -a);
     });
 
-    /* if (score < alpha) 
+    if (score < alpha) 
         tt.store(pos.get_hash(), score, depth, move, EntryType::UpperBound);
     else if(score > beta) 
         tt.store(pos.get_hash(), score, depth, move, EntryType::LowerBound);
     else 
-        tt.store(pos.get_hash(), score, depth, move, EntryType::Exact); */
+        tt.store(pos.get_hash(), score, depth, move, EntryType::Exact);
 
     return score;
 }
 
 int Search::QSearch(PositionFixedMemory &pos, int alpha, int beta)
 {
-    alpha = std::max(alpha, eval.score(pos));
+    alpha = std::max(alpha, eval.score());
     if(alpha >= beta) 
-        return beta;
+        return alpha;
 
-    auto score = SearchMoves<MoveGenType::Forced>(pos, alpha, beta, 
+    auto [_, score] = SearchMoves<MoveGenType::Forced>(pos, alpha, beta, 
         [this](PositionFixedMemory &pos, int a, int b) {
         return -QSearch(pos, -b, -a);
     });
