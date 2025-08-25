@@ -180,29 +180,31 @@ void Eval::Setup()
 
 void Eval::init(const PositionFixedMemory& pos) 
 {
-    game_phase = 0;
-    mg[WHITE] = 0;
-    mg[BLACK] = 0;
-    eg[WHITE] = 0;
-    eg[BLACK] = 0;
+    data.game_phase = 0;
+    data.mg[WHITE] = 0;
+    data.mg[BLACK] = 0;
+    data.eg[WHITE] = 0;
+    data.eg[BLACK] = 0;
 
     for(Square sqr = Square::Start(); sqr <= Square::End(); ++sqr) {
         Piece p = pos.piece_on(sqr);
         Color c = pos.piece_clr_on(sqr);
         if(p.isValid()) add_piece(c, p, sqr);
     }
+
+    this->pos = &pos;
 }
 
 
-void Eval::update(const PositionFixedMemory& pos, logic::Move move)
+void Eval::update(logic::Move move)
 {
     const Square from = move.from();
     const Square targ = move.targ();
     const MoveFlag flag = move.flag();
-    const Color side_curr = pos.get_side();
+    const Color side_curr = pos->get_side();
     const Color side_moved = side_curr.opp();
     
-    if(const Piece captured = pos.get_captured(); captured.isValid()) remove_piece(side_curr, captured, targ);
+    if(const Piece captured = pos->get_captured(); captured.isValid()) remove_piece(side_curr, captured, targ);
     else if(flag == EN_PASSANT_MF) remove_piece(side_curr, PAWN, where_passant(from, targ));
 
     switch (flag)
@@ -218,65 +220,29 @@ void Eval::update(const PositionFixedMemory& pos, logic::Move move)
     case K_PROMOTION_MF:
     case B_PROMOTION_MF:
     {
-        const Piece p = pos.piece_on(targ);
-        mg[side_moved] += mg_table[side_moved][p][targ] - mg_table[side_moved][PAWN][from];
-        eg[side_moved] += eg_table[side_moved][p][targ] - eg_table[side_moved][PAWN][from];
-        game_phase += gamephaseInc[p] - gamephaseInc[PAWN];
+        const Piece p = pos->piece_on(targ);
+        data.mg[side_moved] += mg_table[side_moved][p][targ] - mg_table[side_moved][PAWN][from];
+        data.eg[side_moved] += eg_table[side_moved][p][targ] - eg_table[side_moved][PAWN][from];
+        data.game_phase += gamephaseInc[p] - gamephaseInc[PAWN];
         break;
     }
     default:
     {
-        update_piece(side_moved, pos.piece_on(targ), from, targ);
+        update_piece(side_moved, pos->piece_on(targ), from, targ);
         break;
     }
     
     }
 }
 
-void Eval::rollback(const PositionFixedMemory &pos, logic::Move move)
+int Eval::score() const
 {
-    const Color side_curr = pos.get_side();
-    const Color side_moved = side_curr.opp();
-    const Square from = move.from();
-    const Square targ = move.targ();
-    const MoveFlag flag = move.flag();
+    const Color side = pos->get_side();
 
-    if(const Piece captured = pos.get_captured(); captured.isValid()) add_piece(side_curr, captured, targ);
-    else if(flag == EN_PASSANT_MF) add_piece(side_curr, PAWN, where_passant(from, targ));
-
-    switch (flag)
-    {
-    case S_CASTLE_MF:
-        castle(side_moved, targ, from, from + EAST, targ + EAST);
-        break;
-    case L_CASTLE_MF:
-        castle(side_moved, targ, from, from + WEST, targ + 2 * WEST);
-        break;
-    case Q_PROMOTION_MF:
-    case R_PROMOTION_MF:
-    case K_PROMOTION_MF:
-    case B_PROMOTION_MF:
-    {
-        const Piece p = pos.piece_on(targ);
-        mg[side_moved] -= mg_table[side_moved][p][targ] + mg_table[side_moved][PAWN][from];
-        eg[side_moved] -= eg_table[side_moved][p][targ] + eg_table[side_moved][PAWN][from];
-        game_phase -= gamephaseInc[p] + gamephaseInc[PAWN];
-        break;
-    }
-    default:
-        update_piece(side_moved, pos.piece_on(targ), targ, from);
-        break;
-    }
-}
-
-int Eval::score(const PositionFixedMemory& pos) const
-{
-    const Color side = pos.get_side();
-
-    int mg_score = mg[side] - mg[side.opp()];
-    int eg_score = eg[side] - eg[side.opp()];
+    int mg_score = data.mg[side] - data.mg[side.opp()];
+    int eg_score = data.eg[side] - data.eg[side.opp()];
     
-    int mg_phase = (game_phase > 24) ? 24 : game_phase;
+    int mg_phase = (data.game_phase > 24) ? 24 : data.game_phase;
     int eg_phase = 24 - mg_phase;
 
     return (mg_score * mg_phase + eg_score * eg_phase) / 24;
@@ -284,22 +250,22 @@ int Eval::score(const PositionFixedMemory& pos) const
 
 void Eval::update_piece(logic::Color side, logic::Piece piece, logic::Square from, logic::Square targ)
 {
-    mg[side] += mg_table[side][piece][targ] - mg_table[side][piece][from];
-    eg[side] += eg_table[side][piece][targ] - eg_table[side][piece][from];
+    data.mg[side] += mg_table[side][piece][targ] - mg_table[side][piece][from];
+    data.eg[side] += eg_table[side][piece][targ] - eg_table[side][piece][from];
 }
 
 void Eval::add_piece(logic::Color side, logic::Piece piece, logic::Square sqr)
 {
-    mg[side] += mg_table[side][piece][sqr];
-    eg[side] += eg_table[side][piece][sqr];
-    game_phase += gamephaseInc[piece];
+    data.mg[side] += mg_table[side][piece][sqr];
+    data.eg[side] += eg_table[side][piece][sqr];
+    data.game_phase += gamephaseInc[piece];
 }
 
 void Eval::remove_piece(logic::Color side, logic::Piece piece, logic::Square from)
 {
-    mg[side] -= mg_table[side][piece][from];
-    eg[side] -= eg_table[side][piece][from];
-    game_phase -= gamephaseInc[piece];
+    data.mg[side] -= mg_table[side][piece][from];
+    data.eg[side] -= eg_table[side][piece][from];
+    data.game_phase -= gamephaseInc[piece];
 }
 
 void Eval::castle(logic::Color side, logic::Square kf, logic::Square kt, logic::Square rf, logic::Square rt)
