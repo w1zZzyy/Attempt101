@@ -1,33 +1,27 @@
 #pragma once
 
 #include "event/bus/view.hpp"
-#include "manager/logic.hpp" 
+#include "logic.hpp"
 
 namespace controller
 {
 
 
-class GameManager
+class GameLogicController
 {
 public:
 
-    GameManager(event::Bus& bus);
+    GameLogicController(event::Bus& bus);
     void Init(const std::string& fen);
-    void Update() const;
 
 private:
 
-    void SubscribeOnMoveEvent();
-    void HandleMoveError(const event::MoveEvent& event, game::LogicException err) const;
-    void HandleMove(game::logic::Move move);
-
-    void SubscribeOnBoardClickedEvent();
-    void MaybePieceClick(game::logic::Square sqr) const;
+    void SubscribeOnMoveAppeared();
 
 private:
 
     event::Bus& bus;
-    game::LogicManager manager;
+    GameLogic logic;
 
 };
 
