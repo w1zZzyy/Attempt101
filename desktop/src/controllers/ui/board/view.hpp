@@ -1,26 +1,33 @@
 #pragma once
 
 #include "ui/board/view.hpp"
-#include "ui/piece/view.hpp"
 #include "event/bus/view.hpp"
-
-#include <array>
-#include <optional>
+#include "ui/board/manager.hpp"
+#include "ui/piece/manager.hpp"
 
 namespace controller
 {
 
 
-class UIBoardManager {
+class UIGameController 
+{
+
+    using Square = game::logic::Square;
+    using Move = game::logic::Move;
+    using Color = game::logic::Color;
+
 public:
 
-    UIBoardManager(event::Bus& bus);
+    using OnPieceSelected = std::function<std::vector<Move>(Square)>;
 
-    UIBoardManager& SetBoardView(game::logic::Color side);
-    UIBoardManager& SetLeftBottomSquarePos(const sf::Vector2f& pos);
-    UIBoardManager& SetCellShape(const sf::Vector2f& shape);
-    UIBoardManager& SetCellColor(game::logic::Color side, sf::Color color);
-    UIBoardManager& SetHighlightedCellColor(sf::Color color);
+    UIGameController(event::Bus& bus);
+
+    UIGameController& SetBoardView(Color);
+    UIGameController& SetOrigin(const sf::Vector2f&);
+    UIGameController& SetCellShape(const sf::Vector2f&);
+    UIGameController& SetCellColor(Color, sf::Color);
+    UIGameController& SetHighlightedCellColor(sf::Color);
+    UIGameController& SetOnPieceSelected(OnPieceSelected&&) noexcept;
 
     void Render(sf::RenderWindow& window);
 
@@ -30,18 +37,18 @@ private:
     void SubscribeOnPieceRemovedEvent();
     void SubscribeOnPieceMovedEvent();
     void SubscribeOnMousePressedEvent();
-    void SubscribeOnPieceSelectedEvent();
-    void ResetSelected();
+    void SubscribeOnMouseMovedEvent();
+    void SubscribeOnMouseReleasedEvent();
+    void SetPieceManagerCallbacks();
 
 private:
 
     event::Bus& bus;
 
-    std::array<std::optional<ui::PieceEntity>, game::logic::SQUARE_COUNT> pieces;
-    std::optional<game::logic::Square> selected;
+    ui::PiecesManager PiecesManager;
+    ui::BoardManager BoardManager;
 
-    ui::BoardRenderer board;
-    ui::BoardViewPtr board_view;
+    OnPieceSelected onPieceSelected;
 
 };
 
