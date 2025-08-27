@@ -1,7 +1,6 @@
 #pragma once
 
 #include <SFML/Graphics.hpp>
-#include <memory>
 #include "logic/defs.hpp"
 
 namespace ui
@@ -11,65 +10,29 @@ namespace ui
 class BoardView {
 public:
 
-    void SetLeftBottomSquarePos(const sf::Vector2f& pos);
-    void SetCellShape(const sf::Vector2f& shape);
-    void SetCellColor(game::logic::Color side, sf::Color color);
-    void SetHighlightedCellColor(sf::Color color);
+    static void SetOrigin(const sf::Vector2f& origin) noexcept {Origin = origin;}
+    static void SetCellShape(const sf::Vector2f& shape) noexcept {Shape = shape;}
+    static void SetPlayerView(game::logic::Color side) noexcept {PlayerView = side;}
+    static void SetHighlightedColor(sf::Color clr) noexcept {Highlight = clr;}
+    static void SetCellColor(game::logic::Color side, sf::Color clr) noexcept {Color[side] = clr;}
 
-    sf::Vector2f GetCellShape() const noexcept {return square_shape;}
-    sf::Color GetColor(game::logic::Square sqr) const;
-    virtual sf::Vector2f GetPosition(game::logic::Square sqr) const;
+    static sf::Color GetColor(game::logic::Square sqr) noexcept;
+    static sf::Color GetHighlighted() noexcept {return Highlight;}
+    static sf::Vector2f GetShape() noexcept {return Shape;}
 
-    sf::RectangleShape CreateCell() const;
-    sf::RectangleShape CreateHighlightedCell() const;
+    static sf::RectangleShape CreateCell();
 
-    std::optional<game::logic::Square> ToSquare(sf::Vector2f pos);
-
-protected:
-
-    sf::Vector2f lb_sqr_pos;
-    sf::Vector2f square_shape;
-    sf::Color color[game::logic::COLOR_COUNT];
-    sf::Color highlighted;
-
-};
-
-class ReversedBoardView : public BoardView {
-public:
-    sf::Vector2f GetPosition(game::logic::Square sqr) const override;
-};
-
-using BoardViewPtr = std::shared_ptr<BoardView>;
-
-template<game::logic::ColorType T>
-BoardViewPtr CreateBoardView() {
-    if constexpr (T == game::logic::WHITE) {
-        return std::make_shared<BoardView>();
-    } else {
-        return std::make_shared<ReversedBoardView>();
-    }
-}
-
-
-class BoardRenderer {
-public:
-
-    void SetBoardView(BoardViewPtr& bvp) {board_view = bvp;}
-    void Render(sf::RenderWindow& window) const;
-    void AddHighlighted(game::logic::Square sqr) {highlighted.push_back(sqr);}
-    void CleanHighlighted() noexcept {highlighted.clear();}
+    static std::optional<game::logic::Square> ToSquare(sf::Vector2f pos);
+    static sf::Vector2f ToCoordinates(game::logic::Square sqr);
 
 private:
 
-    void RenderCommonSquares(sf::RenderWindow& window) const;
-    void RenderHighlightedSquares(sf::RenderWindow& window) const;
-
-private:
-
-    BoardViewPtr board_view;
-    std::vector<game::logic::Square> highlighted;
+    static sf::Vector2f Origin;
+    static sf::Vector2f Shape;
+    static sf::Color Highlight;
+    static sf::Color Color[game::logic::COLOR_COUNT];
+    static game::logic::Color PlayerView;
 
 };
-
 
 }

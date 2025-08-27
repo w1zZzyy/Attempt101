@@ -5,30 +5,23 @@
 namespace ui
 {
 
-PieceEntity::PieceEntity(game::logic::Color c, game::logic::Piece p) : 
+PieceSprite::PieceSprite(game::logic::Color c, game::logic::Piece p) : 
     sprite(*resource::TextureManager::Get(c, p)), 
     color(c),
     piece(p)
 {}
 
-PieceEntity::PieceEntity(PieceEntity &&pe) noexcept :
-    sprite(std::move(pe.sprite)),
-    piece(pe.piece),
-    color(pe.color)
+PieceSprite::PieceSprite(PieceSprite&& ps) noexcept : 
+    sprite(std::move(ps.sprite)),
+    piece(ps.piece),
+    color(ps.color)
 {}
 
-void PieceEntity::operator=(PieceEntity &&pe) noexcept
-{
-    sprite = std::move(pe.sprite);
-    piece = pe.piece;
-    color = pe.color;
-}
-
-void PieceEntity::Render(sf::RenderWindow& window) {
+void PieceSprite::Render(sf::RenderWindow& window) {
     window.draw(sprite);
 }
 
-PieceEntity& PieceEntity::setSize(sf::Vector2f size) {
+PieceSprite& PieceSprite::setSize(sf::Vector2f size) {
     auto currSize = sprite.getTexture().getSize();
     sprite.setScale({
         size.x / currSize.x,
@@ -37,16 +30,22 @@ PieceEntity& PieceEntity::setSize(sf::Vector2f size) {
     return *this;
 }
 
-PieceEntity& PieceEntity::setPos(sf::Vector2f pos) {
+PieceSprite& PieceSprite::setPos(sf::Vector2f pos) {
     sprite.setPosition(pos);
     return *this;
 }
 
-void PieceEntity::replacePiece(game::logic::Piece newPiece)
+void PieceSprite::replacePiece(game::logic::Piece newPiece)
 {
     auto texture = resource::TextureManager::Get(color, newPiece);
     sprite.setTexture(*texture);
     piece = newPiece;
+}
+
+void PieceSprite::operator = (PieceSprite&& _entity) noexcept {
+    sprite = std::move(_entity.sprite);
+    piece = _entity.piece;
+    color = _entity.color;
 }
 
 
