@@ -1,14 +1,11 @@
 #include "view.hpp"
+#include "event/models/mouse_event.hpp"
 
 namespace controller
 {
 
 
-InputManager::InputManager(event::Bus &bus) : bus(bus) 
-{
-    SubscribeOnInputBlockedEvent();
-    SubscribeOnInputAllowedEvent();
-}
+InputManager::InputManager(event::Bus &bus) : bus(bus) {}
 
 void InputManager::HandleEvents(sf::RenderWindow &window)
 {
@@ -20,8 +17,6 @@ void InputManager::HandleEvents(sf::RenderWindow &window)
         }
 
         if (const auto* mouseButtonPressed = event->getIf<sf::Event::MouseButtonPressed>()) {
-            if(isBlocked) 
-                continue;
             if (mouseButtonPressed->button == sf::Mouse::Button::Left) {
                 bus.publish<event::MousePressedEvent>(sf::Vector2f{
                     (float)mouseButtonPressed->position.x, 
@@ -29,25 +24,16 @@ void InputManager::HandleEvents(sf::RenderWindow &window)
                 });
             }
         }
+        else if (event->getIf<sf::Event::MouseButtonReleased>()) {
+            bus.publish<event::MouseReleasedEvent>({});
+        }
+        else if(const auto* mouse = event->getIf<sf::Event::MouseMoved>()) {
+            bus.publish<event::MouseMovedEvent>(sf::Vector2f{
+                    (float)mouse->position.x, 
+                    (float)mouse->position.y
+            });
+        }
     }
-}
-
-void InputManager::SubscribeOnInputBlockedEvent()
-{
-    bus.subscribe<event::InputWasBlocked>({
-        [this](const event::InputWasBlocked&) {
-            this->isBlocked = true;
-        }
-    });
-}
-
-void InputManager::SubscribeOnInputAllowedEvent()
-{
-    bus.subscribe<event::InputWasAllowed>({
-        [this](const event::InputWasAllowed&) {
-            this->isBlocked = false;
-        }
-    });
 }
 
 }
