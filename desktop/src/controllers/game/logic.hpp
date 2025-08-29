@@ -14,7 +14,7 @@ public:
 public:
 
     void Init(const std::string&);
-    game::logic::Move DoMove(game::logic::Move);
+    void DoMove(game::logic::Move);
     std::vector<game::logic::Move> MovesFrom(game::logic::Square) const;
     operator const PositionDynamicMemory&() const noexcept {return pos;}
 

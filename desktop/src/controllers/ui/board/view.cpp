@@ -1,6 +1,5 @@
 #include "view.hpp"
 
-#include "event/models/piece_event.hpp"
 #include "event/models/mouse_event.hpp"
 #include "event/models/position_event.hpp"
 
@@ -9,9 +8,7 @@ namespace controller
 
 UIGameController::UIGameController(event::Bus &bus) : bus(bus)
 {
-    SubscribeOnPieceAddedEvent();
-    SubscribeOnPieceRemovedEvent();
-    SubscribeOnPieceMovedEvent();
+    SubscribeOnPositionChangedEvent();
     SubscribeOnMousePressedEvent();
     SubscribeOnMouseMovedEvent();
     SubscribeOnMouseReleasedEvent();
@@ -63,29 +60,29 @@ void UIGameController::Render(sf::RenderWindow &window)
     PiecesManager.Render(window);
 }
 
-void UIGameController::SubscribeOnPieceAddedEvent()
+void UIGameController::SubscribeOnPositionChangedEvent()
 {
-    bus.subscribe<event::PieceAddedEvent>(
-        [this](const event::PieceAddedEvent& event) {
-            PiecesManager.AppendPiece(event.color, event.piece, event.square);
-        }
-    );
-}
+    bus.subscribe<event::PositionChangedEvent>(
+        [this](const event::PositionChangedEvent& event) 
+        {
+            for(auto& place : event.PiecesAdded) {
+                PiecesManager.AppendPiece(
+                    place.color, 
+                    place.piece, 
+                    place.square
+                );
+            }
 
-void UIGameController::SubscribeOnPieceRemovedEvent()
-{
-    bus.subscribe<event::PieceRemovedEvent>(
-        [this](const event::PieceRemovedEvent& event) {
-            PiecesManager.RemovePiece(event.captured_on);
-        }
-    );
-}
+            for(auto& move : event.PieceMove) {
+                PiecesManager.MovePiece(
+                    move.from, 
+                    move.targ, 
+                    move.promotion
+                );
+            }
 
-void UIGameController::SubscribeOnPieceMovedEvent()
-{
-    bus.subscribe<event::PieceMovedEvent>(
-        [this](const event::PieceMovedEvent& event) {
-            PiecesManager.MovePiece(event.from, event.targ, event.promotion);
+            if(event.PieceRemoved) 
+                PiecesManager.RemovePiece(*event.PieceRemoved);
         }
     );
 }

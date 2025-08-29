@@ -33,9 +33,7 @@ public:
 
 private:
 
-    void SubscribeOnPieceAddedEvent();
-    void SubscribeOnPieceRemovedEvent();
-    void SubscribeOnPieceMovedEvent();
+    void SubscribeOnPositionChangedEvent();
     void SubscribeOnMousePressedEvent();
     void SubscribeOnMouseMovedEvent();
     void SubscribeOnMouseReleasedEvent();

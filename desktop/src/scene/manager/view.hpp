@@ -10,8 +10,7 @@ class SceneManager
 {
 public:
 
-    void Display(sf::RenderWindow& window) {scene->Display(window);}
-    void HandleEvents(sf::RenderWindow& window) {scene->HandleEvents(window);}
+    void Handle(sf::RenderWindow& window);
     void Load(const resource::ConfigManager& config);
 
 private:

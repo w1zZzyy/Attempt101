@@ -27,11 +27,11 @@ public:
 
 private:
 
-    static sf::Vector2f Origin;
-    static sf::Vector2f Shape;
-    static sf::Color Highlight;
-    static sf::Color Color[game::logic::COLOR_COUNT];
-    static game::logic::Color PlayerView;
+    inline static sf::Vector2f Origin;
+    inline static sf::Vector2f Shape;
+    inline static sf::Color Highlight;
+    inline static sf::Color Color[game::logic::COLOR_COUNT];
+    inline static game::logic::Color PlayerView;
 
 };
 

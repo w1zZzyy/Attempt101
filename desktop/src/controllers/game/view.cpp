@@ -1,5 +1,5 @@
 #include "view.hpp"
-#include "event/models/piece_event.hpp"
+#include "event/models/position_event.hpp"
 
 namespace controller
 {
@@ -15,20 +15,73 @@ void GameLogicController::Init(const std::string& fen)
     using namespace game::logic;
     const PositionDynamicMemory& pos = logic;
 
+    event::PositionChangedEvent event;
+
     for(Square sqr = Square::Start(); sqr <= Square::End(); ++sqr) {
         if(Piece piece = pos.piece_on(sqr); piece.isValid()) 
         {
             Color clr = pos.piece_clr_on(sqr);
-            bus.enqueue<event::PieceAddedEvent>(piece, clr, sqr);
+            event.PiecesAdded.push_back({sqr, clr, piece});
         }
     }
 
-    bus.publish_all();
+    bus.publish<event::PositionChangedEvent>(event);
 }
 
 void GameLogicController::SubscribeOnMoveAppeared() 
 {
-    //tututu
+    bus.subscribe<event::PositionMoveAppearedEvent>(
+        [this](const event::PositionMoveAppearedEvent& event) {
+            logic.DoMove(event.move);
+            HandleMove(event.move);
+        }
+    );
+}
+
+void GameLogicController::HandleMove(game::logic::Move move) const
+{
+    using namespace game::logic;
+
+    const PositionDynamicMemory& pos = logic;
+    const MoveFlag flag = move.flag();
+    const Square from = move.from(), targ = move.targ();
+
+    event::PositionChangedEvent event;
+
+    if(auto captured = pos.get_captured(); captured.isValid()) 
+        event.PieceRemoved.emplace(targ);
+    else if(flag == EN_PASSANT_MF) 
+        event.PieceRemoved.emplace(where_passant(from, targ));
+
+    switch (flag)
+    {
+    case MoveFlag::S_CASTLE_MF:
+        event.PieceMove.push_back({from, targ});
+        event.PieceMove.push_back({targ + EAST, from + EAST});
+        break;
+    case MoveFlag::L_CASTLE_MF:
+        event.PieceMove.push_back({from, targ});
+        event.PieceMove.push_back({targ + 2 * WEST, from + WEST});
+        break;
+    case MoveFlag::Q_PROMOTION_MF:
+    case MoveFlag::K_PROMOTION_MF:
+    case MoveFlag::B_PROMOTION_MF:
+    case MoveFlag::R_PROMOTION_MF:
+        event.PieceMove.push_back({
+            from, 
+            targ, 
+            pos.piece_on(targ)}
+        );
+        break;
+    default:
+        event.PieceMove.push_back({from, targ});
+        break;
+    }
+
+    event.fen = pos.fen();
+    event.side = pos.get_side();
+
+    bus.publish<event::PositionChangedEvent>(event);
 }
 
 }

@@ -13,10 +13,12 @@ public:
 
     GameLogicController(event::Bus& bus);
     void Init(const std::string& fen);
+    operator const GameLogic& () const noexcept {return logic;}
 
 private:
 
     void SubscribeOnMoveAppeared();
+    void HandleMove(game::logic::Move move) const;
 
 private:
 

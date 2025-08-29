@@ -5,9 +5,9 @@ namespace controller
 {
 
 
-InputManager::InputManager(event::Bus &bus) : bus(bus) {}
+InputController::InputController(event::Bus &bus) : bus(bus) {}
 
-void InputManager::HandleEvents(sf::RenderWindow &window)
+void InputController::HandleEvents(sf::RenderWindow &window)
 {
     while(auto event = window.pollEvent()) 
     {

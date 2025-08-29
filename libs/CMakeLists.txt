@@ -4,5 +4,4 @@ set(INCDIR ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 add_subdirectory(src/logic)
 add_subdirectory(src/engine)
-add_subdirectory(src/manager)
 add_subdirectory(tests)

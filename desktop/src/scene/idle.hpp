@@ -2,9 +2,9 @@
 
 #include <SFML/Graphics.hpp>
 #include <memory>
-#include <concepts>
 #include <type_traits>
 #include "resources/config_manager/view.hpp"
+#include "controllers/input/view.hpp"
 
 namespace scene
 {
@@ -12,10 +12,13 @@ namespace scene
 
 class IScene {
 public:
+    IScene(event::Bus& bus) : InputController(bus) {}
     virtual ~IScene() = default;
     virtual void Display(sf::RenderWindow& window) = 0;
     virtual void ParseConfig(const resource::ConfigManager& config) = 0;
-    virtual void HandleEvents(sf::RenderWindow& window) = 0;
+    void PublishEvents(sf::RenderWindow& window) {InputController.HandleEvents(window);}
+protected:
+    controller::InputController InputController;
 };
 
 using ScenePtr = std::unique_ptr<IScene>;

@@ -7,11 +7,11 @@ namespace controller
 {
 
 
-class InputManager
+class InputController
 {
 public:
 
-    InputManager(event::Bus& bus);
+    InputController(event::Bus& bus);
     void HandleEvents(sf::RenderWindow& window);
 
 private:

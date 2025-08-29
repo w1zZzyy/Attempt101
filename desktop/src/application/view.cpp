@@ -1,7 +1,5 @@
 #include "view.hpp"
 
-#include "logic/position.hpp"
-
 Application::Application()
 {
     resource::ConfigManager config;
@@ -17,9 +15,5 @@ Application::Application()
 
 void Application::run()
 {
-    while(Window.isOpen())
-    {
-        SceneController.HandleEvents(Window);
-        SceneController.Display(Window);
-    }
+    SceneController.Handle(Window);
 }

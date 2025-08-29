@@ -20,11 +20,12 @@ std::vector<game::logic::Move> GameLogic::MovesFrom(game::logic::Square from) co
     return piece_moves;
 }
 
-game::logic::Move GameLogic::DoMove(game::logic::Move move) 
+void GameLogic::DoMove(game::logic::Move move) 
 {
-    pos.do_move(move);
-    Update();
-    return move;
+    if(state == State::InProgress) {
+        pos.do_move(move);
+        Update();
+    }
 }
 
 void GameLogic::Update() 
