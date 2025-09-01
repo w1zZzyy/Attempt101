@@ -48,9 +48,7 @@ void GameLogicController::HandleMove(game::logic::Move move) const
 
     event::PositionChangedEvent event;
 
-    if(auto captured = pos.get_captured(); captured.isValid()) 
-        event.PieceRemoved.emplace(targ);
-    else if(flag == EN_PASSANT_MF) 
+    if(flag == EN_PASSANT_MF) 
         event.PieceRemoved.emplace(where_passant(from, targ));
 
     switch (flag)
