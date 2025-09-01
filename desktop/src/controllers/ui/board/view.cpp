@@ -10,8 +10,6 @@ UIGameController::UIGameController(event::Bus &bus) : bus(bus)
 {
     SubscribeOnPositionChangedEvent();
     SubscribeOnMousePressedEvent();
-    SubscribeOnMouseMovedEvent();
-    SubscribeOnMouseReleasedEvent();
     SetPieceManagerCallbacks();
 }
 
@@ -99,22 +97,6 @@ void UIGameController::SubscribeOnMousePressedEvent()
     );
 }
 
-void UIGameController::SubscribeOnMouseMovedEvent() {
-    bus.subscribe<event::MouseMovedEvent>(
-        [this](const event::MouseMovedEvent& event){
-            PiecesManager.HandleMouseMovedEvent(event.pos);
-        }
-    );
-}
-
-void UIGameController::SubscribeOnMouseReleasedEvent() {
-    bus.subscribe<event::MouseReleasedEvent>(
-        [this](const event::MouseReleasedEvent& event){
-            PiecesManager.HandleMouseReleasedEvent();
-        }
-    );
-}
-
 void UIGameController::SetPieceManagerCallbacks() 
 {
     using namespace game::logic;
@@ -123,9 +105,11 @@ void UIGameController::SetPieceManagerCallbacks()
         .SetPieceSelectedCallback(
             [this](Square sqr){
                 BoardManager.CleanHighlighted();
-                for(Move move : onPieceSelected(sqr)) {
+                std::vector<Move> possibleSquares = onPieceSelected(sqr);
+                for(Move move : possibleSquares) {
                     BoardManager.AddHighlighted(move.targ());
                 }
+                PiecesManager.SetSelectedMoves(std::move(possibleSquares)); 
             })
         .SetPieceMovedCallback(
             [this](std::expected<Move, event::MoveErrorEvent> move)

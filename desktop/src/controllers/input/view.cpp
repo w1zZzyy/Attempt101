@@ -24,7 +24,7 @@ void InputController::HandleEvents(sf::RenderWindow &window)
                 });
             }
         }
-        else if (event->getIf<sf::Event::MouseButtonReleased>()) {
+        /* else if (event->getIf<sf::Event::MouseButtonReleased>()) {
             bus.publish<event::MouseReleasedEvent>({});
         }
         else if(const auto* mouse = event->getIf<sf::Event::MouseMoved>()) {
@@ -32,7 +32,7 @@ void InputController::HandleEvents(sf::RenderWindow &window)
                     (float)mouse->position.x, 
                     (float)mouse->position.y
             });
-        }
+        } */
     }
 }
 

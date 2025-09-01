@@ -39,18 +39,15 @@ public:
     PiecesManager& SetPieceSelectedCallback(OnPieceSelected&&) noexcept;
     PiecesManager& SetPieceMovedCallback(OnPieceMoved&&) noexcept;
     PiecesManager& SetSelectionRights(int) noexcept;
+    void SetSelectedMoves(std::vector<Move>&& moves);
 
     void AppendPiece(Color, Piece, Square);
     void RemovePiece(Square);
     void MovePiece(Square from, Square targ, std::optional<Piece> newPiece);
 
     void HandleMousePressedEvent(Square);
-    void HandleMouseMovedEvent(sf::Vector2f);
-    void HandleMouseReleasedEvent();
-
     void DropSelectedPiece();
     void TryToSelectPiece(Square sqr);
-    void SetSelectedMoves(std::vector<Move>&& moves);
 
 private:
 

@@ -56,22 +56,6 @@ void PiecesManager::HandleMousePressedEvent(Square sqr)
         TryToMove(selected->sqr, sqr);
 }
 
-void PiecesManager::HandleMouseMovedEvent(sf::Vector2f mouse_pos) {
-    if(selected) 
-        pieces[selected->sqr]->setPos(mouse_pos);
-}
-
-void PiecesManager::HandleMouseReleasedEvent() 
-{
-    if(!selected) 
-        return;
-
-    const Square from = selected->sqr;
-    if(auto targ = BoardView::ToSquare(pieces[from]->getPos())) {
-        TryToMove(from, *targ);
-    }
-}
-
 void PiecesManager::TryToSelectPiece(Square sqr) 
 {
     DropSelectedPiece();
