@@ -1,4 +1,10 @@
 {
+    "window" : {
+        "width": 800,
+        "height": 640,
+        "title": "FinalAttempt", 
+        "fps": 60
+    }, 
     "board" : {
         "square_color": {
             "white": {
@@ -23,15 +29,9 @@
             "alpha": 100
         },
         "left_bottom_square": {
-            "x": 0,
-            "y": 560
+            "x": 50,
+            "y": 600
         }
-    }, 
-    "window" : {
-        "width": 800,
-        "height": 640,
-        "title": "FinalAttempt", 
-        "fps": 60
     }, 
     "game" : {
         "start_position": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
