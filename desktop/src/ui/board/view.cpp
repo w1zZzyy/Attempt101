@@ -5,9 +5,10 @@ namespace ui
 
 sf::RectangleShape BoardView::CreateCell()
 {
-    sf::RectangleShape rect;
-    rect.setSize(Shape);
-    return rect;
+    sf::RectangleShape cell;
+    cell.setSize(Shape);
+    cell.setOrigin(cell.getLocalBounds().getCenter());
+    return cell;
 }
 
 sf::Color BoardView::GetColor(game::logic::Square sqr) noexcept {
