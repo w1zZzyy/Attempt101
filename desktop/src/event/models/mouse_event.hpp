@@ -14,6 +14,9 @@ struct MouseMovedEvent : IEvent {
     MouseMovedEvent(sf::Vector2f pos) : pos(pos) {}
     sf::Vector2f pos;
 };
-struct MouseReleasedEvent : IEvent {};
+struct MouseReleasedEvent : IEvent {
+    MouseReleasedEvent(sf::Vector2f pos) : pos(pos) {}
+    sf::Vector2f pos;
+};
 
 }
