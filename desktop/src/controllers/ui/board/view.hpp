@@ -35,6 +35,8 @@ private:
 
     void SubscribeOnPositionChangedEvent();
     void SubscribeOnMousePressedEvent();
+    void SubscribeOnMouseMovedEvent();
+    void SubscribeOnMouseReleasedEvent();
     void SetPieceManagerCallbacks();
 
 private:

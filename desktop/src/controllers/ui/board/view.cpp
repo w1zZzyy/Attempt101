@@ -10,6 +10,8 @@ UIGameController::UIGameController(event::Bus &bus) : bus(bus)
 {
     SubscribeOnPositionChangedEvent();
     SubscribeOnMousePressedEvent();
+    SubscribeOnMouseMovedEvent();
+    SubscribeOnMouseReleasedEvent();
     SetPieceManagerCallbacks();
 }
 
@@ -97,6 +99,24 @@ void UIGameController::SubscribeOnMousePressedEvent()
     );
 }
 
+void UIGameController::SubscribeOnMouseMovedEvent() 
+{
+    bus.subscribe<event::MouseMovedEvent>(
+        [this](const event::MouseMovedEvent& event) {
+            PiecesManager.HandleMouseMovedEvent(event.pos);
+        }
+    );
+}
+
+void UIGameController::SubscribeOnMouseReleasedEvent() 
+{
+    bus.subscribe<event::MouseReleasedEvent>(
+        [this](const event::MouseReleasedEvent& event) {
+            PiecesManager.HandleMouseReleasedEvent(event.pos);
+        }
+    );
+}
+
 void UIGameController::SetPieceManagerCallbacks() 
 {
     using namespace game::logic;
@@ -109,20 +129,19 @@ void UIGameController::SetPieceManagerCallbacks()
                 for(Move move : possibleSquares) {
                     BoardManager.AddHighlighted(move.targ());
                 }
-                PiecesManager.SetSelectedMoves(std::move(possibleSquares)); 
+                PiecesManager.SetSelectedMoves(std::move(possibleSquares));
             })
         .SetPieceMovedCallback(
             [this](std::expected<Move, event::MoveErrorEvent> move)
             {
                 BoardManager.CleanHighlighted();
-                PiecesManager.DropSelectedPiece();
+                PiecesManager.ResetSelected();
                 if(!move) 
                 {
                     const auto error = move.error();
                     switch (error.type) 
                     {
                     case event::MoveErrorEvent::NotFound: 
-                        PiecesManager.TryToSelectPiece(error.targ);
                         break;
                     case event::MoveErrorEvent::Ambiguous:
                         // promotion
