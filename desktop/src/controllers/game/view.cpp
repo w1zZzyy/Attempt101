@@ -1,124 +1,85 @@
 #include "view.hpp"
+#include "event/models/position_event.hpp"
 
 namespace controller
 {
 
-
-GameManager::GameManager(event::Bus &bus) : bus(bus)
-{
-    SubscribeOnMoveEvent();
-    SubscribeOnBoardClickedEvent();
+GameLogicController::GameLogicController(event::Bus& bus) : bus(bus) {
+    SubscribeOnMoveAppeared();
 }
 
-void GameManager::Init(const std::string& fen)
+void GameLogicController::Init(const std::string& fen)
 {
-    manager.Init(fen);
+    logic.Init(fen);
 
     using namespace game::logic;
+    const PositionDynamicMemory& pos = logic;
+
+    event::PositionChangedEvent event;
 
     for(Square sqr = Square::Start(); sqr <= Square::End(); ++sqr) {
-        if(Piece piece = manager.getPieceOn(sqr); piece.isValid()) 
+        if(Piece piece = pos.piece_on(sqr); piece.isValid()) 
         {
-            Color clr = manager.getPieceClr(sqr);
-            bus.enqueue<event::PieceAddedEvent>(piece, clr, sqr);
+            Color clr = pos.piece_clr_on(sqr);
+            event.PiecesAdded.push_back({sqr, clr, piece});
         }
     }
 
-    bus.publish_all();
+    bus.publish<event::PositionChangedEvent>(event);
 }
 
-void GameManager::Update() const
+void GameLogicController::SubscribeOnMoveAppeared() 
 {
-    bus.publish<event::PositionWasUpdated>({manager.getPositionFen(), manager.getSide2Move()});
-}
-
-void GameManager::SubscribeOnMoveEvent()
-{
-    bus.subscribe<event::MoveEvent>(
-        [this](const event::MoveEvent& event) {
-            auto optmove = manager.DoMove(event.from, event.targ, event.flag);
-            if(!optmove) HandleMoveError(event, optmove.error());
-            else HandleMove(optmove.value());
+    bus.subscribe<event::PositionMoveAppearedEvent>(
+        [this](const event::PositionMoveAppearedEvent& event) {
+            logic.DoMove(event.move);
+            HandleMove(event.move);
         }
     );
 }
 
-void GameManager::HandleMoveError(const event::MoveEvent& event, game::LogicException err) const
-{
-    switch (err)
-    {
-    case game::LogicException::PromotionFlagNeeded:
-        bus.publish<event::MoveEvent>({event.from, event.targ, game::logic::Q_PROMOTION_MF});
-        break;
-    case game::LogicException::MoveNotFound:
-        MaybePieceClick(event.targ);
-        break;
-    case game::LogicException::GameStatusError: break;
-    default: break;
-    }
-}
-
-void GameManager::HandleMove(game::logic::Move move)
+void GameLogicController::HandleMove(game::logic::Move move) const
 {
     using namespace game::logic;
 
+    const PositionDynamicMemory& pos = logic;
     const MoveFlag flag = move.flag();
     const Square from = move.from(), targ = move.targ();
 
-    if(auto captured = manager.getCaptured(); captured.isValid()) 
-        bus.enqueue<event::PieceRemovedEvent>(targ);
-    else if(flag == EN_PASSANT_MF) 
-        bus.enqueue<event::PieceRemovedEvent>(where_passant(from, targ));
+    event::PositionChangedEvent event;
+
+    if(flag == EN_PASSANT_MF) 
+        event.PieceRemoved.emplace(where_passant(from, targ));
 
     switch (flag)
     {
     case MoveFlag::S_CASTLE_MF:
-        bus.enqueue<event::PieceMovedEvent>(from, targ);
-        bus.enqueue<event::PieceMovedEvent>(targ + EAST, from + EAST);
+        event.PieceMove.push_back({from, targ});
+        event.PieceMove.push_back({targ + EAST, from + EAST});
         break;
     case MoveFlag::L_CASTLE_MF:
-        bus.enqueue<event::PieceMovedEvent>(from, targ);
-        bus.enqueue<event::PieceMovedEvent>(targ + 2 * WEST, from + WEST);
+        event.PieceMove.push_back({from, targ});
+        event.PieceMove.push_back({targ + 2 * WEST, from + WEST});
         break;
     case MoveFlag::Q_PROMOTION_MF:
-        bus.enqueue<event::PieceMovedEvent>(from, targ, QUEEN);
-        break;
     case MoveFlag::K_PROMOTION_MF:
-        bus.enqueue<event::PieceMovedEvent>(from, targ, KNIGHT);
-        break;
     case MoveFlag::B_PROMOTION_MF:
-        bus.enqueue<event::PieceMovedEvent>(from, targ, BISHOP);
-        break;
     case MoveFlag::R_PROMOTION_MF:
-        bus.enqueue<event::PieceMovedEvent>(from, targ, ROOK);
+        event.PieceMove.push_back({
+            from, 
+            targ, 
+            pos.piece_on(targ)}
+        );
         break;
     default:
-        bus.enqueue<event::PieceMovedEvent>(from, targ);
+        event.PieceMove.push_back({from, targ});
         break;
     }
 
-    bus.publish_all();
-    Update();
-}
+    event.fen = pos.fen();
+    event.side = pos.get_side();
 
-void GameManager::SubscribeOnBoardClickedEvent()
-{
-    bus.subscribe<event::ClickedOnBoardEvent>(
-        [this](const event::ClickedOnBoardEvent& event) {
-            MaybePieceClick(event.square);
-        }
-    );
-}
-
-void GameManager::MaybePieceClick(game::logic::Square sqr) const
-{
-    if(auto piece = manager.getPieceOn(sqr); piece.isValid()) {
-        auto moves = manager.MovesFrom(sqr);
-        bus.publish<event::PieceSelectedEvent>({
-            sqr, 
-            std::move(moves)
-        });
-    }
+    bus.publish<event::PositionChangedEvent>(event);
 }
 
 }

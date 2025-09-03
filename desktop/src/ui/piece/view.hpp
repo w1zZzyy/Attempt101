@@ -1,35 +1,34 @@
 #pragma once
 
 #include <SFML/Graphics.hpp>
-#include <array>
 #include "logic/defs.hpp"
 
 namespace ui
 {
 
-
-class PieceEntity {
+class PieceSprite {
 public:
 
-    PieceEntity(game::logic::Color c, game::logic::Piece p);
-    PieceEntity(PieceEntity&& pe) noexcept;
-    PieceEntity(const PieceEntity&) = delete;
-
-    void operator = (PieceEntity&& pe) noexcept;
-    void operator = (const PieceEntity&) = delete;
+    PieceSprite(game::logic::Color c, game::logic::Piece p);
+    PieceSprite(PieceSprite&& _sprite) noexcept;
+    void operator = (PieceSprite&& _entity) noexcept;
 
     void Render(sf::RenderWindow& window);
-    PieceEntity& setSize(sf::Vector2f size);
-    PieceEntity& setPos(sf::Vector2f pos);
+    PieceSprite& setSize(sf::Vector2f size);
+    PieceSprite& setPos(sf::Vector2f pos);
+    PieceSprite& setOriginCenter();
     void replacePiece(game::logic::Piece newPiece);
 
-private:
+    game::logic::Color getColor() const noexcept {return color;}
+    game::logic::Piece getPiece() const noexcept {return piece;}
+    sf::Vector2f getPos() const noexcept {return sprite.getPosition();}
+
+protected:
 
     sf::Sprite sprite;
     game::logic::Color color;
     game::logic::Piece piece;
 
 };
-
 
 }

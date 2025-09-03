@@ -5,6 +5,14 @@
 namespace scene
 {
 
+void SceneManager::Handle(sf::RenderWindow &window)
+{
+    while(window.isOpen())
+    {
+        scene->PublishEvents(window);
+        scene->Display(window);
+    }
+}
 
 void SceneManager::Load(const resource::ConfigManager &config)
 {

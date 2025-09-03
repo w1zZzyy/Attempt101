@@ -1,149 +1,163 @@
 #include "view.hpp"
 
+#include "event/models/mouse_event.hpp"
+#include "event/models/position_event.hpp"
+
 namespace controller
 {
 
-UIBoardManager::UIBoardManager(event::Bus &bus) : bus(bus)
+UIGameController::UIGameController(event::Bus &bus) : bus(bus)
 {
-    SubscribeOnPieceAddedEvent();
-    SubscribeOnPieceRemovedEvent();
-    SubscribeOnPieceMovedEvent();
+    SubscribeOnPositionChangedEvent();
     SubscribeOnMousePressedEvent();
-    SubscribeOnPieceSelectedEvent();
+    SubscribeOnMouseMovedEvent();
+    SubscribeOnMouseReleasedEvent();
+    SetPieceManagerCallbacks();
 }
 
-UIBoardManager &UIBoardManager::SetBoardView(game::logic::Color side)
+UIGameController &UIGameController::SetBoardView(game::logic::Color side)
 {
     assert(side.isValid());
 
-    using namespace game::logic;
-    board_view = side.is(WHITE) 
-        ? ui::CreateBoardView<WHITE>()
-        : ui::CreateBoardView<BLACK>();
-    board.SetBoardView(board_view);
+    ui::BoardView::SetPlayerView(side);
+    PiecesManager.SetSelectionRights(side);
 
     return *this;
 }
 
-UIBoardManager& UIBoardManager::SetLeftBottomSquarePos(const sf::Vector2f& pos)
+UIGameController& UIGameController::SetOrigin(const sf::Vector2f& pos)
 {
-    assert(board_view);
-    board_view->SetLeftBottomSquarePos(pos);
+    ui::BoardView::SetOrigin(pos);
     return *this;
 }
 
-UIBoardManager& UIBoardManager::SetCellShape(const sf::Vector2f& shape) 
+UIGameController& UIGameController::SetCellShape(const sf::Vector2f& shape) 
 {
-    assert(board_view);
-    board_view->SetCellShape(shape);
+    ui::BoardView::SetCellShape(shape);
     return *this;
 }   
 
-UIBoardManager& UIBoardManager::SetCellColor(game::logic::Color side, sf::Color color)
+UIGameController& UIGameController::SetCellColor(game::logic::Color side, sf::Color color)
 {
-    assert(board_view);
-    board_view->SetCellColor(side, color);
+    ui::BoardView::SetCellColor(side, color);
     return *this;
 }
 
-UIBoardManager& UIBoardManager::SetHighlightedCellColor(sf::Color color)
+UIGameController& UIGameController::SetHighlightedCellColor(sf::Color color)
 {
-    assert(board_view);
-    board_view->SetHighlightedCellColor(color);
+    ui::BoardView::SetHighlightedColor(color);
     return *this;
 }
 
-void UIBoardManager::Render(sf::RenderWindow &window)
-{
-    board.Render(window);
-    for(auto& piece : pieces) {
-        if(piece) 
-            piece->Render(window);
-    }
+UIGameController& UIGameController::SetOnPieceSelected(OnPieceSelected&& callback) noexcept {
+    onPieceSelected = std::move(callback);
+    return *this;
 }
 
-void UIBoardManager::SubscribeOnPieceAddedEvent()
+void UIGameController::Render(sf::RenderWindow &window)
 {
-    bus.subscribe<event::PieceAddedEvent>(
-        [this](const event::PieceAddedEvent& event) {
-            assert(board_view && !pieces[event.square]);
-            pieces[event.square]
-                .emplace(event.color, event.piece)
-                .setSize(board_view->GetCellShape())
-                .setPos(board_view->GetPosition(event.square));
+    BoardManager.Render(window);
+    PiecesManager.Render(window);
+}
+
+void UIGameController::SubscribeOnPositionChangedEvent()
+{
+    bus.subscribe<event::PositionChangedEvent>(
+        [this](const event::PositionChangedEvent& event) 
+        {
+            for(auto& place : event.PiecesAdded) {
+                PiecesManager.AppendPiece(
+                    place.color, 
+                    place.piece, 
+                    place.square
+                );
+            }
+
+            for(auto& move : event.PieceMove) {
+                PiecesManager.MovePiece(
+                    move.from, 
+                    move.targ, 
+                    move.promotion
+                );
+            }
+
+            if(event.PieceRemoved) 
+                PiecesManager.RemovePiece(*event.PieceRemoved);
         }
     );
 }
 
-void UIBoardManager::SubscribeOnPieceRemovedEvent()
-{
-    bus.subscribe<event::PieceRemovedEvent>(
-        [this](const event::PieceRemovedEvent& event) {
-            if(selected && *selected == event.captured_on) ResetSelected();             
-            pieces[event.captured_on].reset();
-        }
-    );
-}
-
-void UIBoardManager::SubscribeOnPieceMovedEvent()
-{
-    bus.subscribe<event::PieceMovedEvent>(
-        [this](const event::PieceMovedEvent& event) {
-            assert(board_view);
-
-            if(selected)
-                ResetSelected();
-
-            if(event.promotion)
-                pieces[event.from]->replacePiece(*event.promotion);
-
-            pieces[event.targ] = std::move(pieces[event.from]);
-            pieces[event.targ]->setPos(board_view->GetPosition(event.targ));
-            pieces[event.from].reset();
-        }
-    );
-}
-
-void UIBoardManager::SubscribeOnMousePressedEvent()
+void UIGameController::SubscribeOnMousePressedEvent()
 {
     bus.subscribe<event::MousePressedEvent>(
         [this](const event::MousePressedEvent& event) {
-            assert(board_view);
-            if(auto targ = board_view->ToSquare(event.pos)) {
-                if(selected) {
-                    auto from = *selected;
-                    bus.publish<event::MoveEvent>({from, *targ});
+            auto sqr = ui::BoardView::ToSquare(event.pos);
+            if(sqr) {
+                PiecesManager.HandleMousePressedEvent(*sqr);
+            }
+        }
+    );
+}
+
+void UIGameController::SubscribeOnMouseMovedEvent() 
+{
+    bus.subscribe<event::MouseMovedEvent>(
+        [this](const event::MouseMovedEvent& event) {
+            PiecesManager.HandleMouseMovedEvent(event.pos);
+        }
+    );
+}
+
+void UIGameController::SubscribeOnMouseReleasedEvent() 
+{
+    bus.subscribe<event::MouseReleasedEvent>(
+        [this](const event::MouseReleasedEvent& event) {
+            PiecesManager.HandleMouseReleasedEvent(event.pos);
+        }
+    );
+}
+
+void UIGameController::SetPieceManagerCallbacks() 
+{
+    using namespace game::logic;
+
+    PiecesManager 
+        .SetPieceSelectedCallback(
+            [this](Square sqr){
+                BoardManager.CleanHighlighted();
+                std::vector<Move> possibleSquares = onPieceSelected(sqr);
+                for(Move move : possibleSquares) {
+                    BoardManager.AddHighlighted(move.targ());
+                }
+                PiecesManager.SetSelectedMoves(std::move(possibleSquares));
+            })
+        .SetPieceMovedCallback(
+            [this](std::expected<Move, event::MoveErrorEvent> move)
+            {
+                BoardManager.CleanHighlighted();
+                PiecesManager.ResetSelected();
+                if(!move) 
+                {
+                    const auto error = move.error();
+                    switch (error.type) 
+                    {
+                    case event::MoveErrorEvent::NotFound: 
+                        break;
+                    case event::MoveErrorEvent::Ambiguous:
+                        // promotion
+                        bus.publish<event::PositionMoveAppearedEvent>(
+                            {{error.from, error.targ, Q_PROMOTION_MF}}
+                        );
+                        break;
+                    }
                 }
                 else {
-                    bus.publish<event::ClickedOnBoardEvent>({*targ});
-                } 
-            }
-        }
-    );
+                    const Move move_v = *move;
+                    bus.publish<event::PositionMoveAppearedEvent>(
+                        {move_v}
+                    );
+                }
+            });
 }
 
-void UIBoardManager::SubscribeOnPieceSelectedEvent()
-{
-    bus.subscribe<event::PieceSelectedEvent>(
-        [this](const event::PieceSelectedEvent& event) 
-        {
-            if(selected && *selected == event.piece_on) {
-                ResetSelected();
-                return;
-            }
-
-            selected.emplace(event.piece_on);
-            board.CleanHighlighted();
-            
-            for(auto& move : event.moves) 
-                board.AddHighlighted(move.targ());
-        }
-    );
-}
-
-void UIBoardManager::ResetSelected()
-{
-    board.CleanHighlighted();
-    selected.reset();
-}
 }

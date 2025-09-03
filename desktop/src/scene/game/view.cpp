@@ -5,9 +5,8 @@ namespace scene
 GameScene::GameScene() : 
     GameController(bus),
     UIController(bus),
-    InputController(bus), 
-    HumanController(bus),
-    AIController(bus)
+    AIController(bus), 
+    IScene(bus) 
 {}
 
 void GameScene::Display(sf::RenderWindow &window)
@@ -26,14 +25,17 @@ void GameScene::ParseConfig(const resource::ConfigManager &config)
 
     UIController
         .SetBoardView(side)
-        .SetLeftBottomSquarePos(config.LeftBottomSquare())
+        .SetOrigin(config.LeftBottomSquare())
         .SetCellColor(WHITE, config.WhiteSquare())
         .SetCellColor(BLACK, config.BlackSquare())
         .SetCellShape(config.SquareSize())
-        .SetHighlightedCellColor(config.Highlight());
-
-    GameController.Init(fen);
-    HumanController.SetSide(side);
+        .SetHighlightedCellColor(config.Highlight())
+        .SetOnPieceSelected(
+            [this](game::logic::Square sqr) { 
+                const controller::GameLogic& logic = GameController;
+                return logic.MovesFrom(sqr);
+            }
+        );
 
     AIController
         .SetSide(side.opp())
@@ -41,12 +43,7 @@ void GameScene::ParseConfig(const resource::ConfigManager &config)
         .SetTableSize(config.EngineTranspositionSize())
         .LaunchSearchWorker();
 
-    GameController.Update();
-}
-
-void GameScene::HandleEvents(sf::RenderWindow &window)
-{
-    InputController.HandleEvents(window);
+    GameController.Init(fen);
 }
 
 }

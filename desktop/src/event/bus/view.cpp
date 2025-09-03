@@ -8,6 +8,11 @@ void Bus::publish_all()
 {
     while(!event_queue.empty()) {
         auto& event = event_queue.front();
+        if (!event) { 
+            event_queue.pop();
+            continue;
+        }
+        
         std::type_index key = typeid(*event);
         if(auto it = subscribers.find(key); it != subscribers.end()) {
             for(const auto& handler : it->second) {

@@ -7,22 +7,27 @@ namespace controller
 {
 
 
-class InputManager
+class InputController
 {
 public:
 
-    InputManager(event::Bus& bus);
+    InputController(event::Bus& bus);
     void HandleEvents(sf::RenderWindow& window);
 
 private:
 
-    void SubscribeOnInputBlockedEvent();
-    void SubscribeOnInputAllowedEvent();
+    template<event::EventType ET>
+    void PublishMouseEvent(sf::Vector2i mouse) {
+        bus.publish<ET>(sf::Vector2f{
+            (float)mouse.x, 
+            (float)mouse.y
+        });
+    };
+
 
 private:
 
     event::Bus& bus;
-    bool isBlocked{true};
 
 };
 
