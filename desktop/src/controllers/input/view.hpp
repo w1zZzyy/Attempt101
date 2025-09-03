@@ -16,6 +16,17 @@ public:
 
 private:
 
+    template<event::EventType ET>
+    void PublishMouseEvent(sf::Vector2i mouse) {
+        bus.publish<ET>(sf::Vector2f{
+            (float)mouse.x, 
+            (float)mouse.y
+        });
+    };
+
+
+private:
+
     event::Bus& bus;
 
 };

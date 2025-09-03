@@ -16,23 +16,14 @@ void InputController::HandleEvents(sf::RenderWindow &window)
             break;
         }
 
-        if (const auto* mouseButtonPressed = event->getIf<sf::Event::MouseButtonPressed>()) {
-            if (mouseButtonPressed->button == sf::Mouse::Button::Left) {
-                bus.publish<event::MousePressedEvent>(sf::Vector2f{
-                    (float)mouseButtonPressed->position.x, 
-                    (float)mouseButtonPressed->position.y
-                });
-            }
+        if (const auto* mouse = event->getIf<sf::Event::MouseButtonPressed>()) {
+            if (mouse->button == sf::Mouse::Button::Left)
+                PublishMouseEvent<event::MousePressedEvent>(mouse->position);
         }
-        /* else if (event->getIf<sf::Event::MouseButtonReleased>()) {
-            bus.publish<event::MouseReleasedEvent>({});
-        }
-        else if(const auto* mouse = event->getIf<sf::Event::MouseMoved>()) {
-            bus.publish<event::MouseMovedEvent>(sf::Vector2f{
-                    (float)mouse->position.x, 
-                    (float)mouse->position.y
-            });
-        } */
+        else if (const auto* mouse = event->getIf<sf::Event::MouseButtonReleased>()) 
+            PublishMouseEvent<event::MouseReleasedEvent>(mouse->position);
+        else if(const auto* mouse = event->getIf<sf::Event::MouseMoved>()) 
+            PublishMouseEvent<event::MouseMovedEvent>(mouse->position);
     }
 }
 
