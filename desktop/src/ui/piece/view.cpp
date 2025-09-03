@@ -22,7 +22,7 @@ void PieceSprite::Render(sf::RenderWindow& window) {
 }
 
 PieceSprite& PieceSprite::setSize(sf::Vector2f size) {
-    auto currSize = sprite.getTexture().getSize();
+    sf::Vector2u currSize = sprite.getTexture().getSize();
     sprite.setScale({
         size.x / currSize.x,
         size.y / currSize.y
@@ -32,6 +32,13 @@ PieceSprite& PieceSprite::setSize(sf::Vector2f size) {
 
 PieceSprite& PieceSprite::setPos(sf::Vector2f pos) {
     sprite.setPosition(pos);
+    return *this;
+}
+
+PieceSprite &PieceSprite::setOriginCenter()
+{
+    sf::FloatRect bounds = sprite.getLocalBounds();
+    sprite.setOrigin(bounds.getCenter());
     return *this;
 }
 

@@ -2,9 +2,11 @@
 
 #include <functional>
 #include <expected>
+
 #include "event/models/error_event.hpp"
 #include "logic/move.hpp"
 #include "view.hpp"
+#include "selected.hpp"
 
 namespace ui
 {
@@ -26,44 +28,33 @@ public:
         std::expected<Move, event::MoveErrorEvent>
     )>;
 
-    enum class SelectionRights {
-        WhitePieces, 
-        BlackPieces,
-        Sudo = WhitePieces | BlackPieces
-    };
-
 public:
 
     void Render(sf::RenderWindow& window);
 
     PiecesManager& SetPieceSelectedCallback(OnPieceSelected&&) noexcept;
     PiecesManager& SetPieceMovedCallback(OnPieceMoved&&) noexcept;
-    PiecesManager& SetSelectionRights(int) noexcept;
-    void SetSelectedMoves(std::vector<Move>&& moves);
+    PiecesManager& SetSelectionRights(Color) noexcept;
+    void SetSelectedMoves(Selected::Moves&& moves) noexcept {selected.SetMoves(std::move(moves));};
+    void ResetSelected() noexcept;
 
     void AppendPiece(Color, Piece, Square);
     void RemovePiece(Square);
     void MovePiece(Square from, Square targ, std::optional<Piece> newPiece);
 
     void HandleMousePressedEvent(Square);
-    void DropSelectedPiece();
-    void TryToSelectPiece(Square sqr);
+    void HandleMouseMovedEvent(sf::Vector2f);
+    void HandleMouseReleasedEvent(sf::Vector2f);
 
 private:
 
-    void TryToMove(Square from, Square targ);
-    bool HasEnoughRights(Square sqr) const noexcept;
-    struct SelectedPiece {
-        Square sqr;
-        std::vector<Move> moves;
-    };
+    bool TryToSelectPiece(Square sqr);
+    bool TryToMove(Square from, Square targ);
 
 private:
 
     std::array<std::optional<PieceSprite>, game::logic::SQUARE_COUNT> pieces;
-
-    std::optional<SelectedPiece> selected;
-    SelectionRights rights;
+    Selected selected;
 
     OnPieceSelected onPieceSelected;
     OnPieceMoved onPieceMoved;

@@ -16,6 +16,7 @@ public:
     void Render(sf::RenderWindow& window);
     PieceSprite& setSize(sf::Vector2f size);
     PieceSprite& setPos(sf::Vector2f pos);
+    PieceSprite& setOriginCenter();
     void replacePiece(game::logic::Piece newPiece);
 
     game::logic::Color getColor() const noexcept {return color;}

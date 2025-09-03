@@ -22,16 +22,26 @@ PiecesManager& PiecesManager::SetPieceMovedCallback(OnPieceMoved&& _callback) no
     return *this;
 }
 
-PiecesManager& PiecesManager::SetSelectionRights(int r) noexcept {
-    rights = static_cast<SelectionRights>(r);
+PiecesManager& PiecesManager::SetSelectionRights(Color r) noexcept {
+    selected.SetRights(r);
     return *this;
 }
 
-void PiecesManager::AppendPiece(Color c, Piece p, Square sqr) {
+void PiecesManager::ResetSelected() noexcept 
+{
+    if(selected.IsSettled()) {
+        pieces[Square(selected)]->setPos(BoardView::ToCoordinates(selected));
+        selected.Reset();
+    }
+}
+
+void PiecesManager::AppendPiece(Color c, Piece p, Square sqr) 
+{
     pieces[sqr].reset();
-    pieces[sqr].emplace(c, p);
-    pieces[sqr]->setPos(BoardView::ToCoordinates(sqr));
-    pieces[sqr]->setSize(BoardView::GetShape());
+    pieces[sqr].emplace(c, p) 
+        .setPos(BoardView::ToCoordinates(sqr))
+        .setSize(BoardView::GetShape())
+        .setOriginCenter(); 
 }
 
 void PiecesManager::RemovePiece(Square s) {
@@ -50,27 +60,51 @@ void PiecesManager::MovePiece(Square from, Square targ, std::optional<Piece> new
 
 void PiecesManager::HandleMousePressedEvent(Square sqr) 
 {
-    if(!selected) 
+    if(!selected.IsSettled()) 
         TryToSelectPiece(sqr);
     else 
-        TryToMove(selected->sqr, sqr);
+        TryToMove(selected, sqr);
 }
 
-void PiecesManager::TryToSelectPiece(Square sqr) 
+void PiecesManager::HandleMouseMovedEvent(sf::Vector2f mouse_pos) 
 {
-    DropSelectedPiece();
-    if(!HasEnoughRights(sqr)) 
+    if(selected.IsGrabbed())
+        pieces[Square(selected)]->setPos(mouse_pos);
+}
+
+void PiecesManager::HandleMouseReleasedEvent(sf::Vector2f mouse_pos) 
+{
+    if(!selected.IsGrabbed()) 
         return;
 
-    selected.emplace(sqr);
-    return onPieceSelected(sqr);
+    if(auto sqr = BoardView::ToSquare(mouse_pos)) {
+        if(!TryToMove(selected, *sqr)) {
+            pieces[Square(selected)]->setPos(BoardView::ToCoordinates(selected));
+            selected.Drop();
+        }
+    }
+    else ResetSelected();
 }
 
-void PiecesManager::TryToMove(Square from, Square targ) 
+bool PiecesManager::TryToSelectPiece(Square sqr) 
 {
-    assert(selected);
+    ResetSelected();
+    
+    if(
+        !pieces[sqr] || 
+        !selected.HasRights(pieces[sqr]->getColor())
+    ) return false;
 
-    const auto& moves = selected->moves;
+    selected.SetSelected(sqr);
+    onPieceSelected(selected);
+
+    return true;
+}
+
+
+bool PiecesManager::TryToMove(Square from, Square targ) 
+{
+    const Selected::Moves& moves = selected.GetMoves();
     std::vector<game::logic::Move> candidates;
 
     std::copy_if(
@@ -81,38 +115,19 @@ void PiecesManager::TryToMove(Square from, Square targ)
         }
     );
 
-    if(candidates.empty()) 
-        onPieceMoved(std::unexpected{event::MoveErrorEvent(event::MoveErrorEvent::NotFound, from, targ)});
-    else if(candidates.size() != 1) 
-        onPieceMoved(std::unexpected{event::MoveErrorEvent(event::MoveErrorEvent::Ambiguous, from, targ)});
-    else 
-        onPieceMoved(candidates[0]);
-}
-
-bool PiecesManager::HasEnoughRights(Square sqr) const noexcept 
-{
-    if(!pieces[sqr]) 
+    if(candidates.empty()) {
+        if(!TryToSelectPiece(targ))
+            onPieceMoved(std::unexpected{event::MoveErrorEvent(event::MoveErrorEvent::NotFound, from, targ)});
         return false;
-    if(rights == SelectionRights::Sudo) 
-        return true;
-    return (int)rights == pieces[sqr]->getColor();
+    }
+    else if(candidates.size() != 1) {
+        onPieceMoved(std::unexpected{event::MoveErrorEvent(event::MoveErrorEvent::Ambiguous, from, targ)}); 
+        return false;
+    }
+    
+    onPieceMoved(candidates[0]);
+    return true;
 }
 
-void PiecesManager::DropSelectedPiece() 
-{
-    if(!selected) 
-        return;
-
-    const Square sqr = selected->sqr;
-    pieces[sqr]->setPos(BoardView::ToCoordinates(sqr));
-
-    selected.reset();
-}
-
-
-void PiecesManager::SetSelectedMoves(std::vector<Move>&& moves) {
-    assert(selected);
-    selected->moves = std::move(moves);
-}
 
 }
