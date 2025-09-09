@@ -25,6 +25,9 @@ void GameLogicController::Init(const std::string& fen)
         }
     }
 
+    event.fen = fen;
+    event.side = pos.get_side();
+
     bus.publish<event::PositionChangedEvent>(event);
 }
 
