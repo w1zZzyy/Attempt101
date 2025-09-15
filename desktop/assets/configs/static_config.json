@@ -34,7 +34,7 @@
         }
     }, 
     "game" : {
-        "start_position": "r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1 ",
+        "start_position": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
         "player_side": "white", 
         "engine" : {
             "search_depth": 6,
