@@ -9,16 +9,20 @@ FetchContent_Declare(
     json
     GIT_REPOSITORY https://github.com/nlohmann/json
     GIT_TAG v3.11.3 
-    GIT_PROGRESS TRUE 
 )
 FetchContent_MakeAvailable(json)
 
-FetchContent_Declare(
-    sfml
+set(SFML_BUILD_AUDIO OFF CACHE INTERNAL "")
+set(SFML_BUILD_NETWORK OFF CACHE INTERNAL "")
+set(SFML_BUILD_EXAMPLES OFF CACHE INTERNAL "")
+set(SFML_BUILD_DOC OFF CACHE INTERNAL "")
+set(SFML_USE_UDEV OFF CACHE INTERNAL "")
+
+FetchContent_Declare( 
+    sfml 
     GIT_REPOSITORY https://github.com/SFML/SFML 
-    GIT_TAG v2.6.1 
-    GIT_PROGRESS TRUE 
-)
+    GIT_TAG master 
+) 
 FetchContent_MakeAvailable(sfml)
 
 
