@@ -6,18 +6,21 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src/)
 include(FetchContent)
 
 FetchContent_Declare(
-    sfml 
-    GIT_REPOSITORY https://github.com/SFML/SFML 
-    GIT_TAG v2.6.1
-)
-FetchContent_Declare(
-    json 
+    json
     GIT_REPOSITORY https://github.com/nlohmann/json
-    GIT_TAG v3.11.3
+    GIT_TAG v3.11.3 
+    GIT_PROGRESS TRUE 
 )
-
-FetchContent_MakeAvailable(sfml)
 FetchContent_MakeAvailable(json)
+
+FetchContent_Declare(
+    sfml
+    GIT_REPOSITORY https://github.com/SFML/SFML 
+    GIT_TAG v2.6.1 
+    GIT_PROGRESS TRUE 
+)
+FetchContent_MakeAvailable(sfml)
+
 
 add_subdirectory(src/controllers)
 add_subdirectory(src/ui)
