@@ -4,5 +4,6 @@ build*
 .cores/
 .pgdata/
 .idea/
+.vscode/
 **/.cache/
 __pycache__

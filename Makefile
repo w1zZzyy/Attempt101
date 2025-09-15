@@ -5,30 +5,18 @@ build-impl-%:
 	@cd build_$* && cmake -DCMAKE_BUILD_TYPE=$* .. 
 	@cmake --build build_$* 
 
-build-debug: build-impl-debug
-build-release: build-impl-release
-
+test-impl-%: build-impl-%
+	@cd build && ctest
 
 run-desktop-impl-%: docker-build-%
 	@./build_$*/desktop/AttemptDesktop
 
-run-desktop-debug: run-desktop-impl-debug 
-run-desktop-release: run-desktop-impl-release 
-	
-
-docker-build-impl-%:
-	@git submodule update --init
-	@docker build -f desktop/Dockerfile -t chessui .
-	@docker run --rm \
-	-v $(PWD):${PWD} \
-	-w ${PWD} \
-	chessui ${MAKE} build-$*
-
-docker-build-debug: docker-build-impl-debug 
-docker-build-release: docker-build-impl-release
-
-docker-clean:
-	@docker system prune -a --volumes
+build-debug: build-impl-debug
+build-release: build-impl-release
+test-debug: test-impl-debug 
+test-release: test-impl-release
+run-debug: run-desktop-impl-debug 
+run-release: run-desktop-impl-release 
 
 clean:
 	@rm -rf build_debug
