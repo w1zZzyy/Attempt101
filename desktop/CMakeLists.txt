@@ -3,8 +3,29 @@ add_definitions(-DASSETS_PATH="${CMAKE_CURRENT_BINARY_DIR}/assets")
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src/)
 
-add_subdirectory(SFML)
-add_subdirectory(json)
+include(FetchContent)
+
+FetchContent_Declare(
+    json
+    GIT_REPOSITORY https://github.com/nlohmann/json
+    GIT_TAG v3.11.3 
+)
+FetchContent_MakeAvailable(json)
+
+set(SFML_BUILD_AUDIO OFF CACHE INTERNAL "")
+set(SFML_BUILD_NETWORK OFF CACHE INTERNAL "")
+set(SFML_BUILD_EXAMPLES OFF CACHE INTERNAL "")
+set(SFML_BUILD_DOC OFF CACHE INTERNAL "")
+set(SFML_USE_UDEV OFF CACHE INTERNAL "")
+
+FetchContent_Declare( 
+    sfml 
+    GIT_REPOSITORY https://github.com/SFML/SFML 
+    GIT_TAG master 
+) 
+FetchContent_MakeAvailable(sfml)
+
+
 add_subdirectory(src/controllers)
 add_subdirectory(src/ui)
 add_subdirectory(src/resources)

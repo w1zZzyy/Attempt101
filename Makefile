@@ -1,35 +1,31 @@
-.PHONY: clean docker-build-debug docker-build-release
+.PHONY: clean-soft clean-hard install-linux-deps rm-linux-deps
 
 build-impl-%:
 	@mkdir -p build_$*
 	@cd build_$* && cmake -DCMAKE_BUILD_TYPE=$* .. 
 	@cmake --build build_$* 
 
-build-debug: build-impl-debug
-build-release: build-impl-release
+test-impl-%: build-impl-%
+	@cd build_$*/libs/tests && ctest
 
-
-run-desktop-impl-%: docker-build-%
+run-desktop-impl-%: build-%
 	@./build_$*/desktop/AttemptDesktop
 
-run-desktop-debug: run-desktop-impl-debug 
-run-desktop-release: run-desktop-impl-release 
-	
+install-linux-deps: 
+	@chmod +x ./desktop/sfml-deps/install.sh
+	@./desktop/sfml-deps/install.sh
+rm-linux-deps:
+	@chmod +x ./desktop/sfml-deps/remove.sh
+	@./desktop/sfml-deps/remove.sh
 
-docker-build-impl-%:
-	@git submodule update --init
-	@docker build -f desktop/Dockerfile -t chessui .
-	@docker run --rm \
-	-v $(PWD):${PWD} \
-	-w ${PWD} \
-	chessui ${MAKE} build-$*
-
-docker-build-debug: docker-build-impl-debug 
-docker-build-release: docker-build-impl-release
-
-docker-clean:
-	@docker system prune -a --volumes
-
-clean:
+clean-soft:
 	@rm -rf build_debug
 	@rm -rf build_release
+clean-hard: clean-soft rm-linux-deps
+
+build-debug: build-impl-debug
+build-release: build-impl-release
+test-debug: test-impl-debug 
+test-release: test-impl-release
+run-debug: run-desktop-impl-debug 
+run-release: run-desktop-impl-release 
