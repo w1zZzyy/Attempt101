@@ -26,7 +26,7 @@ class Move
 {
 public:
 
-    Move() noexcept : data(0) {}
+    Move(uint16_t d = 0) noexcept : data(d) {}
     Move(const Move& _m) noexcept : data(_m.data) {}
     Move(Square from, Square targ, MoveFlag flag);
 
@@ -38,9 +38,11 @@ public:
 
     std::string to_string() const;
 
+    constexpr operator uint16_t() const noexcept {return data;}
+
 private:
 
-    unsigned short data;
+    uint16_t data;
 
 };
 

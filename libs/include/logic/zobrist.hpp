@@ -12,6 +12,8 @@ class Zobrist
 public:
 
     static void Setup();
+
+    Zobrist(U64 h = 0) noexcept : hash(h) {}
     
     Zobrist& updateSquare(Color c, Piece p, Square s);
     Zobrist& updateCastle(Castle cr);
@@ -23,7 +25,7 @@ public:
 
 private:
 
-    U64 hash {0};
+    U64 hash;
 
 };
 
