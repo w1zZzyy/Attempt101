@@ -12,6 +12,7 @@
 #include <ostream>
 #include <string_view>
 #include <iostream>
+#include <cstring>
 
 namespace game::logic
 {
@@ -26,6 +27,19 @@ public:
     Position(std::string_view fen);
 
     Position& set_fen(std::string_view fen);
+
+    template<StorageType T>
+    void copy(const Position<T>& pos) {
+        State *dst = st.begin(), *src = pos.st.begin();
+        assert(dst && src);
+        stcopy(*dst, *src);
+
+        std::memcpy(pieces, pos.pieces, COLOR_COUNT * PIECE_COUNT);
+        std::memcpy(occupied, pos.occupied, COLOR_COUNT);
+        std::memcpy(types, pos.types, SQUARE_COUNT);
+        
+        side = pos.side;
+    }
 
     void do_move(Move move);
     void undo_move();
@@ -69,6 +83,7 @@ public:
     std::string fen() const noexcept;
 
     bool is_draw() const;
+    bool not_enough_pieces() const noexcept;
     bool is_check() const noexcept {return checkers;}
     bool is_double_check() const {return checkers.count() == 2;}
 
@@ -110,8 +125,6 @@ private:
     void update_passant(Square sqr);
     void update_castle(Color c, CastleType ct);
     void try_to_update_castle(Color c, Square maybe_rook);
-
-    bool not_enough_pieces() const noexcept;
 
 private:
 

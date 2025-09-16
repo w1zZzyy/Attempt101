@@ -84,4 +84,10 @@ bool DynamicStorage::repetition() const
     return repetition_help(back, history.data());
 }
 
+State *game::logic::DynamicStorage::begin()
+{
+    if(history.empty()) return nullptr;
+    return &history[0];
+}
+
 }

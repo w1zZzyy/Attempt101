@@ -20,6 +20,8 @@ struct State
     Piece captured{NO_PIECE};
 };
 
+void stcopy(State &dst, const State &src);
+
 // STATIC STORAGE (using stack)
 class StaticStorage {
 public:
@@ -33,6 +35,8 @@ public:
     bool repetition() const;
 
     size_t size() const {return curr - history;}
+
+    State* begin() {return history;}
 
 private:
 
@@ -57,6 +61,8 @@ public:
 
     size_t size() const {return history.size();}
 
+    State* begin();
+
 private:
 
     std::vector<State> history;
@@ -74,6 +80,7 @@ concept StorageType = requires (T t) {
     { t.top() };
     { t.repetition() };
     { t.size() };
+    { t.begin() };
 };
 
 template<StorageType StoragePolicy>
@@ -84,6 +91,7 @@ public:
     using StoragePolicy::top;
     using StoragePolicy::repetition;
     using StoragePolicy::size;
+    using StoragePolicy::begin;
 };
 
 
