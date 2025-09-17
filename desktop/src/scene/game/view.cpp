@@ -1,4 +1,5 @@
 #include "view.hpp"
+#include "controllers/game/view.hpp"
 
 namespace scene
 {
@@ -32,18 +33,18 @@ void GameScene::ParseConfig(const resource::ConfigManager &config)
         .SetHighlightedCellColor(config.Highlight())
         .SetOnPieceSelected(
             [this](game::logic::Square sqr) { 
-                const controller::GameLogic& logic = GameController;
+                const controller::GameLogic& logic = GameController.GetLogic();
                 return logic.MovesFrom(sqr);
             }
         );
 
+    GameController.Init(fen);
+
     AIController
         .SetSide(side.opp())
+        .SetPosition(GameController.GetLogic().GetPosition())
         .SetSearchDepth(config.EngineSearchDepth())
-        .SetTableSize(config.EngineTranspositionSize())
         .LaunchSearchWorker();
-
-    GameController.Init(fen);
 }
 
 }
