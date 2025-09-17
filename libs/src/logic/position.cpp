@@ -330,12 +330,6 @@ std::string Position<Policy>::fen() const noexcept
 }
 
 template<StorageType Policy>
-bool Position<Policy>::is_draw() const
-{
-    return not_enough_pieces() || st.repetition() || st.top().rule50 == 50;
-}
-
-template<StorageType Policy>
 bool Position<Policy>::not_enough_pieces() const noexcept
 {
     int total_pieces = get_occupied(WHITE, BLACK).count();
