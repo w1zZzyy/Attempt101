@@ -1,161 +1,151 @@
 #include "search.hpp"
 
+#include "eval.hpp"
+#include "logic/defs.hpp"
+#include "logic/move.hpp"
 #include "logic/movelist.hpp"
-#include <format>
-#include <iostream>
-#include <algorithm>
+#include <cassert>
+#include <chrono>
+#include <optional>
 
 namespace game::engine
 {
 
 using namespace logic;
 
-Search &Search::SetMaxDepth(int d)
-{
-    if(d >= MAX_HISTORY_SIZE) {
-        throw std::runtime_error(std::format(
-            "depth cant be more than {}\n", 
-            MAX_HISTORY_SIZE
-        ));
-    }
-    maxDepth = d;
+Search& Search::SetGlobalHistory(const StateStorage<DynamicStorage>& gh) noexcept {
+    globalHistory = &gh;
     return *this;
 }
 
-Search& Search::SetTableSize(size_t mb) {
-    tt.resize(mb);
+Search& Search::SetMaxDepth(int depth) noexcept {
+    maxDepth = depth;
     return *this;
 }
 
-Search &Search::StartSearchWorker(const std::function<void(RootMove)> &callback)
+std::optional<Move> Search::FindBestMove(PositionFixedMemory& pos) 
 {
-    search_thread = std::thread([this, callback]()
-    {
-        while(!stop.load()) {
-            std::unique_lock<std::mutex> ul(mtx);
-            cv.wait(ul, [this](){return can_search.load();});
+    auto start = std::chrono::high_resolution_clock::now();
 
-            if(stop.load()) 
-                break;
-
-            std::string info = "INFO:\n";
-
-            if(std::optional node = BestMove()) {
-                info += std::format("\tScore: {}\n\tMove: {}\n", node->score, node->move.to_string());
-                info += tt.load_info();
-                info += std::format("\tTT CutOffs: {}\n", tt_cutoffs);
-                callback(*node);
-            }
-
-            can_search.store(false);
-            info += std::format("\tNodes Counted: {}\n", nodes);
-            std::cout << info;
-        }
-    });
-
-    return *this;
-}
-
-void Search::FindBestMove(const std::string &fen_)
-{
-    if(can_search.load()) {
-        std::cout << "wait for search to finish\n";
-        return;
-    }
-
-    this->fen = fen_;
-    this->nodes = 0;
-    this->tt_cutoffs = 0;
-
-    can_search.store(true);
-    cv.notify_one();
-}
-
-void Search::Stop()
-{
-    stop.store(true);
-    can_search.store(true);
-
-    cv.notify_one();
-
-    if(search_thread.joinable()) 
-        search_thread.join();
-}
-
-std::optional<Search::RootMove> Search::BestMove()
-{
-    PositionFixedMemory pos(fen);
-    MoveList moves;
+    Move best_move;
+    int best_score = -INF;
+    nodes = 0;
 
     pos.update();
-    eval.init(pos);
-    moves.generate<MoveGenType::NotForced>(pos);
-    orderer.setPosition(pos);
+    eval.Init(pos);
 
-    if(moves.empty()) 
-        return std::nullopt;
+    MoveList moves;
+    if(std::optional score = generateMoves<MoveGenType::NotForced>(pos, moves))
+        return score.value();
 
-    RootMove best;
-    best.score = -INF;
+    auto eval_data = eval.GetData();
 
-    eval.push();
-
-    for(size_t i = 0; i < moves.get_size(); ++i) 
+    for(int i = 0; i < moves.get_size(); ++i) 
     {
-        Move move = moves[i];
+        const Move move = moves[i];
+        int score = searchRoute<SearchType::Negamax>(pos, move, eval_data, best_score, INF, maxDepth);
 
-        pos.do_move(move);
-        eval.update(move);
-
-        if(int score = -Negamax(pos, maxDepth - 1, best.score, INF); score > best.score) 
-            best = {move, score};
-
-        pos.undo_move();
-        eval.rollback();
+        if(score > best_score) {
+            best_score = score;
+            best_move = move;
+        }
     }
 
-    eval.pop();
+    auto end = std::chrono::high_resolution_clock::now();
 
-    return best;
+    std::cout << std::format(
+        "---------------\n"
+        "Time: {}\nNodes: {}\nScore: {}\n",
+        std::chrono::duration<double>(end - start).count(), 
+        nodes, 
+        best_score  
+    );
+
+    return best_move;
 }
 
-int Search::Negamax(PositionFixedMemory &pos, int depth, int alpha, int beta)
+int Search::negamax(PositionFixedMemory& pos, int depth, int alpha, int beta) 
 {
-    if(std::optional ttVal = tt.probe(pos.get_hash(), depth, alpha, beta)) {
-        tt_cutoffs++;
-        return ttVal.value();
+    assert(depth >= 0);
+    if(depth == 0) {
+        nodes++;
+        return qsearch(pos, alpha, beta);
     }
-
-    if(depth == 0) 
-        return QSearch(pos, alpha, beta);
-
-    auto [move, score] = SearchMoves<MoveGenType::NotForced>(pos, alpha, beta, 
-        [depth, this](PositionFixedMemory &pos, int a, int b) {
-        return -Negamax(pos, depth - 1, -b, -a);
-    });
-
-    if (score < alpha) 
-        tt.store(pos.get_hash(), score, depth, move, EntryType::UpperBound);
-    else if(score > beta) 
-        tt.store(pos.get_hash(), score, depth, move, EntryType::LowerBound);
-    else 
-        tt.store(pos.get_hash(), score, depth, move, EntryType::Exact);
-
-    return score;
+    return go<SearchType::Negamax>(pos, alpha, beta, depth);
 }
 
-int Search::QSearch(PositionFixedMemory &pos, int alpha, int beta)
+int Search::qsearch(PositionFixedMemory& pos, int alpha, int beta)
 {
-    alpha = std::max(alpha, eval.score());
+    alpha = std::max(alpha, eval.Score());
     if(alpha >= beta) 
         return alpha;
+    return go<SearchType::QSearch>(pos, alpha, beta, -1);
+}
 
-    auto [_, score] = SearchMoves<MoveGenType::Forced>(pos, alpha, beta, 
-        [this](PositionFixedMemory &pos, int a, int b) {
-        return -QSearch(pos, -b, -a);
-    });
+template<MoveGenType T>
+std::optional<int> Search::generateMoves(PositionFixedMemory& pos, MoveList& moves) const 
+{
+    if(pos.is_draw(*globalHistory)) {
+        return DRAW_SCORE;
+    }
+
+    moves.generate<T>(pos);
+
+    if(moves.empty()) {
+        if(pos.is_check()) return -INF + pos.get_ply();
+        if constexpr (T == MoveGenType::Forced) return eval.Score();
+        return DRAW_SCORE;
+    }
+
+    return std::nullopt;
+}
+
+template<Search::SearchType T>
+int Search::searchRoute(PositionFixedMemory& pos, Move move, const Evaluation::Data& eval_data, int alpha, int beta, int depth) 
+{
+    int score;
+    const Color us = pos.get_side();
+
+    pos.do_move(move);
+    eval.Update(move, us);
+
+    if constexpr (T == SearchType::Negamax) score = -negamax(pos, depth - 1, -beta, -alpha);
+    else score = -qsearch(pos, -beta, -alpha);
+
+    eval.SetData(eval_data);
+    pos.undo_move();
 
     return score;
+}
+
+template<Search::SearchType T>
+int Search::go(PositionFixedMemory& pos, int alpha, int beta, int depth) 
+{
+    constexpr bool IsNegamax = (T == SearchType::Negamax);
+    constexpr MoveGenType GenType = (IsNegamax ? MoveGenType::NotForced : MoveGenType::Forced);
+
+    pos.update();
+
+    MoveList moves;
+    if(std::optional score = generateMoves<GenType>(pos, moves))
+        return score.value();
+
+    auto eval_data = eval.GetData();
+
+    for(int i = 0; i < moves.get_size(); ++i) 
+    {
+        const Move move = moves[i];
+        int score = searchRoute<T>(pos, move, eval_data, alpha, beta, depth);
+
+        if(score > alpha) {
+            alpha = score;
+            if(alpha >= beta) {
+                return beta;
+            }
+        }
+    }
+
+    return alpha;
 }
 
 }
