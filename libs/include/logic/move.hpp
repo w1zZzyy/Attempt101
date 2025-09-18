@@ -31,6 +31,7 @@ public:
     Move(Square from, Square targ, MoveFlag flag);
 
     Move& operator = (const Move& _m) noexcept {data = _m.data; return *this;}
+    void setMove(const Move& m) noexcept {data = m.data;}
 
     Square from() const;
     Square targ() const;
@@ -40,12 +41,24 @@ public:
 
     constexpr operator uint16_t() const noexcept {return data;}
 
-private:
+protected:
 
     uint16_t data;
 
 };
 
+class ExtMove : public Move 
+{
+public:
+
+    void setScore(int s) noexcept { score = s; }
+    bool operator < (const ExtMove& m) const noexcept {return score < m.score;}
+
+private:
+
+    int score = 0;
+
+};
 
 }
 
