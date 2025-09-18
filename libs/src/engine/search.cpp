@@ -1,9 +1,11 @@
 #include "search.hpp"
 
 #include "eval.hpp"
+#include "pick.hpp"
 #include "logic/defs.hpp"
 #include "logic/move.hpp"
 #include "logic/movelist.hpp"
+
 #include <cassert>
 #include <chrono>
 #include <optional>
@@ -40,9 +42,8 @@ std::optional<Move> Search::FindBestMove(PositionFixedMemory& pos)
 
     auto eval_data = eval.GetData();
 
-    for(int i = 0; i < moves.get_size(); ++i) 
+    for(auto move : moves) 
     {
-        const Move move = moves[i];
         int score = searchRoute<SearchType::Negamax>(pos, move, eval_data, best_score, INF, maxDepth);
 
         if(score > best_score) {
@@ -77,8 +78,10 @@ int Search::negamax(PositionFixedMemory& pos, int depth, int alpha, int beta)
 int Search::qsearch(PositionFixedMemory& pos, int alpha, int beta)
 {
     alpha = std::max(alpha, eval.Score());
-    if(alpha >= beta) 
+    if(alpha >= beta) {
+        nodes++;
         return alpha;
+    }
     return go<SearchType::QSearch>(pos, alpha, beta, -1);
 }
 
@@ -130,12 +133,13 @@ int Search::go(PositionFixedMemory& pos, int alpha, int beta, int depth)
     if(std::optional score = generateMoves<GenType>(pos, moves))
         return score.value();
 
+    MovePicker order(moves, pos);
+
     auto eval_data = eval.GetData();
 
-    for(int i = 0; i < moves.get_size(); ++i) 
+    while(std::optional move = order.next()) 
     {
-        const Move move = moves[i];
-        int score = searchRoute<T>(pos, move, eval_data, alpha, beta, depth);
+        int score = searchRoute<T>(pos, *move, eval_data, alpha, beta, depth);
 
         if(score > alpha) {
             alpha = score;
