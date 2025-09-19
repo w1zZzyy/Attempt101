@@ -35,5 +35,14 @@ private:
 
 };
 
+template<MoveGenType T>
+struct MoveGenerator {
+    MoveGenerator(PositionFixedMemory& pos) {
+        pos.update();
+        moves.generate<T>(pos);
+    }
+    MoveList moves;
+};
+
 
 }
