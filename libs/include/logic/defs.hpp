@@ -16,7 +16,7 @@ constexpr int CASTLE_COUNT = 63;
 constexpr int SQUARE_COUNT = 64;
 constexpr int MAX_MOVES_COUNT = 218;
 constexpr int MAX_HISTORY_SIZE = 50;
-constexpr int INF = 1000000;
+constexpr int INF = 10000;
 constexpr int DRAW_SCORE = 0;
 
 
