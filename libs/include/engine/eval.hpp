@@ -1,32 +1,20 @@
-#pragma once
+#pragma once 
 
+#include "logic/defs.hpp"
 #include "logic/position.hpp"
-#include <stack>
 
 namespace game::engine
 {
 
-class Eval
-{
+class Evaluation {
 public:
 
     static void Setup();
-    
-    void init(const PositionFixedMemory& pos);
-    void update(logic::Move move);
 
-    int score() const;
-    
-    void push() {prev.push(data);}
-    void rollback() {assert(!prev.empty()); data = prev.top();}
-    void pop() {assert(!prev.empty()); prev.pop();}
-
-private:
-
-    void update_piece(logic::Color side, logic::Piece piece, logic::Square from, logic::Square targ);
-    void add_piece(logic::Color side, logic::Piece piece, logic::Square sqr);
-    void remove_piece(logic::Color side, logic::Piece piece, logic::Square from);
-    void castle(logic::Color side, logic::Square kf, logic::Square kt, logic::Square rf, logic::Square rt);
+    void Init(const PositionFixedMemory&);
+    void Update(logic::Move);
+    void Rollback();
+    int Score() const;
 
 private:
 
@@ -38,11 +26,17 @@ private:
 
 private:
 
+    void addPiece(logic::Color side, logic::Piece piece, logic::Square sqr);
+    void removePiece(logic::Color side, logic::Piece piece, logic::Square from);
+    void movePiece(logic::Color side, logic::Piece piece, logic::Square from, logic::Square targ);
+    void castle(logic::Color side, logic::Square kf, logic::Square kt, logic::Square rf, logic::Square rt);
+
+private:
+
+    Data data[logic::MAX_HISTORY_SIZE];
+    Data* cur = data;
     const PositionFixedMemory* pos;
-    Data data;
-    std::stack<Data> prev;
 
 };
-
 
 }

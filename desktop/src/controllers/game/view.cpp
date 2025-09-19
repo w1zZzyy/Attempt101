@@ -13,7 +13,7 @@ void GameLogicController::Init(const std::string& fen)
     logic.Init(fen);
 
     using namespace game::logic;
-    const PositionDynamicMemory& pos = logic;
+    const PositionDynamicMemory& pos = logic.GetPosition();
 
     event::PositionChangedEvent event;
 
@@ -25,8 +25,7 @@ void GameLogicController::Init(const std::string& fen)
         }
     }
 
-    event.fen = fen;
-    event.side = pos.get_side();
+    event.Position = &pos;
 
     bus.publish<event::PositionChangedEvent>(event);
 }
@@ -45,7 +44,7 @@ void GameLogicController::HandleMove(game::logic::Move move) const
 {
     using namespace game::logic;
 
-    const PositionDynamicMemory& pos = logic;
+    const PositionDynamicMemory& pos = logic.GetPosition();
     const MoveFlag flag = move.flag();
     const Square from = move.from(), targ = move.targ();
 
@@ -79,8 +78,7 @@ void GameLogicController::HandleMove(game::logic::Move move) const
         break;
     }
 
-    event.fen = pos.fen();
-    event.side = pos.get_side();
+    event.Position = &pos;
 
     bus.publish<event::PositionChangedEvent>(event);
 }

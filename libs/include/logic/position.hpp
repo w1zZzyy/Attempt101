@@ -12,6 +12,7 @@
 #include <ostream>
 #include <string_view>
 #include <iostream>
+#include <cstring>
 
 namespace game::logic
 {
@@ -22,8 +23,11 @@ class Position
 public:
     static void Init();
 
-    Position() = default;
+    Position() {Init();};
     Position(std::string_view fen);
+
+    template<StorageType T>
+    Position(const Position<T>& pos);
 
     Position& set_fen(std::string_view fen);
 
@@ -63,12 +67,22 @@ public:
     Bitboard get_pinned(Color us) const noexcept {return pinned[us];}
     const Zobrist& get_hash() const {return st.top().hash;}
     size_t get_ply() const {return st.size();}
+    const StateStorage<Policy>& get_history() const noexcept {return st;}
 
     bool can_castle(CastleType ct, Bitboard enemy_attacks) const;
 
     std::string fen() const noexcept;
 
-    bool is_draw() const;
+    template<StorageType T>
+    bool is_draw(const StateStorage<T>& globalHistory) const {
+        if(not_enough_pieces()) return true;
+        if(st.top().rule50 == 50) return true;
+        return st.repetition(globalHistory);
+    }
+    bool is_draw() const {
+        return not_enough_pieces() || st.top().rule50 == 50 || st.repetition();
+    }
+
     bool is_check() const noexcept {return checkers;}
     bool is_double_check() const {return checkers.count() == 2;}
 
@@ -90,6 +104,8 @@ public:
     void update(Colors... clr);
 
 private:
+
+    template<StorageType U> friend class Position;
 
     template<bool UpdateCheckers>
     Position& compute_attackers(Color attacker);
@@ -129,6 +145,18 @@ private:
 
 };
 
+template<StorageType Policy>
+template<StorageType T>
+Position<Policy>::Position(const Position<T>& pos) 
+{
+    std::memcpy(pieces, pos.pieces, sizeof(Bitboard) * COLOR_COUNT * PIECE_COUNT);
+    std::memcpy(occupied, pos.occupied, sizeof(Bitboard) * COLOR_COUNT);
+    std::memcpy(types, pos.types, sizeof(Piece) * SQUARE_COUNT);
+
+    side = pos.side;
+
+    st.create() = pos.st.top();
+}
 
 template<StorageType Policy>
 template <bool HashUpdate>

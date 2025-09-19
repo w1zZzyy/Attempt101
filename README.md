@@ -27,5 +27,3 @@ make rm-linux-deps
 - в desktop/assets/configs/static_config.json можно менять настройки игры: выбрать цвет (game/player_side) (white / black) или поменять начальную позицию (game/start_position) (в формате fen). Настройки расширения лучше не трогать (window height, width; square_size; left_bottom_square).
 - подсветка ходов фигуры при нажатии на нее
 - возможность перетаскивать фигуру
-
-![Окно Игры](docs/game_window_inital.png)

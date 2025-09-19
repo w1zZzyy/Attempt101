@@ -1,161 +1,233 @@
 #include "search.hpp"
 
+#include "eval.hpp"
+#include "pick.hpp"
+#include "logic/defs.hpp"
+#include "logic/move.hpp"
 #include "logic/movelist.hpp"
-#include <format>
-#include <iostream>
-#include <algorithm>
+#include "tt.hpp"
+
+#include <cassert>
+#include <cstdint>
+#include <optional>
 
 namespace game::engine
 {
 
 using namespace logic;
 
-Search &Search::SetMaxDepth(int d)
-{
-    if(d >= MAX_HISTORY_SIZE) {
-        throw std::runtime_error(std::format(
-            "depth cant be more than {}\n", 
-            MAX_HISTORY_SIZE
-        ));
-    }
-    maxDepth = d;
+Search& Search::SetGlobalHistory(const StateStorage<DynamicStorage>& gh) noexcept {
+    globalHistory = &gh;
     return *this;
 }
 
-Search& Search::SetTableSize(size_t mb) {
+Search& Search::SetMaxDepth(int depth) noexcept {
+    maxDepth = depth;
+    return *this;
+}
+
+Search& Search::SetTTSizeMB(size_t mb) {
     tt.resize(mb);
     return *this;
 }
 
-Search &Search::StartSearchWorker(const std::function<void(RootMove)> &callback)
-{
-    search_thread = std::thread([this, callback]()
-    {
-        while(!stop.load()) {
-            std::unique_lock<std::mutex> ul(mtx);
-            cv.wait(ul, [this](){return can_search.load();});
-
-            if(stop.load()) 
-                break;
-
-            std::string info = "INFO:\n";
-
-            if(std::optional node = BestMove()) {
-                info += std::format("\tScore: {}\n\tMove: {}\n", node->score, node->move.to_string());
-                info += tt.load_info();
-                info += std::format("\tTT CutOffs: {}\n", tt_cutoffs);
-                callback(*node);
-            }
-
-            can_search.store(false);
-            info += std::format("\tNodes Counted: {}\n", nodes);
-            std::cout << info;
-        }
-    });
-
-    return *this;
+Search& Search::SetTimeLimit(uint64_t sec) noexcept {
+    timer.setLimit(sec);
+    return*this;
 }
 
-void Search::FindBestMove(const std::string &fen_)
+
+std::optional<Move> Search::FindBestMove(PositionFixedMemory& pos) 
 {
-    if(can_search.load()) {
-        std::cout << "wait for search to finish\n";
-        return;
-    }
+    timer.Start();
 
-    this->fen = fen_;
-    this->nodes = 0;
-    this->tt_cutoffs = 0;
+    Move best_move;
+    int best_score = -INF;
 
-    can_search.store(true);
-    cv.notify_one();
-}
+    int depth;
+    nodes = 0;
+    tt_cuts = 0;
 
-void Search::Stop()
-{
-    stop.store(true);
-    can_search.store(true);
+    eval.Init(pos);
 
-    cv.notify_one();
-
-    if(search_thread.joinable()) 
-        search_thread.join();
-}
-
-std::optional<Search::RootMove> Search::BestMove()
-{
-    PositionFixedMemory pos(fen);
-    MoveList moves;
-
-    pos.update();
-    eval.init(pos);
-    moves.generate<MoveGenType::NotForced>(pos);
-    orderer.setPosition(pos);
-
-    if(moves.empty()) 
+    MoveGenerator<MoveGenType::NotForced> gen(pos);
+    if(gen.moves.empty())
         return std::nullopt;
 
-    RootMove best;
-    best.score = -INF;
+    MovePicker picker(gen.moves, pos);
 
-    eval.push();
-
-    for(size_t i = 0; i < moves.get_size(); ++i) 
+    for(depth = 1; depth <= maxDepth; ++depth)
     {
-        Move move = moves[i];
+        int iter_best_score = -INF;
+        Move iter_best_move;
+
+        while(std::optional __move = picker.next()) 
+        {
+            const Move& move = __move.value();
+
+            pos.do_move(move);
+            eval.Update(move);
+
+            int score = -negamax(pos, depth - 1, -INF, -iter_best_score);
+
+            pos.undo_move();
+            eval.Rollback();
+
+            if(timer.TimeUp()) {
+                goto search_end;
+            }
+
+            if(score > iter_best_score) {
+                iter_best_score = score;
+                iter_best_move = move;
+            }
+        }
+
+        picker.update(iter_best_move);
+        best_score = iter_best_score;
+        best_move = iter_best_move;
+
+    }
+
+    search_end:
+
+    std::cout << std::format(
+        "---------------\n"
+        "Time: {}\nDepth: {}\nNodes: {}\nScore: {}\nTT Cuts: {}\n",
+        timer.TimePassed(),
+        depth,
+        nodes, 
+        best_score,
+        tt_cuts
+    );
+
+    return best_move;
+}
+
+int Search::negamax(PositionFixedMemory& pos, int depth, int alpha, int beta) 
+{
+    if(timer.TimeUp()) 
+        return 0;
+
+    if(pos.is_draw(*globalHistory)) 
+        return DRAW_SCORE;
+
+    ProbeResult probe = tt.probe(pos.get_hash(), depth, alpha, beta);
+
+    if(probe.score) {
+        tt_cuts++;
+        return *probe.score;
+    }
+
+
+    if(depth <= 0)
+        return qsearch(pos, alpha, beta);
+
+    nodes++;
+
+    MoveGenerator<MoveGenType::NotForced> gen(pos);
+
+    if(gen.moves.empty()) {
+        if(pos.is_check()) return -INF + pos.get_ply();
+        return DRAW_SCORE;
+    }
+
+    MovePicker moveloads(gen.moves, pos, probe.move);
+
+
+    const int oldAlpha = alpha;
+    int bestScore = -INF;
+    logic::Move bestMove;
+
+
+    while(std::optional __move = moveloads.next())
+    {
+        const Move& move = __move.value();
 
         pos.do_move(move);
-        eval.update(move);
+        eval.Update(move);
 
-        if(int score = -Negamax(pos, maxDepth - 1, best.score, INF); score > best.score) 
-            best = {move, score};
+        int score = -negamax(pos, depth - 1, -beta, -alpha);
 
         pos.undo_move();
-        eval.rollback();
+        eval.Rollback();
+
+        if(timer.TimeUp()) 
+            return 0;
+
+        if(score > bestScore) {
+            bestScore = score;
+            bestMove = move;
+            if(bestScore > alpha) {
+                alpha = bestScore;
+                if(alpha >= beta) {
+                    tt.store(pos.get_hash(), bestScore, move, depth, EntryType::LowerBound);
+                    return bestScore;
+                }
+            }
+        }
     }
 
-    eval.pop();
+    if(bestScore <= oldAlpha)
+        tt.store(pos.get_hash(), bestScore, bestMove, depth, EntryType::UpperBound);
+    else
+        tt.store(pos.get_hash(), bestScore, bestMove, depth, EntryType::Exact);
 
-    return best;
+    return bestScore;
 }
 
-int Search::Negamax(PositionFixedMemory &pos, int depth, int alpha, int beta)
+int Search::qsearch(PositionFixedMemory& pos, int alpha, int beta)
 {
-    if(std::optional ttVal = tt.probe(pos.get_hash(), depth, alpha, beta)) {
-        tt_cutoffs++;
-        return ttVal.value();
+    if(timer.TimeUp()) 
+        return 0;
+
+    if(pos.is_draw(*globalHistory)) 
+        return DRAW_SCORE;
+
+    nodes++;
+
+    int score = eval.Score();
+
+    if(pos.get_ply() == MAX_HISTORY_SIZE - 1)
+        return score;
+
+    if(score >= beta) 
+        return beta;
+
+    if(score > alpha)
+        alpha = score;
+
+    
+    MoveGenerator<MoveGenType::Forced> gen(pos);
+
+    if(gen.moves.empty()) {
+        if(pos.is_check()) return -INF + pos.get_ply();
+        return score;
     }
 
-    if(depth == 0) 
-        return QSearch(pos, alpha, beta);
+    MovePicker moveloads(gen.moves, pos);
 
-    auto [move, score] = SearchMoves<MoveGenType::NotForced>(pos, alpha, beta, 
-        [depth, this](PositionFixedMemory &pos, int a, int b) {
-        return -Negamax(pos, depth - 1, -b, -a);
-    });
 
-    if (score < alpha) 
-        tt.store(pos.get_hash(), score, depth, move, EntryType::UpperBound);
-    else if(score > beta) 
-        tt.store(pos.get_hash(), score, depth, move, EntryType::LowerBound);
-    else 
-        tt.store(pos.get_hash(), score, depth, move, EntryType::Exact);
+    while(std::optional __move = moveloads.next())
+    {
+        const Move& move = __move.value();
 
-    return score;
-}
+        pos.do_move(move);
+        eval.Update(move);
 
-int Search::QSearch(PositionFixedMemory &pos, int alpha, int beta)
-{
-    alpha = std::max(alpha, eval.score());
-    if(alpha >= beta) 
-        return alpha;
+        score = -qsearch(pos, -beta, -alpha);
 
-    auto [_, score] = SearchMoves<MoveGenType::Forced>(pos, alpha, beta, 
-        [this](PositionFixedMemory &pos, int a, int b) {
-        return -QSearch(pos, -b, -a);
-    });
+        pos.undo_move();
+        eval.Rollback();
 
-    return score;
+        if(score > alpha) {
+            alpha = score;
+            if(alpha >= beta)
+                return beta;
+        }
+    }
+
+    return alpha;
 }
 
 }

@@ -1,9 +1,11 @@
 #include "storage.hpp"
+#include "zobrist.hpp"
+#include <cassert>
 
 namespace game::logic
 {
 
-void stcopy(State &dst, const State &src)
+void IStorage::stcopy(State &dst, const State &src)
 {
     dst.hash = src.hash;
     dst.castle = src.castle;
@@ -14,26 +16,25 @@ void stcopy(State &dst, const State &src)
     dst.captured = NO_PIECE;
 }
 
-bool repetition_help(const State *curr, const State* begin)
+int IStorage::state_repetions(const State *curr, const State* begin, Zobrist hash) const
 {
     assert(curr);
 
-    int counter = 1;
-    const Zobrist& hash = curr->hash;
+    int counter = 0;
     const int rule50 = curr->rule50;
 
-    for(const State* hist = curr - 2; hist >= begin; hist -= 2) {
+    for(const State* hist = curr; hist >= begin; hist -= 2) {
         if(hist->hash == hash) {
             counter++;
             if(counter == 3)
-                return true;
+                return counter;
         }
 
-        if(hist->rule50 != rule50 - (curr - hist)) 
-            return false;
+        else if(hist->rule50 != rule50 - (curr - hist)) 
+            return -1;
     }
 
-    return false;
+    return counter;
 }
 
 State& StaticStorage::create() 
@@ -54,9 +55,13 @@ State& StaticStorage::rollback()
     return *curr;
 }
 
+int StaticStorage::count(Zobrist hash) const {
+    return state_repetions(curr, history, hash);
+}
+
 bool StaticStorage::repetition() const
 {
-    return repetition_help(curr, history);
+    return count(curr->hash) == 3;
 }
 
 State& DynamicStorage::create() 
@@ -78,10 +83,22 @@ State& DynamicStorage::rollback()
     return history.back();
 }
 
+int DynamicStorage::count(Zobrist hash) const {
+    const State* back = &history.back();
+    return state_repetions(back, history.data(), hash);
+}
+
+
 bool DynamicStorage::repetition() const
 {
     const State* back = &history.back();
-    return repetition_help(back, history.data());
+    return count(back->hash) == 3;
+}
+
+State *game::logic::DynamicStorage::begin()
+{
+    if(history.empty()) return nullptr;
+    return &history[0];
 }
 
 }

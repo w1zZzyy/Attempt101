@@ -1,75 +1,124 @@
 #include "tt.hpp"
+#include "logic/move.hpp"
+#include <cstdint>
+#include <cstring>
+#include <optional>
 
-#include <format>
+namespace game::engine {
 
-namespace game::engine 
+struct TTEntry 
 {
+    uint16_t key;
+    int16_t score;
+    uint16_t move;
+    uint8_t depth;
+    EntryType flag;
+};
 
-void Transpositions::resize(size_t mb)
+constexpr int ClusterSize = 3;
+
+struct Cluster {
+    TTEntry entry[ClusterSize];
+};
+
+Transposition::~Transposition() {clear();}
+
+void Transposition::resize(size_t mb) 
 {
     clear();
 
-    constexpr size_t entry_bytes = sizeof(TTEntry);
-    size = mb * 1024 * 1024 / entry_bytes;
-    data = new TTEntry[size];
+    constexpr size_t bytes = sizeof(Cluster);
+    size = mb * 1024 * 1024 / bytes;
+    table = new Cluster[size];
 
+    for (size_t i = 0; i < size; ++i)
+        std::memset(&table[i], 0, bytes);
 }
 
-void Transpositions::store(const logic::Zobrist& key, int score, int depth, logic::Move move, EntryType type)
-{
-    TTEntry& entry = find(key);
-    if (depth >= entry.depth || entry.key != key) {
-        entry.depth = depth;
-        entry.move = move;
-        entry.score = score;
-        entry.key = key;
-        entry.type = type;
+void Transposition::store(
+    uint64_t key, int16_t score, logic::Move move, uint8_t depth, EntryType flag
+) {
+    TTEntry* entry = first_entry(key);
+    const uint16_t key16 = uint16_t(key);
+
+    for (int i = 0; i < ClusterSize; ++i) {
+        if(entry[i].key == key16) {
+            if(flag == EntryType::Exact || depth >= entry[i].depth) 
+            {
+                entry[i].depth = depth;
+                entry[i].score = score;
+                entry[i].flag = flag;
+                entry[i].move = move;
+            }
+            return;
+        }
     }
 
+    TTEntry* replace = entry;
+    for (int i = 1; i < ClusterSize; ++i) 
+        if(entry[i].depth < replace->depth) 
+            replace = &entry[i];
+
+    replace->key = key16;
+    replace->depth = depth;
+    replace->score = score;
+    replace->flag = flag;
+    replace->move = move;
 }
 
-std::optional<int> Transpositions::probe(const logic::Zobrist& key, int depth, int alpha, int beta)
+ProbeResult Transposition::probe(uint64_t key, uint8_t depth, int alpha, int beta) const 
 {
-    const TTEntry& entry = find(key);
-    if(entry.depth >= depth && entry.key == key) 
+    TTEntry* entry = first_entry(key);
+    const uint16_t key16 = uint16_t(key);
+
+    for(int i = 0; i < ClusterSize; ++i)
     {
-        switch (entry.type) 
+        if(entry[i].key == key16)
         {
-        case EntryType::Exact: 
-            return entry.score;
-        case EntryType::LowerBound:
-            if(entry.score >= beta)
-                return entry.score;
-            break;
-        case EntryType::UpperBound:
-            if(entry.score <= alpha)
-                return entry.score;
-            break;
+            ProbeResult res;
+
+            if(entry[i].depth >= depth)
+            {
+                switch (entry[i].flag) 
+                {
+                case EntryType::Exact:
+                    res.score = entry[i].score;
+                    break;
+                case EntryType::LowerBound:
+                    if(entry[i].score >= beta)
+                        res.score = entry[i].score;
+                    break;
+                case EntryType::UpperBound:
+                    if(entry[i].score <= alpha)
+                        res.score = entry[i].score;
+                    break;
+                }
+            }
+
+            res.move = entry[i].move;
+
+            return res;
         }
     }
-    return std::nullopt;
+
+    return {};
 }
 
-TTEntry& Transpositions::find(const logic::Zobrist& key) {
-    assert(data);
-    size_t index = key % size;
-    return data[index];
-}
 
-std::string Transpositions::load_info() const {
-    int total = 0;
-    for(size_t i = 0; i < size; ++i) {
-        if(data[i].key) {
-            ++total;
-        }
+void Transposition::clear() 
+{
+    if(table) {
+        delete[] table;
     }
-    return std::format("\tTT Load Info: {}/{}\n", total, size);
-}
-
-void Transpositions::clear() noexcept {
+    table = nullptr;
     size = 0;
-    if(data) 
-        delete [] data;
 }
 
+TTEntry* Transposition::first_entry(uint64_t key) const
+{
+    __extension__ using uint128 = unsigned __int128;
+    uint64_t index = ((uint128(key) * uint128(size)) >> 64);
+    return &table[index].entry[0];
 }
+
+} 

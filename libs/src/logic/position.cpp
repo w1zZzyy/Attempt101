@@ -9,7 +9,6 @@
 #include <sstream>
 #include <string>
 
-
 namespace game::logic
 {
 
@@ -328,12 +327,6 @@ std::string Position<Policy>::fen() const noexcept
     res << curr_st.rule50;
 
     return res.str();
-}
-
-template<StorageType Policy>
-bool Position<Policy>::is_draw() const
-{
-    return not_enough_pieces() || st.repetition() || st.top().rule50 == 50;
 }
 
 template<StorageType Policy>

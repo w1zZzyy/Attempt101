@@ -13,7 +13,7 @@ public:
 
     GameLogicController(event::Bus& bus);
     void Init(const std::string& fen);
-    operator const GameLogic& () const noexcept {return logic;}
+    const GameLogic& GetLogic() const noexcept {return logic;}
 
 private:
 

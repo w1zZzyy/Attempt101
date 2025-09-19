@@ -2,6 +2,7 @@
 
 #include "event_type.hpp"
 #include "logic/move.hpp"
+#include "logic/position.hpp"
 #include <vector>
 
 namespace event 
@@ -34,8 +35,7 @@ struct PositionChangedEvent : IEvent
     std::vector<Placement> PiecesAdded;
     std::optional<Square> PieceRemoved;
     std::vector<Move> PieceMove;
-    std::string fen;
-    Color side;
+    const PositionDynamicMemory* Position;
 };
 
 }

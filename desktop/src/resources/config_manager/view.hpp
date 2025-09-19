@@ -22,6 +22,7 @@ public:
     game::logic::Color BoardView() const;
     int EngineSearchDepth() const;
     size_t EngineTranspositionSize() const;
+    uint64_t EngineSearchTimeLimit() const;
 
     sf::Vector2u WindowSize() const;
     std::string Title() const;

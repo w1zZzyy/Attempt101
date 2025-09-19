@@ -1,7 +1,8 @@
 #pragma once
 
 #include "event/bus/view.hpp"
-#include "engine/search.hpp"
+#include "engine/engine.hpp"
+#include "logic/position.hpp"
 
 namespace controller
 {
@@ -12,8 +13,10 @@ public:
 
     AIController(event::Bus& bus);
     AIController& SetSide(game::logic::Color _s) noexcept {side = _s; return *this;}
-    AIController& SetSearchDepth(int depth) {search.SetMaxDepth(depth); return *this;} 
-    AIController& SetTableSize(size_t mb) {search.SetTableSize(mb); return *this;}
+    AIController& SetPosition(const PositionDynamicMemory&) noexcept;
+    AIController& SetSearchDepth(int depth) {engine.SetMaxDepth(depth); return *this;} 
+    AIController& SetTTSizeMB(size_t mb) {engine.SetTTSizeMB(mb); return *this;}
+    AIController& SetSearchTimeLimit(uint64_t sec) {engine.SetSearchLimit(sec); return *this;}
     AIController& LaunchSearchWorker();
 
 private: 
@@ -24,7 +27,7 @@ private:
 
     event::Bus& bus;
     game::logic::Color side;
-    game::engine::Search search;
+    game::engine::Engine engine;
 
 };
 
