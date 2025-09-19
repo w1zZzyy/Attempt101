@@ -37,8 +37,11 @@
         "start_position": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
         "player_side": "white", 
         "engine" : {
-            "search_depth": 6,
-            "transpositions_mb" : 1024
+            "search" : {
+                "depth": 6, 
+                "threads": 4
+            },
+            "tt_mb" : 1024
         }
     }
 }
