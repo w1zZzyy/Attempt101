@@ -38,14 +38,14 @@ void GameScene::ParseConfig(const resource::ConfigManager &config)
             }
         );
 
-    GameController.Init(fen);
-
     AIController
         .SetSide(side.opp())
         .SetPosition(GameController.GetLogic().GetPosition())
         .SetSearchDepth(config.EngineSearchDepth())
         .SetTTSizeMB(config.EngineTranspositionSize())
         .LaunchSearchWorker();
+
+    GameController.Init(fen);
 }
 
 }
