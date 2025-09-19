@@ -15,6 +15,7 @@ public:
     AIController& SetSide(game::logic::Color _s) noexcept {side = _s; return *this;}
     AIController& SetPosition(const PositionDynamicMemory&) noexcept;
     AIController& SetSearchDepth(int depth) {engine.SetMaxDepth(depth); return *this;} 
+    AIController& SetTTSizeMB(size_t mb) {engine.SetTTSizeMB(mb); return *this;}
     AIController& LaunchSearchWorker();
 
 private: 

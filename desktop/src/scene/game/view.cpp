@@ -44,6 +44,7 @@ void GameScene::ParseConfig(const resource::ConfigManager &config)
         .SetSide(side.opp())
         .SetPosition(GameController.GetLogic().GetPosition())
         .SetSearchDepth(config.EngineSearchDepth())
+        .SetTTSizeMB(config.EngineTranspositionSize())
         .LaunchSearchWorker();
 }
 

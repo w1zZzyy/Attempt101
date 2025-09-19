@@ -65,11 +65,11 @@ game::logic::Color ConfigManager::BoardView() const
 }
 
 int ConfigManager::EngineSearchDepth() const {
-    return config["game"]["engine"]["search_depth"];
+    return config["game"]["engine"]["search"]["depth"];
 }
 
 size_t ConfigManager::EngineTranspositionSize() const {
-    return config["game"]["engine"]["transpositions_mb"];
+    return config["game"]["engine"]["tt_mb"];
 }
 
 sf::Color ConfigManager::SquareColor(std::string_view clr) const
