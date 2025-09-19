@@ -28,6 +28,11 @@ Engine& Engine::SetMaxDepth(int depth) {
     return *this;
 }
 
+Engine& Engine::SetTTSizeMB(size_t mb) {
+    search.SetTTSizeMB(mb);
+    return *this;
+}
+
 void Engine::StartWorker(const std::function<void(logic::Move)>& onMoveFound) 
 {
     mainWorker = std::thread(

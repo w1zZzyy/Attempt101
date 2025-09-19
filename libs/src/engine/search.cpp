@@ -5,6 +5,7 @@
 #include "logic/defs.hpp"
 #include "logic/move.hpp"
 #include "logic/movelist.hpp"
+#include "tt.hpp"
 
 #include <cassert>
 #include <chrono>
@@ -25,26 +26,41 @@ Search& Search::SetMaxDepth(int depth) noexcept {
     return *this;
 }
 
+Search& Search::SetTTSizeMB(size_t mb) {
+    tt.resize(mb);
+    return *this;
+}
+
+
 std::optional<Move> Search::FindBestMove(PositionFixedMemory& pos) 
 {
     auto start = std::chrono::high_resolution_clock::now();
 
     Move best_move;
     int best_score = -INF;
-    nodes = 0;
 
-    pos.update();
+    nodes = 0;
+    tt_cuts = 0;
+
     eval.Init(pos);
 
-    MoveList moves;
-    if(std::optional score = generateMoves<MoveGenType::NotForced>(pos, moves))
-        return score.value();
+    MoveGenerator<MoveGenType::NotForced> gen(pos);
+    if(gen.moves.empty())
+        return std::nullopt;
 
-    auto eval_data = eval.GetData();
+    MovePicker picker(gen.moves, pos);
 
-    for(auto move : moves) 
+    while(std::optional __move = picker.next()) 
     {
-        int score = searchRoute<SearchType::Negamax>(pos, move, eval_data, best_score, INF, maxDepth);
+        const Move& move = __move.value();
+
+        pos.do_move(move);
+        eval.Update(move);
+
+        int score = -negamax(pos, maxDepth - 1, -INF, -best_score);
+
+        pos.undo_move();
+        eval.Rollback();
 
         if(score > best_score) {
             best_score = score;
@@ -56,10 +72,11 @@ std::optional<Move> Search::FindBestMove(PositionFixedMemory& pos)
 
     std::cout << std::format(
         "---------------\n"
-        "Time: {}\nNodes: {}\nScore: {}\n",
+        "Time: {}\nNodes: {}\nScore: {}\nTT Cuts: {}\n",
         std::chrono::duration<double>(end - start).count(), 
         nodes, 
-        best_score  
+        best_score,
+        tt_cuts
     );
 
     return best_move;
@@ -67,85 +84,115 @@ std::optional<Move> Search::FindBestMove(PositionFixedMemory& pos)
 
 int Search::negamax(PositionFixedMemory& pos, int depth, int alpha, int beta) 
 {
-    assert(depth >= 0);
-    if(depth == 0) {
-        nodes++;
-        return qsearch(pos, alpha, beta);
+    ProbeResult probe = tt.probe(pos.get_hash(), depth, alpha, beta);
+
+    if(probe.score) {
+        tt_cuts++;
+        return *probe.score;
     }
-    return go<SearchType::Negamax>(pos, alpha, beta, depth);
+
+
+    if(depth <= 0)
+        return qsearch(pos, alpha, beta);
+
+    if(pos.is_draw(*globalHistory)) 
+        return DRAW_SCORE;
+
+    nodes++;
+
+    MoveGenerator<MoveGenType::NotForced> gen(pos);
+
+    if(gen.moves.empty()) {
+        if(pos.is_check()) return -INF + pos.get_ply();
+        return DRAW_SCORE;
+    }
+
+    MovePicker moveloads(gen.moves, pos, probe.move);
+
+
+    const int oldAlpha = alpha;
+    int bestScore = -INF;
+    logic::Move bestMove;
+
+
+    while(std::optional __move = moveloads.next())
+    {
+        const Move& move = __move.value();
+
+        pos.do_move(move);
+        eval.Update(move);
+
+        int score = -negamax(pos, depth - 1, -beta, -alpha);
+
+        pos.undo_move();
+        eval.Rollback();
+
+        if(score > bestScore) {
+            bestScore = score;
+            bestMove = move;
+            if(bestScore > alpha) {
+                alpha = bestScore;
+                if(alpha >= beta) {
+                    tt.store(pos.get_hash(), bestScore, move, depth, EntryType::LowerBound);
+                    return bestScore;
+                }
+            }
+        }
+    }
+
+    if(bestScore <= oldAlpha)
+        tt.store(pos.get_hash(), bestScore, bestMove, depth, EntryType::UpperBound);
+    else
+        tt.store(pos.get_hash(), bestScore, bestMove, depth, EntryType::Exact);
+
+    return bestScore;
 }
 
 int Search::qsearch(PositionFixedMemory& pos, int alpha, int beta)
 {
-    alpha = std::max(alpha, eval.Score());
-    if(alpha >= beta) {
-        nodes++;
-        return alpha;
-    }
-    return go<SearchType::QSearch>(pos, alpha, beta, -1);
-}
-
-template<MoveGenType T>
-std::optional<int> Search::generateMoves(PositionFixedMemory& pos, MoveList& moves) const 
-{
-    if(pos.is_draw(*globalHistory)) {
+    if(pos.is_draw(*globalHistory)) 
         return DRAW_SCORE;
-    }
 
-    moves.generate<T>(pos);
+    nodes++;
 
-    if(moves.empty()) {
+    int score = eval.Score();
+
+    if(pos.get_ply() == MAX_HISTORY_SIZE - 1)
+        return score;
+
+    if(score >= beta) 
+        return beta;
+
+    if(score > alpha)
+        alpha = score;
+
+    
+    MoveGenerator<MoveGenType::Forced> gen(pos);
+
+    if(gen.moves.empty()) {
         if(pos.is_check()) return -INF + pos.get_ply();
-        if constexpr (T == MoveGenType::Forced) return eval.Score();
-        return DRAW_SCORE;
+        return score;
     }
 
-    return std::nullopt;
-}
+    MovePicker moveloads(gen.moves, pos);
 
-template<Search::SearchType T>
-int Search::searchRoute(PositionFixedMemory& pos, Move move, const Evaluation::Data& eval_data, int alpha, int beta, int depth) 
-{
-    int score;
-    const Color us = pos.get_side();
 
-    pos.do_move(move);
-    eval.Update(move, us);
-
-    if constexpr (T == SearchType::Negamax) score = -negamax(pos, depth - 1, -beta, -alpha);
-    else score = -qsearch(pos, -beta, -alpha);
-
-    eval.SetData(eval_data);
-    pos.undo_move();
-
-    return score;
-}
-
-template<Search::SearchType T>
-int Search::go(PositionFixedMemory& pos, int alpha, int beta, int depth) 
-{
-    constexpr bool IsNegamax = (T == SearchType::Negamax);
-    constexpr MoveGenType GenType = (IsNegamax ? MoveGenType::NotForced : MoveGenType::Forced);
-
-    pos.update();
-
-    MoveList moves;
-    if(std::optional score = generateMoves<GenType>(pos, moves))
-        return score.value();
-
-    MovePicker order(moves, pos);
-
-    auto eval_data = eval.GetData();
-
-    while(std::optional move = order.next()) 
+    while(std::optional __move = moveloads.next())
     {
-        int score = searchRoute<T>(pos, *move, eval_data, alpha, beta, depth);
+        const Move& move = __move.value();
+
+        pos.do_move(move);
+        eval.Update(move);
+
+        score = -qsearch(pos, -beta, -alpha);
+
+        pos.undo_move();
+        eval.Rollback();
 
         if(score > alpha) {
             alpha = score;
-            if(alpha >= beta) {
+            if(alpha >= beta)
                 return beta;
-            }
         }
     }
 

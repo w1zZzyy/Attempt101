@@ -16,8 +16,9 @@ add_executable(tests_exe
     src/main.cpp 
     src/test_node_counter.cpp 
     src/test_zobrist.cpp
+    src/test_tt.cpp
 )
-target_link_libraries(tests_exe PRIVATE Logic_lib gtest_main)
+target_link_libraries(tests_exe PRIVATE Logic_lib Engine_lib gtest_main)
 target_compile_definitions(tests_exe PRIVATE 
     LOGIC_TESTS_DATA_PATH="${CMAKE_CURRENT_BINARY_DIR}/data"
 )

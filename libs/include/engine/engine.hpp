@@ -16,6 +16,7 @@ public:
 
     Engine& SetPosition(const PositionDynamicMemory&);
     Engine& SetMaxDepth(int);
+    Engine& SetTTSizeMB(size_t);
 
     void StartWorker(const std::function<void(logic::Move)>& onMoveFound);
     void StopWorker();
