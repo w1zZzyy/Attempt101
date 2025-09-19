@@ -12,16 +12,17 @@ public:
     static void Setup();
 
     void Init(const PositionFixedMemory&);
-    void Update(logic::Move, logic::Color us);
+    void Update(logic::Move);
+    void Rollback();
     int Score() const;
+
+private:
 
     struct Data {
         int mg[logic::COLOR_COUNT];
         int eg[logic::COLOR_COUNT];
         int game_phase;
     };
-    Data GetData() const noexcept {return data;}
-    void SetData(const Data& _data) noexcept {data = _data;}
 
 private:
 
@@ -32,7 +33,8 @@ private:
 
 private:
 
-    Data data;
+    Data data[logic::MAX_HISTORY_SIZE];
+    Data* cur = data;
     const PositionFixedMemory* pos;
 
 };

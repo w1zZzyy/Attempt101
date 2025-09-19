@@ -1,6 +1,7 @@
 #include "eval.hpp"
 #include "logic/defs.hpp"
 #include "logic/square.hpp"
+#include <cassert>
 
 namespace game::engine
 {
@@ -186,11 +187,13 @@ void Evaluation::Setup()
 
 void Evaluation::Init(const PositionFixedMemory& pos)
 {
-    data.game_phase = 0;
-    data.mg[WHITE] = 0;
-    data.mg[BLACK] = 0;
-    data.eg[WHITE] = 0;
-    data.eg[BLACK] = 0;
+    Data& _cur = *cur;
+
+    _cur.game_phase = 0;
+    _cur.mg[WHITE] = 0;
+    _cur.mg[BLACK] = 0;
+    _cur.eg[WHITE] = 0;
+    _cur.eg[BLACK] = 0;
 
     for(Square sqr = Square::Start(); sqr <= Square::End(); ++sqr) {
         Piece p = pos.piece_on(sqr);
@@ -202,9 +205,15 @@ void Evaluation::Init(const PositionFixedMemory& pos)
     this->pos = &pos;
 }
 
-void Evaluation::Update(Move move, Color us) 
+void Evaluation::Update(Move move) 
 {
-    const Color opp = us.opp();
+    cur++;
+    assert(cur);
+    *cur = *(cur - 1);
+    Data& _cur = *cur;
+
+    const Color opp = pos->get_side();
+    const Color us = opp.opp();
     const Square from = move.from();
     const Square targ = move.targ();
     const MoveFlag flag = move.flag();
@@ -228,9 +237,9 @@ void Evaluation::Update(Move move, Color us)
     case B_PROMOTION_MF:
     {
         const Piece p = pos->piece_on(targ);
-        data.mg[us] += mg_table[us][p][targ] - mg_table[us][PAWN][from];
-        data.eg[us] += eg_table[us][p][targ] - eg_table[us][PAWN][from];
-        data.game_phase += gamephaseInc[p] - gamephaseInc[PAWN];
+        _cur.mg[us] += mg_table[us][p][targ] - mg_table[us][PAWN][from];
+        _cur.eg[us] += eg_table[us][p][targ] - eg_table[us][PAWN][from];
+        _cur.game_phase += gamephaseInc[p] - gamephaseInc[PAWN];
         break;
     }
     default:
@@ -242,15 +251,22 @@ void Evaluation::Update(Move move, Color us)
     }
 }
 
+void Evaluation::Rollback()
+{
+    cur--;
+    assert(cur);
+}
+
 int Evaluation::Score() const
 {
+    const Data _cur = *cur;
     const Color side = pos->get_side();
     const Color opp = side.opp();
 
-    int mg_score = data.mg[side] - data.mg[opp];
-    int eg_score = data.eg[side] - data.eg[opp];
+    int mg_score = _cur.mg[side] - _cur.mg[opp];
+    int eg_score = _cur.eg[side] - _cur.eg[opp];
     
-    int mg_phase = (data.game_phase > 24) ? 24 : data.game_phase;
+    int mg_phase = (_cur.game_phase > 24) ? 24 : _cur.game_phase;
     int eg_phase = 24 - mg_phase;
 
     return (mg_score * mg_phase + eg_score * eg_phase) / 24;
@@ -258,22 +274,25 @@ int Evaluation::Score() const
 
 void Evaluation::addPiece(Color side, Piece piece, Square sqr)
 {
-    data.mg[side] += mg_table[side][piece][sqr];
-    data.eg[side] += eg_table[side][piece][sqr];
-    data.game_phase += gamephaseInc[piece];
+    Data& _cur = *cur;
+    _cur.mg[side] += mg_table[side][piece][sqr];
+    _cur.eg[side] += eg_table[side][piece][sqr];
+    _cur.game_phase += gamephaseInc[piece];
 }
 
 void Evaluation::removePiece(Color side, Piece piece, Square from)
 {
-    data.mg[side] -= mg_table[side][piece][from];
-    data.eg[side] -= eg_table[side][piece][from];
-    data.game_phase -= gamephaseInc[piece];
+    Data& _cur = *cur;
+    _cur.mg[side] -= mg_table[side][piece][from];
+    _cur.eg[side] -= eg_table[side][piece][from];
+    _cur.game_phase -= gamephaseInc[piece];
 }
 
 void Evaluation::movePiece(Color side, Piece piece, Square from, Square targ)
 {
-    data.mg[side] += mg_table[side][piece][targ] - mg_table[side][piece][from];
-    data.eg[side] += eg_table[side][piece][targ] - eg_table[side][piece][from];
+    Data& _cur = *cur;
+    _cur.mg[side] += mg_table[side][piece][targ] - mg_table[side][piece][from];
+    _cur.eg[side] += eg_table[side][piece][targ] - eg_table[side][piece][from];
 }
 
 void Evaluation::castle(Color side, Square kf, Square kt, Square rf, Square rt)
