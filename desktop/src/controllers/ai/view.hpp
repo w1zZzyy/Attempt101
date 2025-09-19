@@ -16,6 +16,7 @@ public:
     AIController& SetPosition(const PositionDynamicMemory&) noexcept;
     AIController& SetSearchDepth(int depth) {engine.SetMaxDepth(depth); return *this;} 
     AIController& SetTTSizeMB(size_t mb) {engine.SetTTSizeMB(mb); return *this;}
+    AIController& SetSearchTimeLimit(uint64_t sec) {engine.SetSearchLimit(sec); return *this;}
     AIController& LaunchSearchWorker();
 
 private: 

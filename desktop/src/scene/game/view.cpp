@@ -43,6 +43,7 @@ void GameScene::ParseConfig(const resource::ConfigManager &config)
         .SetPosition(GameController.GetLogic().GetPosition())
         .SetSearchDepth(config.EngineSearchDepth())
         .SetTTSizeMB(config.EngineTranspositionSize())
+        .SetSearchTimeLimit(config.EngineSearchTimeLimit())
         .LaunchSearchWorker();
 
     GameController.Init(fen);

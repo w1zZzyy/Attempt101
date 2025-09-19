@@ -1,6 +1,7 @@
 #include "engine.hpp"
 
 #include "logic/position.hpp"
+#include <cstdint>
 #include <optional>
 #include <thread>
 
@@ -30,6 +31,11 @@ Engine& Engine::SetMaxDepth(int depth) {
 
 Engine& Engine::SetTTSizeMB(size_t mb) {
     search.SetTTSizeMB(mb);
+    return *this;
+}
+
+Engine& Engine::SetSearchLimit(uint64_t sec) noexcept {
+    search.SetTimeLimit(sec);
     return *this;
 }
 

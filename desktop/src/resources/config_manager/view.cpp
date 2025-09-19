@@ -72,6 +72,11 @@ size_t ConfigManager::EngineTranspositionSize() const {
     return config["game"]["engine"]["tt_mb"];
 }
 
+uint64_t ConfigManager::EngineSearchTimeLimit() const {
+    return config["game"]["engine"]["search"]["time_limit"];
+}
+
+
 sf::Color ConfigManager::SquareColor(std::string_view clr) const
 {
     const auto& sqr = config["board"]["square_color"];

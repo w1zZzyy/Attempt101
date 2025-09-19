@@ -17,6 +17,7 @@ public:
     Engine& SetPosition(const PositionDynamicMemory&);
     Engine& SetMaxDepth(int);
     Engine& SetTTSizeMB(size_t);
+    Engine& SetSearchLimit(uint64_t) noexcept;
 
     void StartWorker(const std::function<void(logic::Move)>& onMoveFound);
     void StopWorker();
@@ -32,7 +33,6 @@ private:
     std::condition_variable cv;
     bool can_search{false};
     bool stop{false};
-
 };
 
 }

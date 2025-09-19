@@ -8,7 +8,7 @@
 #include "tt.hpp"
 
 #include <cassert>
-#include <chrono>
+#include <cstdint>
 #include <optional>
 
 namespace game::engine
@@ -31,14 +31,20 @@ Search& Search::SetTTSizeMB(size_t mb) {
     return *this;
 }
 
+Search& Search::SetTimeLimit(uint64_t sec) noexcept {
+    timer.setLimit(sec);
+    return*this;
+}
+
 
 std::optional<Move> Search::FindBestMove(PositionFixedMemory& pos) 
 {
-    auto start = std::chrono::high_resolution_clock::now();
+    timer.Start();
 
     Move best_move;
     int best_score = -INF;
 
+    int depth;
     nodes = 0;
     tt_cuts = 0;
 
@@ -50,30 +56,46 @@ std::optional<Move> Search::FindBestMove(PositionFixedMemory& pos)
 
     MovePicker picker(gen.moves, pos);
 
-    while(std::optional __move = picker.next()) 
+    for(depth = 1; depth <= maxDepth; ++depth)
     {
-        const Move& move = __move.value();
+        int iter_best_score = -INF;
+        Move iter_best_move;
 
-        pos.do_move(move);
-        eval.Update(move);
+        while(std::optional __move = picker.next()) 
+        {
+            const Move& move = __move.value();
 
-        int score = -negamax(pos, maxDepth - 1, -INF, -best_score);
+            pos.do_move(move);
+            eval.Update(move);
 
-        pos.undo_move();
-        eval.Rollback();
+            int score = -negamax(pos, depth - 1, -INF, -iter_best_score);
 
-        if(score > best_score) {
-            best_score = score;
-            best_move = move;
+            pos.undo_move();
+            eval.Rollback();
+
+            if(timer.TimeUp()) {
+                goto search_end;
+            }
+
+            if(score > iter_best_score) {
+                iter_best_score = score;
+                iter_best_move = move;
+            }
         }
+
+        picker.update(iter_best_move);
+        best_score = iter_best_score;
+        best_move = iter_best_move;
+
     }
 
-    auto end = std::chrono::high_resolution_clock::now();
+    search_end:
 
     std::cout << std::format(
         "---------------\n"
-        "Time: {}\nNodes: {}\nScore: {}\nTT Cuts: {}\n",
-        std::chrono::duration<double>(end - start).count(), 
+        "Time: {}\nDepth: {}\nNodes: {}\nScore: {}\nTT Cuts: {}\n",
+        timer.TimePassed(),
+        depth,
         nodes, 
         best_score,
         tt_cuts
@@ -84,6 +106,12 @@ std::optional<Move> Search::FindBestMove(PositionFixedMemory& pos)
 
 int Search::negamax(PositionFixedMemory& pos, int depth, int alpha, int beta) 
 {
+    if(timer.TimeUp()) 
+        return 0;
+
+    if(pos.is_draw(*globalHistory)) 
+        return DRAW_SCORE;
+
     ProbeResult probe = tt.probe(pos.get_hash(), depth, alpha, beta);
 
     if(probe.score) {
@@ -94,9 +122,6 @@ int Search::negamax(PositionFixedMemory& pos, int depth, int alpha, int beta)
 
     if(depth <= 0)
         return qsearch(pos, alpha, beta);
-
-    if(pos.is_draw(*globalHistory)) 
-        return DRAW_SCORE;
 
     nodes++;
 
@@ -127,6 +152,9 @@ int Search::negamax(PositionFixedMemory& pos, int depth, int alpha, int beta)
         pos.undo_move();
         eval.Rollback();
 
+        if(timer.TimeUp()) 
+            return 0;
+
         if(score > bestScore) {
             bestScore = score;
             bestMove = move;
@@ -150,6 +178,9 @@ int Search::negamax(PositionFixedMemory& pos, int depth, int alpha, int beta)
 
 int Search::qsearch(PositionFixedMemory& pos, int alpha, int beta)
 {
+    if(timer.TimeUp()) 
+        return 0;
+
     if(pos.is_draw(*globalHistory)) 
         return DRAW_SCORE;
 

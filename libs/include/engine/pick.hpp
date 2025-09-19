@@ -16,6 +16,7 @@ public:
 
     MovePicker(const logic::MoveList&, const PositionFixedMemory&, std::optional<logic::Move> = std::nullopt);
     std::optional<logic::Move> next();
+    void update(logic::Move bestMovePrevIter);
 
 private:
 

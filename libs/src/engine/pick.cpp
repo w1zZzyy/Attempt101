@@ -48,6 +48,22 @@ std::optional<Move> MovePicker::next() {
     return move;
 }
 
+void MovePicker::update(logic::Move bestMovePrevIter) 
+{
+    std::optional ttMoveOld = ttMove;
+    ttMove = bestMovePrevIter;
+
+    cur = moves;
+    for(ExtMove* it = cur; it != end; ++it) {
+        const Move move = *it;
+        if(ttMoveOld && move == ttMoveOld.value()) {
+            it->setScore(computeScore(move));
+        } else if(move == bestMovePrevIter) {
+            it->setScore(INF);
+        }
+    }
+}
+
 int MovePicker::computeScore(Move move) const 
 {
     if(move == ttMove)

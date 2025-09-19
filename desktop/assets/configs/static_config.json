@@ -38,8 +38,8 @@
         "player_side": "white", 
         "engine" : {
             "search" : {
-                "depth": 6, 
-                "threads": 4
+                "time_limit" : 3,
+                "depth": 32
             },
             "tt_mb" : 1024
         }

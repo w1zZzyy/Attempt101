@@ -2,10 +2,12 @@
 
 #include "eval.hpp"
 #include "tt.hpp"
+#include "timer.hpp"
 
 #include "logic/move.hpp"
 #include "logic/storage.hpp"
 #include <cstddef>
+#include <cstdint>
 
 namespace game::engine
 {
@@ -17,6 +19,7 @@ public:
     Search& SetGlobalHistory(const logic::StateStorage<logic::DynamicStorage>& gh) noexcept;
     Search& SetMaxDepth(int) noexcept;
     Search& SetTTSizeMB(size_t);
+    Search& SetTimeLimit(uint64_t __limit) noexcept;
     std::optional<logic::Move> FindBestMove(PositionFixedMemory&);
 
 private:
@@ -32,6 +35,7 @@ private:
     Evaluation eval;
     const logic::StateStorage<logic::DynamicStorage>* globalHistory;
     Transposition tt;
+    Timer timer;
 
 };
 
