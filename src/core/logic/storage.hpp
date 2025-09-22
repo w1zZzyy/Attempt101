@@ -55,8 +55,8 @@ template <typename Derived>
 template <typename Parent>
 inline bool StateStorage<Derived>::hasRepeated(const StateStorage<Parent> &globalHistory) const noexcept
 {
-    constexpr Derived* der = cast();
-    constexpr Parent* par = globalHistory.cast();
+    const Derived* der = cast();
+    const Parent* par = globalHistory.cast();
 
     if(int cnt = der->countRepetitionsImpl()) 
     {
@@ -92,7 +92,9 @@ private:
 
     State history[MAX_HISTORY_SIZE];
     State* curr = history;
-    friend class StateStorage<StaticStorage>;
+
+    template<typename>
+    friend class StateStorage;
 
 };
 
@@ -117,7 +119,9 @@ protected:
 private:
 
     std::vector<State> history;
-    friend class StateStorage<DynamicStorage>;
+    template<typename>
+    friend class StateStorage;
+
 
 };
 

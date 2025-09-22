@@ -7,7 +7,7 @@
 namespace Core::Logic
 {
 
-enum class MoveGenType {NotForced, Forced};
+enum class MoveGenType {All, Forced};
 
 class MoveList
 {

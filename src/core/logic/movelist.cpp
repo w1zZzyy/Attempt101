@@ -264,9 +264,9 @@ void MoveList::generate(const Position<ST> &pos)
 
 
 template void MoveList::generate<MoveGenType::Forced, DynamicStorage>(const Position<DynamicStorage>&);
-template void MoveList::generate<MoveGenType::NotForced, DynamicStorage>(const Position<DynamicStorage>&);
+template void MoveList::generate<MoveGenType::All, DynamicStorage>(const Position<DynamicStorage>&);
 template void MoveList::generate<MoveGenType::Forced, StaticStorage>(const Position<StaticStorage>&);
-template void MoveList::generate<MoveGenType::NotForced, StaticStorage>(const Position<StaticStorage>&);
+template void MoveList::generate<MoveGenType::All, StaticStorage>(const Position<StaticStorage>&);
 
 
 

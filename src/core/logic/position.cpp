@@ -251,20 +251,6 @@ void PositionAttacks::ComputeAttacks() noexcept
     }
 }
 
-
-template<StorageType Policy>
-Position<Policy>::Position()
-{
-    Setup();
-}
-
-template <StorageType Policy>
-Position<Policy>::Position(std::string_view fen) noexcept 
-{
-    Setup();
-    SetFen(fen);
-}
-
 template<StorageType Policy>
 void Position<Policy>::SetFen(std::string_view fen) noexcept 
 {

@@ -14,6 +14,7 @@ class PositionBase {
 public:
 
     static void Setup();
+    PositionBase() {Setup();};
 
     constexpr Piece GetPiece(Square sqr) const {return types[sqr];}
     Color GetPieceColor(Square) const;
@@ -108,8 +109,8 @@ template<StorageType Policy>
 class Position : public PositionAttacks {
 public:
 
-    Position();
-    Position(std::string_view fen) noexcept;
+    Position() = default;
+    Position(std::string_view fen) {SetFen(fen);};
     template<StorageType T>
     Position(const Position<T>&);
 
@@ -119,6 +120,7 @@ public:
     constexpr const Policy& GetHistory() const noexcept {return st;}
     constexpr Zobrist GetHash() const {return st.back().hash;}
     constexpr Piece GetCaptured() const {return st.back().captured;}
+    constexpr int GetPly() const noexcept {return st.size();}
 
     void DoMove(Move) noexcept;
     void UndoMove() noexcept;

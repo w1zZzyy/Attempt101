@@ -26,7 +26,7 @@ size_t CountNodes(TPosition& pos, size_t depth)
     pos.UpdateAttacks();
 
     MoveList moves;
-    moves.generate<MoveGenType::NotForced>(pos);
+    moves.generate<MoveGenType::All>(pos);
 
     size_t nodes = 0;
 

@@ -53,7 +53,7 @@ void check_hash_stability(Position<StaticStorage> &pos, int depth)
         return;
 
     MoveList moves;
-    moves.generate<MoveGenType::NotForced>(pos);
+    moves.generate<MoveGenType::All>(pos);
 
     for (size_t i = 0; i < moves.get_size(); ++i) {
         Move move = moves[i];
