@@ -7,4 +7,14 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 add_definitions(-DASSETS_PATH="${CMAKE_SOURCE_DIR}/assets/")
 
-add_subdirectory(src/core)
+include(FetchContent)
+
+FetchContent_Declare(
+    sfml 
+    GIT_REPOSITORY https://github.com/SFML/SFML.git
+    GIT_TAG 3.0.0
+)
+
+FetchContent_MakeAvailable(sfml)
+
+add_subdirectory(src)
