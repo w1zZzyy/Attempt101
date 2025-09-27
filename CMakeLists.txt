@@ -5,7 +5,8 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-add_definitions(-DASSETS_PATH="${CMAKE_SOURCE_DIR}/assets/")
+file(COPY ${CMAKE_SOURCE_DIR}/assets DESTINATION ${CMAKE_BINARY_DIR})
+add_definitions(-DASSETS_PATH="${CMAKE_BINARY_DIR}/assets/")
 
 include(FetchContent)
 
