@@ -8,8 +8,9 @@
 
 #include "core/logic/defs.hpp"
 #include "core/logic/square.hpp"
-#include "resources/colors.hpp"
-#include "utils/quad.hpp"
+#include "../resources/colors.hpp"
+#include "../utils/quad.hpp"
+#include "../utils/cellsize.hpp"
 
 #include <array>
 #include <stdexcept>
@@ -20,18 +21,18 @@ namespace UI::Renderer
 
 Board::Board() : textBuilder(ASSETS_PATH "/board/font.ttf") {}
 
-void Board::Init(const Options& opt)
+void Board::Init(const Model::Options& opt)
 {
     // 1. считываем цвета из файлика
 
     Resources::Colors colors(ASSETS_PATH "/board/colors.csv"); 
 
-    const std::array<std::string, HighLightCnt> colorName = {
+    const std::array<std::string, Model::HighLightCnt> colorName = {
         "white", "black", "background",
         "danger", "valid", "selected"
     };
 
-    for(int i = 0; i < HighLightCnt; ++i) {
+    for(int i = 0; i < Model::HighLightCnt; ++i) {
         std::optional clr = colors.Extract(colorName[i]);
         if(!clr)
             throw std::runtime_error(std::format("no color name '{}", colorName[i]));
@@ -42,22 +43,15 @@ void Board::Init(const Options& opt)
     // 2. инициализируем статичные вершины
 
     background.setPrimitiveType(sf::PrimitiveType::Triangles);
-    Utils::AppendQuad(opt.origin, opt.size, cellColor[Background], background);
+    Utils::AppendQuad(opt.origin, opt.size, cellColor[Model::Background], background);
 
     board.setPrimitiveType(sf::PrimitiveType::Triangles);
 
-    const sf::Vector2f boardSize = sf::Vector2f(
-        opt.size.x - 2 * opt.padding,
-        opt.size.y - 2 * opt.padding
-    );
     const sf::Vector2f boardOrigin = sf::Vector2f(
         opt.origin.x + opt.padding, 
         opt.origin.y - opt.padding
     );
-    const sf::Vector2f cellSize = sf::Vector2f(
-        boardSize.x / 8.0,
-        boardSize.y / 8.0
-    );
+    const sf::Vector2f cellSize = Utils::computeCellSize(opt.size, opt.padding);
 
     for(Core::Logic::Square sqr = Core::Logic::Square::Start(); sqr.isValid(); ++sqr) 
     {

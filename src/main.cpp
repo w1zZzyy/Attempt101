@@ -1,8 +1,11 @@
 #include "SFML/Graphics/RenderWindow.hpp"
 #include "SFML/Window/Event.hpp"
 #include "SFML/Window/VideoMode.hpp"
+
 #include "core/logic/defs.hpp"
+#include "ui/renderer/pieces.hpp"
 #include "ui/renderer/board.hpp"
+
 #include <optional>
 
 int main()
@@ -11,14 +14,19 @@ int main()
     Window.setVerticalSyncEnabled(true);
 
     UI::Renderer::Board Board;
-    UI::Renderer::Board::Options opt;
+    UI::Renderer::Pieces Pieces;
+
+    UI::Model::Options opt;
 
     opt.size = {500, 500};
     opt.origin = {50, 500};
-    opt.padding = 15;
-    opt.player = Core::Logic::BLACK;
+    opt.padding = 20;
+    opt.player = Core::Logic::WHITE;
 
     Board.Init(opt);
+    Pieces.Init(opt);
+
+    Pieces.Append(Core::Logic::WHITE, Core::Logic::KING, Core::Logic::d4);
 
     while(Window.isOpen())
     {
@@ -31,6 +39,7 @@ int main()
 
         Window.clear();
         Board.Render(Window);
+        Pieces.Render(Window);
         Window.display();
     }
 }

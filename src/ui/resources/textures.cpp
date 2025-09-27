@@ -4,6 +4,8 @@
 namespace UI::Resources
 {
 
+PieceTextures::Ptr PieceTextures::textures[Core::Logic::PIECE_COUNT][Core::Logic::COLOR_COUNT];
+
 std::string BuildPath(Core::Logic::Piece piece, Core::Logic::Color color)
 {
     std::string res;
@@ -20,7 +22,7 @@ std::string BuildPath(Core::Logic::Piece piece, Core::Logic::Color color)
         default: throw std::logic_error("Invalid piece");
     }
 
-    return std::format(ASSETS_PATH "/textures/{}.png", res);
+    return std::format(ASSETS_PATH "/pieces/{}.png", res);
 }
 
 const PieceTextures::Ptr& PieceTextures::Get(Core::Logic::Piece piece, Core::Logic::Color color)
