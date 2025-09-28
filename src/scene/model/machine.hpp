@@ -2,7 +2,6 @@
 
 #include "state.hpp"
 
-#include <stdexcept>
 #include <variant>
 
 namespace Scene::Model 
@@ -13,7 +12,10 @@ class Machine
 {
 public:
 
-    Machine(Object& object) noexcept : object(object), state(object) {}
+    Machine(Object& object) noexcept : object(object) {
+        using FirstState = std::tuple_element_t<0, std::tuple<T...>>;
+        state.template emplace<FirstState>(object);
+    }
     
     template<EventType Event>
     void HandleEvent(const Event& event) {
@@ -21,9 +23,6 @@ public:
             [&event, this](auto& st) {
                 if(auto newStateOpt = st.HandleEvent(event)) {
                     using NewState = std::decay_t<decltype(*newStateOpt)>;
-                    if(!std::holds_alternative<NewState>(state)) {
-                        throw std::invalid_argument("NewState template not supported\n");
-                    }
                     newStateOpt->Init(object);
                     state = std::move(*newStateOpt);
                 }
