@@ -6,7 +6,7 @@
 namespace Scene::Game::State::Piece
 {
 
-void Idle::HandleEventImpl(const Event::GameStarted& event)
+std::optional<InProgress> Idle::HandleEventImpl(const Event::GameStarted& event)
 {
     using namespace Core::Logic;
     for(Square sqr = Square::Start(); sqr.isValid(); ++sqr) {
@@ -15,6 +15,7 @@ void Idle::HandleEventImpl(const Event::GameStarted& event)
             object->Append(color, piece, sqr);
         }
     }
+    return InProgress{};
 }
 
 }

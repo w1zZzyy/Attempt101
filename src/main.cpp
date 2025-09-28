@@ -7,7 +7,7 @@
 #include "scene/game/event/game-started.hpp"
 #include "ui/renderer/pieces.hpp"
 #include "ui/renderer/board.hpp"
-#include "scene/game/state/piece/idle.hpp"
+#include "scene/game/state/machine.hpp"
 
 #include <optional>
 
@@ -18,7 +18,7 @@ int main()
 
     UI::Renderer::Board Board;
     UI::Renderer::Pieces Pieces;
-    Scene::Game::State::Piece::Idle st;
+    Scene::Game::State::PieceMachine Machine(Pieces);
     Core::Logic::PositionDM pos("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
 
     UI::Model::Options opt;
@@ -31,8 +31,7 @@ int main()
     Board.Init(opt);
     Pieces.Init(opt);
 
-    st.Init(Pieces);
-    st.HandleEvent(Scene::Game::Event::GameStarted{pos});
+    Machine.HandleEvent(Scene::Game::Event::GameStarted{pos});
 
     while(Window.isOpen())
     {

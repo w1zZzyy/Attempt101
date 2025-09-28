@@ -1,6 +1,5 @@
 #pragma once 
 
-#include "in-progress.hpp"
 #include "scene/model/state.hpp"
 #include "ui/renderer/pieces.hpp"
 #include "../../event/game-started.hpp"
@@ -9,9 +8,9 @@
 namespace Scene::Game::State::Piece
 {
 
-class Idle : public Model::IState<Idle, UI::Renderer::Pieces> {
+class InProgress : public Model::IState<InProgress, UI::Renderer::Pieces> {
 public:
-    std::optional<InProgress> HandleEventImpl(const Event::GameStarted& event);
+    std::optional<InProgress> HandleEventImpl(const Event::GameStarted& event) {return std::nullopt;}
 };
 
 }
