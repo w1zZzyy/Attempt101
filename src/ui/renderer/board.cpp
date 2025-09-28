@@ -12,7 +12,6 @@
 #include "../utils/quad.hpp"
 #include "../utils/cellsize.hpp"
 
-#include <array>
 #include <stdexcept>
 #include <string_view>
 
@@ -27,23 +26,21 @@ void Board::Init(const Model::Options& opt)
 
     Resources::Colors colors(ASSETS_PATH "/board/colors.csv"); 
 
-    const std::array<std::string, Model::HighLightCnt> colorName = {
-        "white", "black", "background",
-        "danger", "valid", "selected"
-    };
+    constexpr std::string_view colorName[] = {"white", "black", "background"};
+    std::vector<sf::Color> cellColor;
 
-    for(int i = 0; i < Model::HighLightCnt; ++i) {
-        std::optional clr = colors.Extract(colorName[i]);
+    for(std::string_view name : colorName) {
+        std::optional clr = colors.Extract(name.data());
         if(!clr)
-            throw std::runtime_error(std::format("no color name '{}", colorName[i]));
-        cellColor[i] = clr.value();
+            throw std::runtime_error(std::format("no color name '{}", name));
+        cellColor.push_back(clr.value());
     }
  
 
     // 2. инициализируем статичные вершины
 
     background.setPrimitiveType(sf::PrimitiveType::Triangles);
-    Utils::AppendQuad(opt.origin, opt.size, cellColor[Model::Background], background);
+    Utils::AppendQuad(opt.origin, opt.size, cellColor[2], background);
 
     board.setPrimitiveType(sf::PrimitiveType::Triangles);
 
@@ -63,13 +60,8 @@ void Board::Init(const Model::Options& opt)
             boardOrigin.y - cellSize.y * rank
         );
 
-        cords[sqr] = cellPos;
-
         Utils::AppendQuad(cellPos, cellSize, cellColor[1 - (rank + file) % 2], board);
     }
-    
-    cellBase.setRadius(std::min(cellSize.x, cellSize.y));
-    cellBase.setOrigin(cellBase.getGeometricCenter());
 
 
     // 3. подписываем координаты
@@ -90,8 +82,6 @@ void Board::Init(const Model::Options& opt)
         textBuilder.Push(fileNotationOpt);
         fileNotationOpt.pos.x += cellSize.x;
     }
-    
-
 
     // 3.2 rank
 
