@@ -4,6 +4,7 @@
 #include "SFML/Graphics/VertexArray.hpp"
 
 #include "../resources/text.hpp"
+#include "../resources/colors.hpp"
 #include "../model/options.hpp"
 
 namespace UI::Renderer 
@@ -21,6 +22,7 @@ private:
 
     sf::VertexArray background, board;
     Resources::Text textBuilder;
+    Resources::Colors colorBuilder;
 
 };
 

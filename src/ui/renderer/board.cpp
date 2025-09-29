@@ -1,6 +1,5 @@
 #include "board.hpp"
 
-#include "SFML/Graphics/Color.hpp"
 #include "SFML/Graphics/PrimitiveType.hpp"
 #include "SFML/Graphics/RenderWindow.hpp"
 #include "SFML/Graphics/VertexArray.hpp"
@@ -12,35 +11,26 @@
 #include "../utils/quad.hpp"
 #include "../utils/cellsize.hpp"
 
-#include <stdexcept>
 #include <string_view>
 
 namespace UI::Renderer 
 {
 
-Board::Board() : textBuilder(ASSETS_PATH "/board/font.ttf") {}
+Board::Board() : 
+    textBuilder(ASSETS_PATH "/board/font.ttf"),
+    colorBuilder(ASSETS_PATH "/board/colors.csv") 
+{}
 
 void Board::Init(const Model::Options& opt)
 {
-    // 1. считываем цвета из файлика
-
-    Resources::Colors colors(ASSETS_PATH "/board/colors.csv"); 
-
-    constexpr std::string_view colorName[] = {"white", "black", "background"};
-    std::vector<sf::Color> cellColor;
-
-    for(std::string_view name : colorName) {
-        std::optional clr = colors.Extract(name.data());
-        if(!clr)
-            throw std::runtime_error(std::format("no color name '{}", name));
-        cellColor.push_back(clr.value());
-    }
- 
-
-    // 2. инициализируем статичные вершины
+    // 1. инициализируем статичные вершины
 
     background.setPrimitiveType(sf::PrimitiveType::Triangles);
-    Utils::AppendQuad(opt.origin, opt.size, cellColor[2], background);
+    Utils::AppendQuad(
+        opt.origin, opt.size, 
+        colorBuilder.Extract<Resources::BACKGROUND_COLOR>(), 
+        background
+    );
 
     board.setPrimitiveType(sf::PrimitiveType::Triangles);
 
@@ -60,16 +50,26 @@ void Board::Init(const Model::Options& opt)
             boardOrigin.y - cellSize.y * rank
         );
 
-        Utils::AppendQuad(cellPos, cellSize, cellColor[1 - (rank + file) % 2], board);
+        const bool isWhite = 1 - (rank + file) % 2 == 0;
+
+        Utils::AppendQuad(
+            cellPos, cellSize, 
+            (
+                isWhite 
+                ? colorBuilder.Extract<Resources::WHITE_COLOR>()
+                : colorBuilder.Extract<Resources::BLACK_COLOR>()      
+            ),
+            board
+        );
     }
 
 
-    // 3. подписываем координаты
+    // 2. подписываем координаты
 
     Resources::Text::Options fileNotationOpt, rankNotationOpt;
     const float characterSize = opt.padding * 0.75; 
 
-    // 3.1 file
+    // 2.1 file
 
     fileNotationOpt.characterSize = characterSize;
     fileNotationOpt.pos = sf::Vector2f{
@@ -83,7 +83,7 @@ void Board::Init(const Model::Options& opt)
         fileNotationOpt.pos.x += cellSize.x;
     }
 
-    // 3.2 rank
+    // 2.2 rank
 
     rankNotationOpt.characterSize = characterSize;
     rankNotationOpt.pos = sf::Vector2f{

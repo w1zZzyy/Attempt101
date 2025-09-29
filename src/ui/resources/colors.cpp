@@ -1,9 +1,11 @@
 #include "colors.hpp"
+#include "SFML/Graphics/Color.hpp"
 
 #include <cstdint>
 #include <fstream>
 #include <iostream>
-#include <optional>
+#include <stdexcept>
+#include <string_view>
 
 namespace  
 {
@@ -56,13 +58,38 @@ Colors::Colors(std::string path)
     }
 }
 
-std::optional<sf::Color> Colors::Extract(const std::string& name) const
+template<ColorType T>
+sf::Color Colors::Extract() const
 {
-    if(auto it = colors.find(name); it != colors.end()) {
+    constexpr std::string_view name = (
+        T == WHITE_COLOR ? "white" : 
+        T == BLACK_COLOR ? "black" : 
+        T == BACKGROUND_COLOR ? "background" :
+        T == DANGER_SQUARE_COLOR ? "danger" :
+        T == VALID_SQUARE_COLOR ? "valid" :
+        T == SELECTED_SQUARE_COLOR ? "selected" :
+        ""
+    );
+    static_assert(!name.empty(), "invalid type");
+
+    if(
+        auto it = colors.find(name.data()); 
+        it != colors.end()
+    ) {
         return it->second;
     }
-    return std::nullopt;
+
+    throw std::runtime_error(std::format(
+        "no color '{}' was found",
+        name
+    ));
 }
 
+template sf::Color Colors::Extract<WHITE_COLOR>() const;
+template sf::Color Colors::Extract<BLACK_COLOR>() const;
+template sf::Color Colors::Extract<BACKGROUND_COLOR>() const;
+template sf::Color Colors::Extract<DANGER_SQUARE_COLOR>() const;
+template sf::Color Colors::Extract<VALID_SQUARE_COLOR>() const;
+template sf::Color Colors::Extract<SELECTED_SQUARE_COLOR>() const;
 
 }
