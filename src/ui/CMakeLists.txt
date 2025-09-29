@@ -8,12 +8,12 @@ target_include_directories(Resources_lib PUBLIC ${SRC_DIR})
 
 add_library(UIUtils_lib STATIC 
     utils/quad.hpp utils/quad.cpp
-    utils/cellsize.hpp utils/cellsize.cpp
 )
 target_link_libraries(UIUtils_lib PUBLIC SFML::Graphics)
 
 add_library(Renderer_lib STATIC
     renderer/board.hpp renderer/board.cpp 
     renderer/pieces.hpp renderer/pieces.cpp 
+    model/options.hpp model/options.cpp 
 )
 target_link_libraries(Renderer_lib PUBLIC Resources_lib UIUtils_lib)

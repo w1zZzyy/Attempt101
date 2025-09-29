@@ -1,9 +1,9 @@
 #include "pieces.hpp"
 
 #include "SFML/Graphics/Sprite.hpp"
+#include "SFML/System/Vector2.hpp"
 #include "core/logic/defs.hpp"
 #include "core/logic/square.hpp"
-#include "../utils/cellsize.hpp"
 #include "../resources/textures.hpp"
 
 #include <cassert>
@@ -11,16 +11,6 @@
 
 namespace UI::Renderer 
 {
-
-void Pieces::Init(const Model::Options& opt)
-{
-    cellSize = Utils::computeCellSize(opt.size, opt.padding);
-    origin = sf::Vector2f(
-        opt.origin.x + opt.padding + cellSize.x * 0.5,
-        opt.origin.y - opt.padding - cellSize.y * 0.5
-    );
-    player = opt.player;
-}
 
 void Pieces::Append(Core::Logic::Color color, Core::Logic::Piece piece, Core::Logic::Square square)
 {
@@ -32,7 +22,7 @@ void Pieces::Append(Core::Logic::Color color, Core::Logic::Piece piece, Core::Lo
 
     sf::Sprite& sprite = pieces[square].emplace(*texture);
 
-    sprite.setPosition(ToVec(square));
+    sprite.setPosition(opt.ToVec(square));
     SetSize(sprite);
     SetCenter(sprite);
 }
@@ -43,7 +33,7 @@ void Pieces::Move(Core::Logic::Square from, Core::Logic::Square targ)
         throw std::runtime_error(std::format("no piece on sqr '{}'", from.to_string()));
 
     pieces[targ] = std::move(pieces[from]);
-    pieces[targ]->setPosition(ToVec(targ));
+    pieces[targ]->setPosition(opt.ToVec(targ));
 
     pieces[from].reset();
 }
@@ -66,25 +56,11 @@ void Pieces::Render(sf::RenderWindow& window) const
             window.draw(piece.value());
 }
 
-sf::Vector2f Pieces::ToVec(Core::Logic::Square sqr) const
-{
-    int rank = sqr.rank();
-    int file = sqr.file();
-
-    if(player.is(Core::Logic::BLACK)) {
-        rank = 7 - rank;
-        file = 7 - file;
-    }
-
-    return sf::Vector2f{
-        origin.x + cellSize.x * file,
-        origin.y - cellSize.y * rank,
-    };
-}
-
 void Pieces::SetSize(sf::Sprite& sprite)
 {
-    sf::Vector2u currSize = sprite.getTexture().getSize();
+    const sf::Vector2u currSize = sprite.getTexture().getSize();
+    const sf::Vector2f cellSize = opt.cell_size();
+
     sprite.setScale({
         cellSize.x / currSize.x,
         cellSize.y / currSize.y

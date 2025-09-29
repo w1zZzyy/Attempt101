@@ -2,7 +2,6 @@
 
 #include "SFML/Graphics/RenderWindow.hpp"
 #include "SFML/Graphics/Sprite.hpp"
-#include "SFML/System/Vector2.hpp"
 
 #include "core/logic/defs.hpp"
 #include "core/logic/square.hpp"
@@ -18,7 +17,8 @@ class Pieces
     using Piece = std::optional<sf::Sprite>;
 public:
 
-    void Init(const Model::Options&);
+    Pieces(const Options::BoardVisual& opt) noexcept : opt(opt) {}
+
     void Append(Core::Logic::Color, Core::Logic::Piece, Core::Logic::Square);
     void Move(Core::Logic::Square from, Core::Logic::Square targ);
     void Replace(Core::Logic::Piece newPiece, Core::Logic::Color newColor, Core::Logic::Square on);
@@ -26,16 +26,12 @@ public:
 
 private:
 
-    sf::Vector2f ToVec(Core::Logic::Square) const;
     void SetSize(sf::Sprite&);
     void SetCenter(sf::Sprite&);
 
 private:
 
-    Core::Logic::Color player;
-    sf::Vector2f cellSize;
-    sf::Vector2f origin;
-    
+    const Options::BoardVisual& opt;
     Piece pieces[Core::Logic::SQUARE_COUNT];
 
 };
