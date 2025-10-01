@@ -21,14 +21,23 @@ public:
     void HandleEvent(const Event& event) {
         std::visit(
             [&event, this](auto& st) {
-                if(auto newStateOpt = st.HandleEvent(event)) {
-                    using NewState = std::decay_t<decltype(*newStateOpt)>;
-                    newStateOpt->Init(object);
-                    state = std::move(*newStateOpt);
-                }
+                NextState<Object> next = st.HandleEvent(event);
+                next.template Dump<Object>(state);
+                state.Init(object);
             }, 
             state
         );
+    }
+
+    template<EventType TEvent>
+    bool Supports() {
+        bool res;
+        std::visit(
+            [&res](auto& st) 
+            {res = st.template Supports<TEvent>();}, 
+            state
+        );
+        return res;
     }
     
 private:

@@ -2,25 +2,32 @@
 
 #include "core/logic/defs.hpp"
 #include "core/logic/movelist.hpp"
-#include "scene/model/event.hpp"
 #include "core/logic/position.hpp"
+#include "scene/model/state.hpp"
 
-namespace Scene::Game::Event 
+namespace Scene::Game::State
 {
 
-struct GameStarted : public Model::IEvent {
-    GameStarted(
+template<typename Object, typename T>
+class InProgress : public Model::IState<T, Object> {
+public:
+
+    InProgress(
         Core::Logic::Color player,
         const Core::Logic::PositionDM& pos, 
         const Core::Logic::MoveList& moves
-    ) noexcept :
+    ) noexcept : 
         player(player),
         pos(pos), 
-        moves(moves)
+        moves(moves) 
     {}
+
+protected:
+
     Core::Logic::Color player;
     const Core::Logic::PositionDM& pos;
     const Core::Logic::MoveList& moves;
+
 };
 
 }

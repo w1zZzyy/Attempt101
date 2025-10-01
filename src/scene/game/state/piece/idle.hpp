@@ -1,17 +1,25 @@
 #pragma once 
 
-#include "in-progress.hpp"
+#include "scene/game/event/game-started.hpp"
+#include "scene/game/state/piece/in-progress.hpp"
 #include "scene/model/state.hpp"
 #include "ui/renderer/pieces.hpp"
-#include "../../event/game-started.hpp"
-#include <optional>
 
 namespace Scene::Game::State::Piece
 {
 
+class InProgress;
+
 class Idle : public Model::IState<Idle, UI::Renderer::Pieces> {
 public:
-    std::optional<InProgress> HandleEventImpl(const Event::GameStarted& event);
+
+    Model::NextState<InProgress> HandleEventImpl(const Event::GameStarted& event);
+    
+    template<Model::EventType T>
+    constexpr bool SupportsImpl() {
+        return std::is_same_v<T, Event::GameStarted>;
+    }
+    
 };
 
 }
