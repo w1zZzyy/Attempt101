@@ -1,19 +1,18 @@
 #pragma once 
 
 #include "scene/game/event/game-started.hpp"
-#include "scene/game/state/piece/in-progress.hpp"
 #include "scene/model/state.hpp"
 #include "ui/renderer/pieces.hpp"
 
 namespace Scene::Game::State::Piece
 {
 
-class InProgress;
+class InProgressIdle;
 
 class Idle : public Model::IState<Idle, UI::Renderer::Pieces> {
 public:
 
-    Model::NextState<InProgress> HandleEventImpl(const Event::GameStarted& event);
+    Model::NextState<InProgressIdle> HandleEventImpl(const Event::GameStarted& event);
     
     template<Model::EventType T>
     constexpr bool SupportsImpl() {

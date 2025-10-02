@@ -1,8 +1,8 @@
-set(SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR})
+include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 add_subdirectory(core)
 add_subdirectory(ui) 
 add_subdirectory(scene)
 
 add_executable(main main.cpp)
-target_link_libraries(main PRIVATE Renderer_lib GameState_lib)
+target_link_libraries(main PRIVATE GameScene_lib)

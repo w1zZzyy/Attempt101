@@ -3,8 +3,6 @@
 #include "scene/game/event/game-started.hpp"
 #include "scene/game/event/mouse.hpp"
 
-#include <stdexcept>
-
 namespace Scene::Game::Handler 
 {
 
@@ -27,17 +25,17 @@ void UIHandler::Init(const UI::Options::Board& bopt)
     OnMouseEvent<Shared::Event::MouseMoved, Event::MouseMoved>();
 }
 
+void UIHandler::Render(sf::RenderWindow &window) {
+    board.Render(window);
+    pieces.Render(window);
+}
+
 void UIHandler::OnGameStarted()
 {
     using TEvent = Event::GameStarted;
     bus.Subscribe<TEvent>(
         [this](const TEvent& event)
         {
-            if(
-                !piece_machine.Supports<TEvent>() || 
-                !board_machine.Supports<TEvent>()
-            ) throw std::runtime_error("game started fatal");
-
             piece_machine.HandleEvent(event);
             board_machine.HandleEvent(event);
         }
@@ -50,15 +48,11 @@ void UIHandler::OnMouseEvent()
     bus.Subscribe<TEvent>(
         [this](const TEvent& __event)
         {
-            CEvent event{__event};
-            
+            CEvent event{__event}; 
             event.sqr = opt.ToSquare(event.pos);
             
-            if(piece_machine.Supports<CEvent>()) 
-                piece_machine.HandleEvent(event);
-
-            if(board_machine.Supports<CEvent>()) 
-                board_machine.HandleEvent(event);
+            piece_machine.HandleEvent(event);
+            board_machine.HandleEvent(event);
         }
     );
 }

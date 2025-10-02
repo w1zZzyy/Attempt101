@@ -14,7 +14,9 @@ class GameHandler {
 public:
 
     GameHandler(Shared::Bus&);
+
     void Init(const std::string& fen, Core::Logic::Color player);
+    void Start();
 
 private:
 

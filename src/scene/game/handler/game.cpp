@@ -1,5 +1,6 @@
 #include "game.hpp"
 #include "core/logic/defs.hpp"
+#include "scene/game/event/game-started.hpp"
 
 namespace Scene::Game::Handler 
 {
@@ -10,6 +11,13 @@ void GameHandler::Init(const std::string& fen, Core::Logic::Color player)
 {
     pos.SetFen(fen);
     this->player = player;
+}
+
+void GameHandler::Start() 
+{
+    update();
+    if(!result)
+        bus.Publish<Event::GameStarted>({player, pos, moves});
 }
 
 void GameHandler::update() 

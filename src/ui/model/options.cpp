@@ -99,7 +99,7 @@ void BoardVisual::Init(const Board& board)
     player_ = board.player();
 } 
 
-sf::Vector2f BoardVisual::ToVec(Core::Logic::Square sqr) const
+sf::Vector2f BoardVisual::ToVec(Core::Logic::Square sqr, bool leftBottom) const
 {
     int rank = sqr.rank();
     int file = sqr.file();
@@ -109,17 +109,24 @@ sf::Vector2f BoardVisual::ToVec(Core::Logic::Square sqr) const
         file = 7 - file;
     }
 
-    return sf::Vector2f{
+    sf::Vector2f vec = sf::Vector2f{
         origin_cell.center.x + origin_cell.size.x * file,
         origin_cell.center.y - origin_cell.size.y * rank,
     };
+
+    if(leftBottom) {
+        vec.x -= origin_cell.size.x / 2;
+        vec.y += origin_cell.size.y / 2;
+    }
+
+    return vec;
 }
 
 std::optional<Core::Logic::Square> BoardVisual::ToSquare(sf::Vector2f pos) const
 {
     sf::RectangleShape cell;
     cell.setSize(origin_cell.size);
-    cell.setOrigin(origin_cell.center);
+    cell.setOrigin(cell.getLocalBounds().getCenter());
 
     using namespace Core::Logic;
     

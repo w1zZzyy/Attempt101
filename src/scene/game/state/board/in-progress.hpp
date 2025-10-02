@@ -13,6 +13,9 @@ class PieceSelected;
 class InProgressIdle : public InProgress<InProgressIdle, UI::Renderer::Board> {
 public:
 
+    using Object = UI::Renderer::Board;
+    using InProgress<InProgressIdle, Object>::InProgress;
+    
     Model::NextState<PieceSelected> HandleEventImpl(const Event::MousePressed&);
 
     template<Model::EventType T>

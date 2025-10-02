@@ -8,7 +8,7 @@
 namespace Scene::Game::State
 {
 
-template<typename Object, typename T>
+template<typename T, typename Object>
 class InProgress : public Model::IState<T, Object> {
 public:
 
@@ -27,7 +27,7 @@ protected:
     Core::Logic::Color player;
     const Core::Logic::PositionDM& pos;
     const Core::Logic::MoveList& moves;
-
+        
 };
 
 }

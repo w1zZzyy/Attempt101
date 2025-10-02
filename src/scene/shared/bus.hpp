@@ -15,18 +15,19 @@
 namespace Scene::Shared 
 {
 
-/* 
-1. сначала все компоненты должны подписаться на события
-2. только после этого события стоит публиковать
-P.S именно в таком порядке, что избежать лишнего копироваания слушателей
-*/
 class Bus {
 public:
 
-    Bus(size_t threads = 1);
+    enum class Mode {
+        AddingListeners, 
+        ProcessingQueries,
+        Stopping
+    };
+
     ~Bus();
 
     void Clear();
+    void Launch(size_t threads = 1);
 
     template<Model::EventType T>
     using Handler = std::function<void(const T&)>;
@@ -44,13 +45,16 @@ private:
     std::vector<std::thread> workers;
     std::condition_variable cv;
     std::mutex mtx;
-    bool stop;
+    std::atomic<Mode> flag = Mode::AddingListeners;
 
 };
 
 template<Model::EventType T>
 void Bus::Subscribe(Handler<T> &&handler)
 {
+    if(flag != Mode::AddingListeners)
+        throw std::runtime_error("cant add listeners in this mode");
+
     std::type_index key = typeid(T);
     subscribers[key].emplace_back(
         [handler](const Model::IEvent& event) {

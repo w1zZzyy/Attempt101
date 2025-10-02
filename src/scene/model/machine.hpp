@@ -20,27 +20,17 @@ public:
     template<EventType Event>
     void HandleEvent(const Event& event) {
         std::visit(
-            [&event, this](auto& st) {
-                NextState<Object> next = st.HandleEvent(event);
-                next.template Dump<Object>(state);
-                state.Init(object);
+            [&event, this](auto&& st) 
+            {
+                auto next = st.HandleEvent(event);
+                if(next.template Dump<Object>(state))
+                    std::visit([this](auto& st) {st.Init(object);}, state);
             }, 
             state
         );
     }
-
-    template<EventType TEvent>
-    bool Supports() {
-        bool res;
-        std::visit(
-            [&res](auto& st) 
-            {res = st.template Supports<TEvent>();}, 
-            state
-        );
-        return res;
-    }
     
-private:
+protected:
 
     Object& object;
     std::variant<T...> state;

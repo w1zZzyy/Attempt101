@@ -35,6 +35,14 @@ public:
 
     };
 
+    Board(const Board& b) noexcept : Board(
+        b.player_, 
+        b.size_,
+         
+        b.left_bottom_, 
+        b.padding_)
+    {}
+
 private:
 
     Board(
@@ -64,7 +72,7 @@ public:
 
     void Init(const Board&);
 
-    sf::Vector2f ToVec(Core::Logic::Square) const;
+    sf::Vector2f ToVec(Core::Logic::Square, bool leftBottom = false) const;
     std::optional<Core::Logic::Square> ToSquare(sf::Vector2f) const;
 
     Core::Logic::Color player() const noexcept {return player_;}

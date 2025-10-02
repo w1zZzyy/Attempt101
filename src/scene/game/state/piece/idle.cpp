@@ -9,7 +9,7 @@ namespace Scene::Game::State::Piece
 
 using Object = UI::Renderer::Pieces;
 
-Model::NextState<InProgress> Idle::HandleEventImpl(const Event::GameStarted& event)
+Model::NextState<InProgressIdle> Idle::HandleEventImpl(const Event::GameStarted& event)
 {
     using namespace Core::Logic;
 
@@ -20,8 +20,8 @@ Model::NextState<InProgress> Idle::HandleEventImpl(const Event::GameStarted& eve
         }
     }
 
-    Model::NextState<InProgress> next;
-    next.Load<Object>(InProgress{
+    Model::NextState<InProgressIdle> next;
+    next.Load<Object>(InProgressIdle{
         event.player, 
         event.pos, 
         event.moves

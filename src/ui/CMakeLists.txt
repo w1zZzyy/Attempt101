@@ -1,19 +1,10 @@
-add_library(Resources_lib STATIC
-    resources/textures.hpp resources/textures.cpp 
-    resources/colors.hpp resources/colors.cpp
-    resources/text.hpp resources/text.cpp
+add_library(UI_lib STATIC 
+    resources/textures.cpp 
+    resources/colors.cpp
+    resources/text.cpp
+    utils/quad.cpp
+    renderer/board.cpp
+    renderer/pieces.cpp 
+    model/options.cpp 
 )
-target_link_libraries(Resources_lib PUBLIC SFML::Graphics Logic_lib)
-target_include_directories(Resources_lib PUBLIC ${SRC_DIR})
-
-add_library(UIUtils_lib STATIC 
-    utils/quad.hpp utils/quad.cpp
-)
-target_link_libraries(UIUtils_lib PUBLIC SFML::Graphics)
-
-add_library(Renderer_lib STATIC
-    renderer/board.hpp renderer/board.cpp 
-    renderer/pieces.hpp renderer/pieces.cpp 
-    model/options.hpp model/options.cpp 
-)
-target_link_libraries(Renderer_lib PUBLIC Resources_lib UIUtils_lib)
+target_link_libraries(UI_lib PUBLIC SFML::Graphics Logic_lib)

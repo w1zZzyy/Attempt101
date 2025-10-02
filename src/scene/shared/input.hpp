@@ -1,6 +1,8 @@
 #pragma once 
 
+#include "SFML/Graphics/RenderWindow.hpp"
 #include "SFML/Window/Event.hpp"
+
 #include "bus.hpp"
 #include "scene/model/event.hpp"
 
@@ -11,7 +13,7 @@ class Input {
 public:
 
     Input(Bus& bus) noexcept : bus(bus) {}
-    void handleEvent(sf::Event&);
+    void handleEvents(sf::RenderWindow&);
 
 private:
 

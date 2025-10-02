@@ -15,6 +15,7 @@ public:
 
     UIHandler(Shared::Bus&);
     void Init(const UI::Options::Board&);
+    void Render(sf::RenderWindow&);
 
 private:
 

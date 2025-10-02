@@ -9,16 +9,20 @@
 namespace Scene::Shared 
 {
 
-void Input::handleEvent(sf::Event& event)
+void Input::handleEvents(sf::RenderWindow& window)
 {
-    if(event.is<sf::Event::Closed>()) {
-        bus.Publish<Event::WindowClosed>({});
-        return;
-    }
+    while(std::optional event = window.pollEvent())
+    {
+        if(event->is<sf::Event::Closed>()) {
+            window.close();
+            bus.Publish<Event::WindowClosed>({});
+            return;
+        }
 
-    if (proceed<Event::MousePressed, sf::Event::MouseButtonPressed>(event)) return;
-    if (proceed<Event::MouseReleased, sf::Event::MouseButtonReleased>(event)) return;
-    if (proceed<Event::MouseMoved, sf::Event::MouseMoved>(event)) return;
+        if (proceed<Event::MousePressed, sf::Event::MouseButtonPressed>(*event)) continue;;
+        if (proceed<Event::MouseReleased, sf::Event::MouseButtonReleased>(*event)) continue;;
+        if (proceed<Event::MouseMoved, sf::Event::MouseMoved>(*event)) continue;
+    }
 }
 
 template<Model::EventType TEvent, typename T>

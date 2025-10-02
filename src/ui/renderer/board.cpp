@@ -40,11 +40,11 @@ void Board::Init(const Options::Board& bopt)
 
     for(Core::Logic::Square sqr = Core::Logic::Square::Start(); sqr.isValid(); ++sqr) 
     {
-        const sf::Vector2f cellPos = opt.ToVec(sqr);
+        const sf::Vector2f cellPos = opt.ToVec(sqr, true);
         const bool isWhite = 1 - (sqr.rank() + sqr.file()) % 2 == 0;
 
         Utils::AppendQuad(
-            {cellPos.x - opt.cell_size().x / 2, cellPos.y + opt.cell_size().y / 2}, 
+            cellPos, 
             opt.cell_size(), 
             (
                 isWhite 
@@ -98,6 +98,29 @@ void Board::Render(sf::RenderWindow& window) const
 
     for(const sf::Text& text : textBuilder)
         window.draw(text);
+
+    using namespace Resources;
+    sf::VertexArray highlight(sf::PrimitiveType::Triangles);
+
+    if(danger) 
+        BuildHighlight<DANGER_SQUARE_COLOR>(danger.value(), highlight);
+    if(selected) 
+        BuildHighlight<SELECTED_SQUARE_COLOR>(selected.value(), highlight);
+    for(const Core::Logic::Square& sqr : valid) 
+        BuildHighlight<VALID_SQUARE_COLOR>(sqr, highlight);
+
+    window.draw(highlight);
+}
+
+template <Resources::ColorType T>
+void Board::BuildHighlight(Core::Logic::Square sqr, sf::VertexArray& highlight) const
+{   
+    Utils::AppendQuad(
+        opt.ToVec(sqr, true), 
+        opt.cell_size(), 
+        colorBuilder.Extract<T>(), 
+        highlight
+    );
 }
 
 }

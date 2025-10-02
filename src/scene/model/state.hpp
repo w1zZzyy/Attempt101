@@ -11,6 +11,9 @@
 namespace Scene::Model 
 {
 
+template<typename... TState>
+class NextState;
+
 template<typename T, typename Object>
 class IState {
 public:
@@ -25,13 +28,12 @@ public:
 
     template<EventType Event>
     auto HandleEvent(const Event& event) {
-        assert(object);
-        return cast()->HandleEventImpl(event);
-    }
-
-    template<EventType Event>
-    constexpr bool Supports() {
-        return cast()->template SupportsImpl<Event>();
+        if constexpr (cast()->template SupportsImpl<Event>()) {
+            assert(object);
+            return cast()->HandleEventImpl(event);
+        }
+        else
+            return NextState<T>();
     }
 
 private:
@@ -65,19 +67,27 @@ public:
     template<typename Object, StateType<Object> T>
     void Load(T&& nextState) {
         static_assert(IsValid<Object>() && (std::is_same_v<T, TState> || ...), "type not supported");
-        state = std::forward(nextState);
+        state.emplace(std::forward<T>(nextState)); 
     }
 
     template<typename Object, StateType<Object>... Dest>
-    void Dump(std::variant<Dest...>& dest) {
-        static_assert(IsValid<Object>() && (is_convertible<TState, Dest...>() && ...), "cant convert");
-        if(!state) return;
+    bool Dump(std::variant<Dest...>& dest) 
+    {
+        if constexpr(!IsValid<Object>() || !(is_convertible<TState, Dest...>() && ...))
+            return false;
+
+        if(!state) 
+            return false;
+            
         std::visit(
             [&dest](auto&& value) {
-                dest = std::move(value);
+                using ValueType = std::decay_t<decltype(value)>;
+                dest.template emplace<ValueType>(std::forward<decltype(value)>(value));
             }, 
             state.value()
         );
+
+        return true;
     }
 
 private:
