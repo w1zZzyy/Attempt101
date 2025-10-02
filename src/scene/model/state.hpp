@@ -76,10 +76,10 @@ public:
         if constexpr(!IsValid<Object>() || !(is_convertible<TState, Dest...>() && ...))
             return false;
 
-        if(!state) 
+        else if(!state) 
             return false;
             
-        std::visit(
+        else std::visit(
             [&dest](auto&& value) {
                 using ValueType = std::decay_t<decltype(value)>;
                 dest.template emplace<ValueType>(std::forward<decltype(value)>(value));
@@ -95,5 +95,20 @@ private:
     std::optional<std::variant<TState...>> state;
     
 };
+
+
+template<typename Object>
+class NoState : public IState<NoState<Object>, Object> {
+public:
+    template<EventType T>
+    Model::NextState<NoState> HandleEventImpl(const T&) {return {};}
+
+    template<Model::EventType T>
+    constexpr bool SupportsImpl() {return false;}
+};
+
+template<typename Object>
+using NoNextState = NextState<NoState<Object>>;
+
 
 }

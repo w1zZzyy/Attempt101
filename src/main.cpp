@@ -18,7 +18,12 @@ int main()
     sf::RenderWindow Window(sf::VideoMode(window_size), "Final Attempt");
     Window.setVerticalSyncEnabled(true);
 
-    Scene::GameScene Scene = Scene::GameScene::Builder().setWindow(Window).setEventBus(bus).build();
+    Scene::GameScene Scene = 
+        Scene::GameScene::Builder()
+        .setWindow(Window)
+        .setEventBus(bus)
+        .setFen("rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 1")
+        .build();
 
     bus.Launch();
 

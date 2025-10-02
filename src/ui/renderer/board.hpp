@@ -22,11 +22,13 @@ public:
 
     void SetDanger(const std::optional<Core::Logic::Square>& sqr) noexcept {danger = sqr;}
     void SetSelected(const std::optional<Core::Logic::Square>& sqr) noexcept {selected = sqr;}
+    void SetHover(const std::optional<Core::Logic::Square>& sqr) noexcept {hover = sqr;}
     void AppendValid(Core::Logic::Square sqr) noexcept {valid.push_back(sqr);}
 
     void RemoveSelected() noexcept {selected.reset();}
     void RemoveDanger() noexcept {danger.reset();}
     void RemoveValid() noexcept {valid.clear();}
+    void RemoveHover() noexcept {hover.reset();}
 
     std::optional<Core::Logic::Square> GetDanger() const noexcept {return danger;}
     std::optional<Core::Logic::Square> GetSelected() const noexcept {return selected;}
@@ -48,6 +50,7 @@ private:
     std::optional<Core::Logic::Square> danger;
     std::optional<Core::Logic::Square> selected;
     std::vector<Core::Logic::Square> valid;
+    std::optional<Core::Logic::Square> hover;
 
 };
 

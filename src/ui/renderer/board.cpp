@@ -1,5 +1,6 @@
 #include "board.hpp"
 
+#include "SFML/Graphics/CircleShape.hpp"
 #include "SFML/Graphics/PrimitiveType.hpp"
 #include "SFML/Graphics/RenderWindow.hpp"
 #include "SFML/Graphics/VertexArray.hpp"
@@ -102,14 +103,23 @@ void Board::Render(sf::RenderWindow& window) const
     using namespace Resources;
     sf::VertexArray highlight(sf::PrimitiveType::Triangles);
 
-    if(danger) 
-        BuildHighlight<DANGER_SQUARE_COLOR>(danger.value(), highlight);
     if(selected) 
         BuildHighlight<SELECTED_SQUARE_COLOR>(selected.value(), highlight);
     for(const Core::Logic::Square& sqr : valid) 
         BuildHighlight<VALID_SQUARE_COLOR>(sqr, highlight);
+    if(hover)
+        BuildHighlight<HOVER_SQUARE_COLOR>(hover.value(), highlight);
 
     window.draw(highlight);
+
+    if(danger) {
+        sf::CircleShape circle;
+        circle.setFillColor(colorBuilder.Extract<DANGER_SQUARE_COLOR>());
+        circle.setRadius(opt.cell_size().x / 2);
+        circle.setOrigin(circle.getLocalBounds().getCenter());
+        circle.setPosition(opt.ToVec(*danger));
+        window.draw(circle);
+    }
 }
 
 template <Resources::ColorType T>

@@ -14,6 +14,7 @@ Model::NextState<InProgressIdle> PieceSelected::HandleEventImpl(const Event::Mou
 
     object->RemoveSelected();
     object->RemoveValid();
+    object->RemoveHover();
 
     if(
         !pos.GetPiece(*event.sqr).isValid() || 
@@ -29,6 +30,24 @@ Model::NextState<InProgressIdle> PieceSelected::HandleEventImpl(const Event::Mou
     for(auto move : moves)
         if(move.from() == *event.sqr) 
             object->AppendValid(move.targ());
+
+    return {};
+}
+
+Model::NoNextState<PieceSelected::Object> PieceSelected::HandleEventImpl(const Event::MouseMoved &event)
+{
+    object->RemoveHover();
+    
+    if(!event.sqr)
+        return {};
+
+    const auto& valid = object->GetValid();
+    for(auto& sqr : valid) {
+        if(*event.sqr == sqr) {
+            object->SetHover(sqr);
+            break;
+        }
+    }
 
     return {};
 }
