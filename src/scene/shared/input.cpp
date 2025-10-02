@@ -4,7 +4,6 @@
 #include "SFML/Window/Event.hpp"
 
 #include "event/mouse.hpp"
-#include "event/window-closed.hpp"
 
 namespace Scene::Shared 
 {
@@ -15,7 +14,6 @@ void Input::handleEvents(sf::RenderWindow& window)
     {
         if(event->is<sf::Event::Closed>()) {
             window.close();
-            bus.Publish<Event::WindowClosed>({});
             return;
         }
 
