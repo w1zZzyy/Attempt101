@@ -40,13 +40,10 @@ void Pieces::Move(Core::Logic::Square from, Core::Logic::Square targ)
 
 void Pieces::Replace(Core::Logic::Piece newPiece, Core::Logic::Color newColor, Core::Logic::Square on)
 {
-    if(pieces[on])
-        pieces[on].reset();
-
     const auto& texture = Resources::PieceTextures::Get(newPiece, newColor);
     assert(texture);
 
-    pieces[on].emplace(*texture);
+    pieces[on]->setTexture(*texture);
 }
 
 void Pieces::Render(sf::RenderWindow& window) const

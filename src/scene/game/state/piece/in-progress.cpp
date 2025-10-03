@@ -38,7 +38,7 @@ Model::NoNextState<InProgressIdle::Object> InProgressIdle::HandleEventImpl(const
         if(auto promotion = std::get_if<Event::GameUpdated::Promotion>(event_ptr)) 
         {
             const auto clr = pos.GetPieceColor(event.targ);
-            object->Replace(*promotion, clr, event.targ);
+            object->Replace(*promotion, clr, event.from);
         }
 
         else if(auto castle = std::get_if<Event::GameUpdated::RookCastle>(event_ptr)) 

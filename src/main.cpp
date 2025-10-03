@@ -9,7 +9,7 @@
 
 int main()
 {
-    const sf::Vector2u window_size = {600, 600};
+    const sf::Vector2u window_size = {1080, 1920};
     const auto player = Core::Logic::WHITE;
 
     Scene::Shared::Bus bus;
