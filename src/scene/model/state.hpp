@@ -1,6 +1,7 @@
 #pragma once
 
 #include "event.hpp"
+#include "scene/shared/bus.hpp"
 
 #include <concepts>
 #include <cassert>
@@ -22,8 +23,9 @@ public:
     IState(const IState& st) noexcept : object(st.object) {}
     IState(Object& object) noexcept : object(&object) {}
 
-    void Init(Object& object) noexcept {
+    void Init(Object& object, Shared::Bus& bus) noexcept {
         this->object = &object;
+        this->bus = &bus;
     }
 
     template<EventType Event>
@@ -43,6 +45,7 @@ private:
 protected:
 
     Object* object;
+    Shared::Bus* bus;
 
 };
 

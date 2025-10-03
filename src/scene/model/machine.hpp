@@ -1,6 +1,7 @@
 #pragma once
 
 #include "state.hpp"
+#include "scene/shared/bus.hpp"
 
 #include <variant>
 
@@ -12,7 +13,10 @@ class Machine
 {
 public:
 
-    Machine(Object& object) noexcept : object(object) {
+    Machine(Object& object, Shared::Bus& bus) noexcept : 
+        object(object), 
+        bus(bus)
+    {
         using FirstState = std::tuple_element_t<0, std::tuple<T...>>;
         state.template emplace<FirstState>(object);
     }
@@ -24,7 +28,7 @@ public:
             {
                 auto next = st.HandleEvent(event);
                 if(next.template Dump<Object>(state))
-                    std::visit([this](auto& st) {st.Init(object);}, state);
+                    std::visit([this](auto& st) {st.Init(object, bus);}, state);
             }, 
             state
         );
@@ -33,6 +37,7 @@ public:
 protected:
 
     Object& object;
+    Shared::Bus& bus;
     std::variant<T...> state;
 
 };

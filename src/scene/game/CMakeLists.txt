@@ -1,6 +1,8 @@
 add_library(GameScene_lib STATIC 
     state/piece/idle.cpp
     state/piece/in-progress.cpp
+    state/piece/piece-grabbed.cpp
+    state/piece/piece-selected.cpp
     state/board/idle.cpp
     state/board/in-progress.cpp
     state/board/piece-selected.cpp

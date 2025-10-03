@@ -9,9 +9,9 @@ namespace Scene::Game::Handler
 UIHandler::UIHandler(Shared::Bus& bus) : 
     bus(bus),
     board(opt),
-    board_machine(board),
+    board_machine(board, bus),
     pieces(opt),
-    piece_machine(pieces)
+    piece_machine(pieces, bus)
 {}
 
 void UIHandler::Init(const UI::Options::Board& bopt)

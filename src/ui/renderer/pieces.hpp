@@ -24,6 +24,8 @@ public:
     void Replace(Core::Logic::Piece newPiece, Core::Logic::Color newColor, Core::Logic::Square on);
     void Render(sf::RenderWindow&) const;
 
+    Piece& GetPiece(Core::Logic::Square on) noexcept {return pieces[on];} 
+
 private:
 
     void SetSize(sf::Sprite&);
