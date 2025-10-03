@@ -56,7 +56,6 @@ sf::Color Colors::Extract() const
         T == WHITE_COLOR ? "white" : 
         T == BLACK_COLOR ? "black" : 
         T == BACKGROUND_COLOR ? "background" :
-        T == DANGER_SQUARE_COLOR ? "danger" :
         T == VALID_SQUARE_COLOR ? "valid" :
         T == SELECTED_SQUARE_COLOR ? "selected" :
         T == HOVER_SQUARE_COLOR ? "hover" : 
@@ -80,7 +79,6 @@ sf::Color Colors::Extract() const
 template sf::Color Colors::Extract<WHITE_COLOR>() const;
 template sf::Color Colors::Extract<BLACK_COLOR>() const;
 template sf::Color Colors::Extract<BACKGROUND_COLOR>() const;
-template sf::Color Colors::Extract<DANGER_SQUARE_COLOR>() const;
 template sf::Color Colors::Extract<VALID_SQUARE_COLOR>() const;
 template sf::Color Colors::Extract<SELECTED_SQUARE_COLOR>() const;
 template sf::Color Colors::Extract<HOVER_SQUARE_COLOR>() const;

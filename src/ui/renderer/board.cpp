@@ -111,15 +111,6 @@ void Board::Render(sf::RenderWindow& window) const
         BuildHighlight<HOVER_SQUARE_COLOR>(hover.value(), highlight);
 
     window.draw(highlight);
-
-    if(danger) {
-        sf::CircleShape circle;
-        circle.setFillColor(colorBuilder.Extract<DANGER_SQUARE_COLOR>());
-        circle.setRadius(opt.cell_size().x / 2);
-        circle.setOrigin(circle.getLocalBounds().getCenter());
-        circle.setPosition(opt.ToVec(*danger));
-        window.draw(circle);
-    }
 }
 
 template <Resources::ColorType T>

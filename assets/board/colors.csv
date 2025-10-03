@@ -2,7 +2,6 @@ name red,green,blue,alpha
 white 176,196,222,255
 black 69,75,141,255
 background 116,41,41,255
-danger 236,48,48,165
 selected 49,156,154,150
 valid 57,186,50,150
 hover 57,186,185,150

@@ -58,14 +58,6 @@ Model::NextState<InProgressIdle> PieceSelected::HandleEventImpl(const Event::Gam
     object->RemoveValid();
     object->RemoveHover();
 
-    if(pos.IsCheck()) {
-        object->SetDanger(pos.GetPieces(
-            pos.GetSide(), 
-            Core::Logic::KING)
-            .lsb()
-        );
-    }
-
     Model::NextState<InProgressIdle> next;
     next.Load<Object>(InProgressIdle{player, pos, moves});
     return next;
