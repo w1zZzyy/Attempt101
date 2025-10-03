@@ -43,7 +43,7 @@ inline bool InProgress<T, Object>::MoveAttempted(Core::Logic::Square from, Core:
     for(auto& move : moves) {
         if(move.from() == from && move.targ() == targ) {
             next.template Load<Object>(OnMove{player, pos, moves});
-            this->bus->template Publish<Event::GameUpdateAttempt>({move});
+            this->bus->template Publish<Event::GameUpdateAttempted>({move});
             return true;
         }
     }

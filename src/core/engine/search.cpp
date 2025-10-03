@@ -16,16 +16,9 @@ Search::Search()
     }
 }
 
-void Search::Launch(const Options& options)
+void Search::Launch()
 {
-    stopSearch = false;
-    allowedToSearch = false;
-    rootPos = options.pos;
-    maxDepth = options.maxDepth;
-    tt.resize(options.ttSizeMB);
-    timer.setLimit(options.timeSec);
-
-    searchThread = std::thread([this, options]() 
+    searchThread = std::thread([this]() 
     {
         while(!stopSearch)
         {
@@ -35,25 +28,35 @@ void Search::Launch(const Options& options)
             }
 
             if(allowedToSearch && iterativeDeepening()) {
-                options.onBestMove(info);
+                onBestMove(info);
                 allowedToSearch = false;
             }
         }
     });
 }
 
-void Search::Think()
+void Search::Init(const Options& options) 
+{
+    stopSearch = false;
+    allowedToSearch = false;
+    maxDepth = options.maxDepth;
+    tt.resize(options.ttSizeMB);
+    timer.setLimit(options.timeSec);
+    onBestMove = std::move(options.onMove);
+}
+
+void Search::Think() 
 {
     assert(rootPos);
 
     {
         std::lock_guard lock(mtx);
 
-        if(allowedToSearch) {
-            throw std::runtime_error("Search is already in progress");
+        if (allowedToSearch) {
+        throw std::runtime_error("Search is already in progress");
         }
-        if(stopSearch) {
-            throw std::runtime_error("Search has been stopped");
+        if (stopSearch) {
+        throw std::runtime_error("Search has been stopped");
         }
 
         allowedToSearch = true;

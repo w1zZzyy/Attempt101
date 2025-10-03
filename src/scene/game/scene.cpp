@@ -1,5 +1,10 @@
 #include "scene.hpp"
 
+#include "event/game-updates.hpp"
+
+#include <iostream>
+#include <format>
+
 namespace Scene
 {
 
@@ -33,6 +38,12 @@ GameScene::Builder &GameScene::Builder::setBoardView(const UI::Options::Board &b
     return *this;
 }
 
+GameScene::Builder &GameScene::Builder::setEngineOptions(Core::Engine::Search::Options &&eopt) noexcept
+{
+    this->eopt = std::move(eopt);
+    return *this;
+}
+
 GameScene GameScene::Builder::build()
 {
     if(!window || !bus)
@@ -52,12 +63,42 @@ GameScene GameScene::Builder::build()
         );
     }
 
+    if(!eopt) {
+        eopt.emplace();
+        eopt->maxDepth = Core::Logic::MAX_HISTORY_SIZE - 1;
+        eopt->timeSec = 3;
+        eopt->ttSizeMB = 64;
+        Shared::Bus* capturedBus = this->bus;
+        eopt->onMove = [capturedBus](Core::Engine::Search::Info info) 
+        {
+            assert(capturedBus);
+
+            std::cout << std::format(
+                ":::::::::::::::::::::::\n"
+                "nodes: {}\n"
+                "eval: {}\n"
+                "time: {}\n"
+                "depth: {}\n"
+                "tt cuts: {}\n"
+                "move: {}\n"
+                ":::::::::::::::::::::::\n",
+                info.nodes, info.eval, info.time, 
+                info.depth, info.tt_cuts, info.bestMove.to_string()
+            );
+
+            capturedBus->Publish<Game::Event::GameUpdateAttempted>({
+                 info.bestMove
+            });
+        };
+    }
+
     return {
         *window, 
         *bus, 
         *fen,
         *player, 
-        *bopt
+        *bopt, 
+        *eopt
     };
 }
 
@@ -71,13 +112,18 @@ GameScene::GameScene(
     Shared::Bus &bus,
     const std::string &fen,
     Core::Logic::Color player,
-    const UI::Options::Board &bopt) noexcept : IScene(window, bus),
+    const UI::Options::Board &bopt, 
+    const Core::Engine::Search::Options& eopt) noexcept : IScene(window, bus),
                                                UIController(bus),
-                                               GameController(bus)
+                                               GameController(bus), 
+                                               AIController(bus)
 {
     GameController.Init(fen, player);
     UIController.Init(bopt);
+    AIController.Init(eopt);
+
     GameController.Start();
+    AIController.Start();
 }
 
 

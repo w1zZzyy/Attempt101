@@ -37,8 +37,8 @@ private:
 
 private:
 
-    Cluster* table;
-    uint64_t size;
+    Cluster* table = nullptr;
+    uint64_t size = 0;
 
 };
 

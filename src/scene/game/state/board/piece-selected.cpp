@@ -52,4 +52,23 @@ Model::NoNextState<PieceSelected::Object> PieceSelected::HandleEventImpl(const E
     return {};
 }
 
+Model::NextState<InProgressIdle> PieceSelected::HandleEventImpl(const Event::GameUpdated &event)
+{
+    object->RemoveSelected();
+    object->RemoveValid();
+    object->RemoveHover();
+
+    if(pos.IsCheck()) {
+        object->SetDanger(pos.GetPieces(
+            pos.GetSide(), 
+            Core::Logic::KING)
+            .lsb()
+        );
+    }
+
+    Model::NextState<InProgressIdle> next;
+    next.Load<Object>(InProgressIdle{player, pos, moves});
+    return next;
+}
+
 }

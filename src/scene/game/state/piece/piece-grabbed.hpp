@@ -27,12 +27,14 @@ public:
 
     Model::NoNextState<Object> HandleEventImpl(const Event::MouseMoved&);
     Model::NextState<InProgressIdle, PieceSelected> HandleEventImpl(const Event::MouseReleased&);
+    Model::NextState<InProgressIdle> HandleEventImpl(const Event::GameUpdated&);
 
     template<Model::EventType T>
     constexpr bool SupportsImpl() {
         return 
             std::is_same_v<T, Event::MouseMoved> || 
-            std::is_same_v<T, Event::MouseReleased>;
+            std::is_same_v<T, Event::MouseReleased> || 
+            std::is_same_v<T, Event::GameUpdated>;
     }
 
 private:

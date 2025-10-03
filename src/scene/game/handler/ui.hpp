@@ -19,7 +19,8 @@ public:
 
 private:
 
-    void OnGameStarted();
+    template<Model::EventType TEvent>
+    void OnGame();
 
     template<Model::EventType TEvent, Model::EventType CEvent>
     void OnMouseEvent();

@@ -38,7 +38,7 @@ private:
 template<MoveGenType T>
 struct MoveGenerator {
     template<StorageType S>
-    MoveGenerator(Position<S> pos) {
+    MoveGenerator(Position<S>& pos) {
         pos.UpdateAttacks();
         moves.generate<T>(pos);
     }

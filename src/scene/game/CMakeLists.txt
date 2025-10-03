@@ -7,7 +7,8 @@ add_library(GameScene_lib STATIC
     state/board/in-progress.cpp
     state/board/piece-selected.cpp
     handler/game.cpp 
-    handler/ui.cpp
+    handler/ui.cpp 
+    handler/ai.cpp 
     scene.cpp 
 )
-target_link_libraries(GameScene_lib PUBLIC UI_lib Logic_lib Shared_lib)
+target_link_libraries(GameScene_lib PUBLIC UI_lib Logic_lib Shared_lib Engine_lib)

@@ -25,13 +25,15 @@ Model::NextState<InProgressIdle, PieceGrabbed> PieceSelected::HandleEventImpl(co
         return next;
     }
 
-    if(
-        pos.GetPiece(*event.sqr).isValid() && 
-        pos.GetPieceColor(*event.sqr) == player
-    ) {
+    if(pos.GetPiece(*event.sqr).isValid()) 
+    {
         auto& piece = object->GetPiece(*event.sqr);
         assert(piece.has_value());
-        next.Load<Object>(PieceGrabbed{player, pos, moves, *piece, *event.sqr, true});
+        next.Load<Object>(PieceGrabbed{
+            player, pos, moves,
+             *piece, *event.sqr, 
+             pos.GetPieceColor(*event.sqr) == player
+        });
         return next;
     }
 

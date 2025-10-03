@@ -50,4 +50,18 @@ Model::NextState<InProgressIdle, PieceSelected> PieceGrabbed::HandleEventImpl(co
     return next;
 }
 
+Model::NextState<InProgressIdle> PieceGrabbed::HandleEventImpl(const Event::GameUpdated &event)
+{
+    piece.setPosition(idlePos);
+
+    InProgressIdle st(player, pos, moves);
+    st.Init(*object, *bus);
+    st.HandleEventImpl(event);
+
+    Model::NextState<InProgressIdle> next;
+    next.Load<Object>(std::move(st));
+
+    return next;
+}
+
 }

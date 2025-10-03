@@ -19,7 +19,8 @@ void UIHandler::Init(const UI::Options::Board& bopt)
     opt.Init(bopt);
     board.Init(bopt);
 
-    OnGameStarted();
+    OnGame<Event::GameStarted>();
+    OnGame<Event::GameUpdated>();
     OnMouseEvent<Shared::Event::MousePressed, Event::MousePressed>();
     OnMouseEvent<Shared::Event::MouseReleased, Event::MouseReleased>();
     OnMouseEvent<Shared::Event::MouseMoved, Event::MouseMoved>();
@@ -30,9 +31,9 @@ void UIHandler::Render(sf::RenderWindow &window) {
     pieces.Render(window);
 }
 
-void UIHandler::OnGameStarted()
+template<Model::EventType TEvent>
+void UIHandler::OnGame()
 {
-    using TEvent = Event::GameStarted;
     bus.Subscribe<TEvent>(
         [this](const TEvent& event)
         {

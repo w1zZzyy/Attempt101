@@ -20,7 +20,8 @@ public:
 
 private:
 
-    void update();
+    void Update();
+    void OnUpdateAttempt();
 
 private:
 

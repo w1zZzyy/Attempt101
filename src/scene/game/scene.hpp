@@ -3,6 +3,7 @@
 #include "scene/model/scene.hpp"
 #include "handler/game.hpp"
 #include "handler/ui.hpp"
+#include "handler/ai.hpp"
 
 namespace Scene 
 {
@@ -18,6 +19,7 @@ public:
         Builder& setFen(std::string) noexcept;
         Builder& setPlayer(Core::Logic::Color) noexcept;
         Builder& setBoardView(const UI::Options::Board&) noexcept;
+        Builder& setEngineOptions(Core::Engine::Search::Options&&) noexcept;
         GameScene build();
         
     private:
@@ -26,6 +28,7 @@ public:
         std::optional<std::string> fen;
         std::optional<Core::Logic::Color> player;
         std::optional<UI::Options::Board> bopt;
+        std::optional<Core::Engine::Search::Options> eopt;
     };
 
     void RenderImpl();
@@ -37,13 +40,15 @@ private:
         Shared::Bus& bus, 
         const std::string& fen, 
         Core::Logic::Color player, 
-        const UI::Options::Board& bopt
+        const UI::Options::Board& bopt, 
+        const Core::Engine::Search::Options& eopt
     ) noexcept;
 
 private:
 
     Game::Handler::UIHandler UIController;
     Game::Handler::GameHandler GameController;
+    Game::Handler::AIHandler AIController;
 
 };
 

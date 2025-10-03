@@ -36,8 +36,7 @@ public:
         uint64_t timeSec;
         uint64_t ttSizeMB;
         int maxDepth;
-        std::function<void(Info)> onBestMove;
-        const Logic::PositionDM* pos;
+        std::function<void(Info)> onMove;
     };
 
 public:
@@ -45,9 +44,14 @@ public:
     Search();
     ~Search() {Stop();}
 
-    void Launch(const Options&);
+    void Init(const Options&);
+    void Launch();
     void Think();
     void Stop();
+
+    void SetPosition(const Logic::PositionDM& pos) noexcept {
+        this->rootPos = &pos;
+    }
 
 private:
 
@@ -61,14 +65,18 @@ private:
     Timer timer;
     Transposition tt;
     Evaluation eval;
+
     const Logic::PositionDM* rootPos;
     int maxDepth;
+
     std::thread searchThread;
-    bool stopSearch;
-    bool allowedToSearch;
     std::mutex mtx;
     std::condition_variable cv;
 
+    bool stopSearch;
+    bool allowedToSearch;
+
+    std::function<void(Info)> onBestMove;
 };
 
 }

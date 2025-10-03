@@ -29,4 +29,32 @@ Model::NextState<PieceGrabbed> InProgressIdle::HandleEventImpl(const Event::Mous
     return next;
 }
 
+Model::NoNextState<InProgressIdle::Object> InProgressIdle::HandleEventImpl(const Event::GameUpdated &event)
+{
+    if(event.flag) 
+    {
+        auto* event_ptr = &event.flag.value();
+
+        if(auto promotion = std::get_if<Event::GameUpdated::Promotion>(event_ptr)) 
+        {
+            const auto clr = pos.GetPieceColor(event.targ);
+            object->Replace(*promotion, clr, event.targ);
+        }
+
+        else if(auto castle = std::get_if<Event::GameUpdated::RookCastle>(event_ptr)) 
+        {
+            object->Move(castle->first, castle->second);
+        }
+
+        else if(auto passant = std::get_if<Event::GameUpdated::Passant>(event_ptr))
+        {
+            object->Reset(*passant);
+        }
+    }
+
+    object->Move(event.from, event.targ);
+
+    return {};
+}
+
 }

@@ -23,6 +23,7 @@ public:
     void Move(Core::Logic::Square from, Core::Logic::Square targ);
     void Replace(Core::Logic::Piece newPiece, Core::Logic::Color newColor, Core::Logic::Square on);
     void Render(sf::RenderWindow&) const;
+    void Reset(Core::Logic::Square sqr) noexcept {pieces[sqr].reset();}
 
     Piece& GetPiece(Core::Logic::Square on) noexcept {return pieces[on];} 
 

@@ -22,7 +22,7 @@ int main()
         Scene::GameScene::Builder()
         .setWindow(Window)
         .setEventBus(bus)
-        .setFen("rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 1")
+        .setFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
         .build();
 
     bus.Launch();
