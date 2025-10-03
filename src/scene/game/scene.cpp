@@ -65,7 +65,7 @@ GameScene GameScene::Builder::build()
 
     if(!eopt) {
         eopt.emplace();
-        eopt->maxDepth = Core::Logic::MAX_HISTORY_SIZE - 1;
+        eopt->maxDepth = 32;
         eopt->timeSec = 3;
         eopt->ttSizeMB = 64;
         Shared::Bus* capturedBus = this->bus;

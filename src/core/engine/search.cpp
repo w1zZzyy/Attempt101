@@ -141,9 +141,6 @@ int Search::negamax(Logic::PositionFM& pos, int depth, int alpha, int beta)
     if(timer.TimeUp()) 
         return 0;
 
-    if(pos.IsDraw(rootPos->GetHistory())) 
-        return Logic::DRAW_SCORE;
-
     ProbeResult probe = tt.probe(pos.GetHash(), depth, alpha, beta);
 
     if(probe.score) {
@@ -176,6 +173,12 @@ int Search::negamax(Logic::PositionFM& pos, int depth, int alpha, int beta)
         const Logic::Move& move = m.value();
 
         pos.DoMove(move);
+        
+        if(pos.IsDraw(rootPos->GetHistory())) {
+            pos.UndoMove();
+            return Logic::DRAW_SCORE;
+        }
+
         eval.Update(move);
 
         int score = -negamax(pos, depth - 1, -beta, -alpha);
