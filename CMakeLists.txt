@@ -5,5 +5,17 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-add_subdirectory(libs)
-add_subdirectory(desktop)
+file(COPY ${CMAKE_SOURCE_DIR}/assets DESTINATION ${CMAKE_BINARY_DIR})
+add_definitions(-DASSETS_PATH="${CMAKE_BINARY_DIR}/assets/")
+
+include(FetchContent)
+
+FetchContent_Declare(
+    sfml 
+    GIT_REPOSITORY https://github.com/SFML/SFML.git
+    GIT_TAG 3.0.0
+)
+
+FetchContent_MakeAvailable(sfml)
+
+add_subdirectory(src)
