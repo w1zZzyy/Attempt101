@@ -102,6 +102,11 @@ void Board::Render(sf::RenderWindow& window) const
     using namespace Resources;
     sf::VertexArray highlight(sf::PrimitiveType::Triangles);
 
+    if(lastMove) {
+        BuildHighlight<SELECTED_SQUARE_COLOR>(lastMove->from(), highlight);
+        BuildHighlight<SELECTED_SQUARE_COLOR>(lastMove->targ(), highlight);
+    }
+
     if(selected) 
         BuildHighlight<SELECTED_SQUARE_COLOR>(selected.value(), highlight);
     for(const Core::Logic::Square& sqr : valid) 

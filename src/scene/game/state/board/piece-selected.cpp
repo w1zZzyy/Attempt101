@@ -54,7 +54,9 @@ Model::NoNextState<PieceSelected::Object> PieceSelected::HandleEventImpl(const E
 
 Model::NextState<InProgressIdle> PieceSelected::HandleEventImpl(const Event::GameUpdated &event)
 {
-    return ToInProgress();
+    auto next = ToInProgress();
+    object->SetMove({event.from, event.targ, Core::Logic::DEFAULT_MF});
+    return next;
 }
 
 Model::NextState<InProgressIdle> PieceSelected::HandleEventImpl(const Event::Promotion &)

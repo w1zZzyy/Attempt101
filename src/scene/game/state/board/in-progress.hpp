@@ -17,10 +17,13 @@ public:
     using InProgress<InProgressIdle, Object>::InProgress;
     
     Model::NextState<PieceSelected> HandleEventImpl(const Event::MousePressed&);
+    Model::NoNextState<Object> HandleEventImpl(const Event::GameUpdated&);
 
     template<Model::EventType T>
     constexpr bool SupportsImpl() {
-        return std::is_same_v<T, Event::MousePressed>;
+        return 
+            std::is_same_v<T, Event::MousePressed> || 
+            std::is_same_v<T, Event::GameUpdated>;
     }
 
 };

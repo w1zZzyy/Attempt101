@@ -25,6 +25,9 @@ Model::NextState<InProgressIdle, PieceGrabbed> PieceSelected::HandleEventImpl(co
         return next;
     }
 
+    if(MoveAttempted<InProgressIdle>(on, *event.sqr, next))
+        return next;
+
     if(pos.GetPiece(*event.sqr).isValid()) 
     {
         auto& piece = object->GetPiece(*event.sqr);
@@ -36,9 +39,6 @@ Model::NextState<InProgressIdle, PieceGrabbed> PieceSelected::HandleEventImpl(co
         });
         return next;
     }
-
-    if(MoveAttempted<InProgressIdle>(on, *event.sqr, next))
-        return next;
 
     return next;
 }

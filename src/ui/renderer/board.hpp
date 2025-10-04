@@ -7,6 +7,7 @@
 #include "../resources/colors.hpp"
 #include "../model/options.hpp"
 #include "core/logic/square.hpp"
+#include "core/logic/move.hpp"
 
 namespace UI::Renderer 
 {
@@ -20,13 +21,15 @@ public:
     void Init(const Options::Board&);
     void Render(sf::RenderWindow&) const;
 
-    void SetSelected(const std::optional<Core::Logic::Square>& sqr) noexcept {selected = sqr;}
-    void SetHover(const std::optional<Core::Logic::Square>& sqr) noexcept {hover = sqr;}
+    void SetMove(const Core::Logic::Move& move) noexcept {lastMove = move;}
+    void SetSelected(const Core::Logic::Square& sqr) noexcept {selected = sqr;}
+    void SetHover(const Core::Logic::Square& sqr) noexcept {hover = sqr;}
     void AppendValid(Core::Logic::Square sqr) noexcept {valid.push_back(sqr);}
 
     void RemoveSelected() noexcept {selected.reset();}
     void RemoveValid() noexcept {valid.clear();}
     void RemoveHover() noexcept {hover.reset();}
+    void RemoveMove() noexcept {lastMove.reset();}
 
     std::optional<Core::Logic::Square> GetSelected() const noexcept {return selected;}
     const std::vector<Core::Logic::Square>& GetValid() const noexcept {return valid;}
@@ -47,6 +50,8 @@ private:
     std::optional<Core::Logic::Square> selected;
     std::vector<Core::Logic::Square> valid;
     std::optional<Core::Logic::Square> hover;
+    std::optional<Core::Logic::Move> lastMove;
+
 
 };
 

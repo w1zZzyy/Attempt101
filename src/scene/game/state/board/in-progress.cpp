@@ -31,4 +31,10 @@ Model::NextState<PieceSelected> InProgressIdle::HandleEventImpl(const Event::Mou
     return next;
 }
 
+Model::NoNextState<PieceSelected::Object> InProgressIdle::HandleEventImpl(const Event::GameUpdated& event)
+{
+    object->SetMove({event.from, event.targ, Core::Logic::DEFAULT_MF});
+    return {};
+}
+
 }
