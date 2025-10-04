@@ -160,7 +160,7 @@ int Search::negamax(Logic::PositionFM& pos, int depth, int alpha, int beta)
         return Logic::DRAW_SCORE;
     }
 
-    MovePicker picker(gen.moves, pos, probe.move);
+    MovePicker picker(gen.moves, pos, killers[pos.GetPly()], probe.move);
 
 
     const int oldAlpha = alpha;
@@ -189,13 +189,26 @@ int Search::negamax(Logic::PositionFM& pos, int depth, int alpha, int beta)
         if(timer.TimeUp()) 
             return 0;
 
-        if(score > bestScore) {
+        if(score > bestScore) 
+        {
             bestScore = score;
             bestMove = move;
-            if(bestScore > alpha) {
+            if(bestScore > alpha) 
+            {
                 alpha = bestScore;
-                if(alpha >= beta) {
+                if(alpha >= beta) 
+                {
                     tt.store(pos.GetHash(), bestScore, move, depth, EntryType::LowerBound);
+
+                    if(
+                        !pos.GetPiece(move.targ()).isValid() && 
+                        move.flag() != Logic::EN_PASSANT_MF
+                    ) {
+                        const int ply = pos.GetPly();
+                        killers[ply][1] = killers[ply][0];
+                        killers[ply][0] = move;
+                    }
+
                     return bestScore;
                 }
             }

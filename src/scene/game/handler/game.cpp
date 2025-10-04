@@ -60,7 +60,7 @@ void GameHandler::OnUpdateAttempt()
                     Found, 
                     NotFound,
                     Ambiguous
-                } status;
+                } status{NotFound};
                 Core::Logic::Move move;
             } move_status;
 

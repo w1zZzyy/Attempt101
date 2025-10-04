@@ -14,7 +14,12 @@ namespace Core::Engine
 class MovePicker {
 public:
 
-    MovePicker(const Logic::MoveList&, const Logic::PositionFM&, std::optional<Logic::Move> = std::nullopt);
+    MovePicker(
+        const Logic::MoveList&, 
+        const Logic::PositionFM&, 
+        Logic::Move* killers = nullptr, 
+        std::optional<Logic::Move> ttMove = std::nullopt
+    );
     std::optional<Logic::Move> next();
     void update(Logic::Move bestMovePrevIter);
 
@@ -32,6 +37,7 @@ private:
 private:
 
     const Logic::PositionFM& pos;
+    const Logic::Move* killers;
     Logic::ExtMove moves[Logic::MAX_MOVES_COUNT];
     Logic::ExtMove* cur;
     Logic::ExtMove* end;

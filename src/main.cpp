@@ -10,7 +10,7 @@
 int main()
 {
     const sf::Vector2u window_size = {1080, 1920};
-    const auto player = Core::Logic::BLACK;
+    const auto player = Core::Logic::WHITE;
 
     Scene::Shared::Bus bus;
     Scene::Shared::Input input(bus);

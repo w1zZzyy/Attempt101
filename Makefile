@@ -19,4 +19,4 @@ run-debug: run-impl-debug
 run-release: run-impl-release
 
 clear:
-	@rm -rf build*
+	@rm -rf build* .cache/

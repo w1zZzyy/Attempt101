@@ -65,6 +65,7 @@ private:
     Timer timer;
     Transposition tt;
     Evaluation eval;
+    Logic::Move killers[Logic::MAX_HISTORY_SIZE][2];
 
     const Logic::PositionDM* rootPos;
     int maxDepth;

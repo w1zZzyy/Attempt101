@@ -20,10 +20,11 @@ constexpr int PieceValue[PIECE_COUNT] = {
 }
 
 MovePicker::MovePicker(
-    const MoveList& __moves, 
-    const PositionFM& __pos, 
-    std::optional<Move> __ttMove
-) : pos(__pos)
+    const Logic::MoveList& __moves, 
+    const Logic::PositionFM& __pos, 
+    Logic::Move* __killers, 
+    std::optional<Logic::Move> __ttMove
+) : pos(__pos), killers(__killers)
 {
     if(__ttMove)
         ttMove = __ttMove.value();
@@ -69,8 +70,16 @@ int MovePicker::computeScore(Move move) const
     if(move == ttMove)
         return INF;
 
-    if(std::optional targ = captureTarget(move)) 
-        return computeCaptureScore(move.from(), move.targ());
+    const Logic::Square from = move.from();
+    const Logic::Square targ = move.targ();
+
+    if(std::optional victim = captureTarget(move)) 
+        return 9 * computeCaptureScore(from, *victim);
+
+    if(killers) {
+        if(killers[0] == move || killers[1] == move)
+            return 500;
+    }
     
     return 0;
 }
