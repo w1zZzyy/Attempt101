@@ -32,7 +32,7 @@ std::ifstream& operator >> (std::ifstream& in, RGB& rgb) {
 
 Colors::Colors(std::string path)
 {
-    std::ifstream file(ASSETS_PATH "board/colors.csv");
+    std::ifstream file(path);
     if(!file) {
         throw std::runtime_error("Failed to open colors file");
     }
@@ -59,6 +59,9 @@ sf::Color Colors::Extract() const
         T == VALID_SQUARE_COLOR ? "valid" :
         T == SELECTED_SQUARE_COLOR ? "selected" :
         T == HOVER_SQUARE_COLOR ? "hover" : 
+        T == PROMOTION_HOVER ? "hover" : 
+        T == PROMOTION_BLUR ? "blur" : 
+        T == PROMOTION_FRAME ? "frame" : 
         ""
     );
     static_assert(!name.empty(), "invalid type");
@@ -82,5 +85,8 @@ template sf::Color Colors::Extract<BACKGROUND_COLOR>() const;
 template sf::Color Colors::Extract<VALID_SQUARE_COLOR>() const;
 template sf::Color Colors::Extract<SELECTED_SQUARE_COLOR>() const;
 template sf::Color Colors::Extract<HOVER_SQUARE_COLOR>() const;
+template sf::Color Colors::Extract<PROMOTION_BLUR>() const;
+template sf::Color Colors::Extract<PROMOTION_FRAME>() const;
+template sf::Color Colors::Extract<PROMOTION_HOVER>() const;
 
 }

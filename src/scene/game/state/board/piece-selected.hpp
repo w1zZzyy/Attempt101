@@ -1,6 +1,7 @@
 #pragma once
 
 #include "scene/game/event/mouse.hpp"
+#include "scene/game/event/promotion.hpp"
 #include "ui/renderer/board.hpp"
 #include "../in-progress.hpp"
 
@@ -19,14 +20,20 @@ public:
     Model::NextState<InProgressIdle> HandleEventImpl(const Event::MousePressed&);
     Model::NoNextState<Object> HandleEventImpl(const Event::MouseMoved&);
     Model::NextState<InProgressIdle> HandleEventImpl(const Event::GameUpdated&);
+    Model::NextState<InProgressIdle> HandleEventImpl(const Event::Promotion&);
 
     template<Model::EventType T>
     constexpr bool SupportsImpl() {
         return 
             std::is_same_v<T, Event::MousePressed> || 
             std::is_same_v<T, Event::MouseMoved> || 
-            std::is_same_v<T, Event::GameUpdated>;
+            std::is_same_v<T, Event::GameUpdated> || 
+            std::is_same_v<T, Event::Promotion>;
     }
+
+private:
+
+    Model::NextState<InProgressIdle> ToInProgress();
     
 };
 

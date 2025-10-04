@@ -6,6 +6,8 @@ add_library(GameScene_lib STATIC
     state/board/idle.cpp
     state/board/in-progress.cpp
     state/board/piece-selected.cpp
+    state/promotion/idle.cpp
+    state/promotion/in-progress.cpp
     handler/game.cpp 
     handler/ui.cpp 
     handler/ai.cpp 

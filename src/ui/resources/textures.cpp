@@ -4,7 +4,7 @@
 namespace UI::Resources
 {
 
-PieceTextures::Ptr PieceTextures::textures[Core::Logic::PIECE_COUNT][Core::Logic::COLOR_COUNT];
+PieceTextures::Texture PieceTextures::textures[Core::Logic::PIECE_COUNT][Core::Logic::COLOR_COUNT];
 
 std::string BuildPath(Core::Logic::Piece piece, Core::Logic::Color color)
 {
@@ -25,22 +25,22 @@ std::string BuildPath(Core::Logic::Piece piece, Core::Logic::Color color)
     return std::format(ASSETS_PATH "/pieces/{}.png", res);
 }
 
-const PieceTextures::Ptr& PieceTextures::Get(Core::Logic::Piece piece, Core::Logic::Color color)
+PieceTextures::Ptr PieceTextures::Get(Core::Logic::Piece piece, Core::Logic::Color color)
 {
     assert(piece.isValid() && color.isValid());
 
-    Ptr& texture = textures[piece][color];
+    Texture& texture = textures[piece][color];
 
-    if(!texture) {
+    if(!texture.init) {
         const std::string path = BuildPath(piece, color);
-        texture = std::make_shared<sf::Texture>();
-        if(!texture->loadFromFile(path)) {
+        if(!texture.data.loadFromFile(path)) {
             throw std::runtime_error("Failed to load texture: " + path);  
         }
-        texture->setSmooth(true);
+        texture.data.setSmooth(true);
+        texture.init = true;
     }
 
-    return texture;
+    return &texture.data;
 }
 
 

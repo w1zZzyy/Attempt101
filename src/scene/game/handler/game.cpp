@@ -3,6 +3,7 @@
 #include "logic/move.hpp"
 #include "scene/game/event/game-started.hpp"
 #include "scene/game/event/game-updates.hpp"
+#include "scene/game/event/promotion.hpp"
 
 namespace Scene::Game::Handler 
 {
@@ -54,11 +55,45 @@ void GameHandler::OnUpdateAttempt()
         {
             using namespace Core::Logic;
 
+            struct MoveStatus {
+                enum Type {
+                    Found, 
+                    NotFound,
+                    Ambiguous
+                } status;
+                Core::Logic::Move move;
+            } move_status;
+
             Square from = event.move.from();
             Square targ = event.move.targ();
             MoveFlag flag = event.move.flag();
 
-            pos.DoMove(event.move);
+            for(auto move : moves) 
+            {
+                if(move == event.move) {
+                    move_status.status = MoveStatus::Found;
+                    move_status.move = move;
+                    break;
+                }
+                if(move.from() == from && move.targ() == targ) {
+                    if(move_status.status == MoveStatus::Found && flag == DEFAULT_MF) {
+                        move_status.status = MoveStatus::Ambiguous;
+                        break;
+                    }
+                    move_status.status = MoveStatus::Found;
+                    move_status.move = move;
+                }
+            }
+
+            if(move_status.status == MoveStatus::Ambiguous) {
+                bus.Publish<Event::Promotion>({from, targ});
+                return;
+            }
+            if(move_status.status == MoveStatus::NotFound) {
+                return;
+            }
+
+            pos.DoMove(move_status.move);
             Update();
 
             auto publish = [&](auto param) -> void {
@@ -67,7 +102,7 @@ void GameHandler::OnUpdateAttempt()
                 });
             };
 
-            switch (flag)
+            switch (move_status.move.flag())
             {
             case EN_PASSANT_MF:
                 publish(where_passant(from, targ));

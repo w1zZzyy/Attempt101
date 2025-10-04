@@ -25,14 +25,18 @@ private:
     template<Model::EventType TEvent, Model::EventType CEvent>
     void OnMouseEvent();
 
+    void OnPromotion();
+
 private:
 
     Shared::Bus& bus;
     UI::Options::BoardVisual opt;
     UI::Renderer::Board board;
     UI::Renderer::Pieces pieces;
+    UI::Renderer::Promotion promo;
     State::PieceMachine piece_machine;
     State::BoardMachine board_machine;
+    State::PromotionMachine promo_machine;
 
 };
 

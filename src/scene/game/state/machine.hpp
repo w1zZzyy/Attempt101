@@ -8,8 +8,11 @@
 #include "board/idle.hpp"
 #include "board/in-progress.hpp"
 #include "board/piece-selected.hpp"
+#include "promotion/idle.hpp"
+#include "promotion/in-progress.hpp"
 #include "ui/renderer/board.hpp"
 #include "ui/renderer/pieces.hpp"
+#include "ui/renderer/promotion.hpp"
 
 namespace Scene::Game::State 
 {
@@ -33,6 +36,19 @@ class BoardMachine : public Model::Machine<UI::Renderer::Board,
 public:
     BoardMachine(UI::Renderer::Board& object, Shared::Bus& bus) noexcept
         : Machine(object, bus) {}
+};
+
+class PromotionMachine : public Model::Machine<UI::Renderer::Promotion, 
+    Promotion::Idle,
+    Promotion::InProgressIdle>
+{
+public:
+    PromotionMachine(UI::Renderer::Promotion& object, Shared::Bus& bus) noexcept
+        : Machine(object, bus) {}
+    
+    bool InActive() const {
+        return std::get_if<Promotion::InProgressIdle>(&state);
+    }
 };
 
 }

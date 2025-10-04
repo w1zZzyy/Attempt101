@@ -6,6 +6,12 @@
 namespace UI::Utils 
 {
 
-void AppendQuad(sf::Vector2f origin, sf::Vector2f size, sf::Color clr, sf::VertexArray& arr);
+void AppendQuad(
+    sf::Vector2f origin, 
+    sf::Vector2f size, 
+    sf::Color clr, 
+    sf::VertexArray& arr, 
+    sf::RenderStates* st = nullptr
+);
 
 }

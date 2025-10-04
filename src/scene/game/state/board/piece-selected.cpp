@@ -18,7 +18,7 @@ Model::NextState<InProgressIdle> PieceSelected::HandleEventImpl(const Event::Mou
 
     if(
         !pos.GetPiece(*event.sqr).isValid() || 
-        !pos.GetPieceColor(*event.sqr).isValid() || 
+        pos.GetPieceColor(*event.sqr) != player || 
         prevSelected == event.sqr
     ) { 
         Model::NextState<InProgressIdle> next;
@@ -53,6 +53,16 @@ Model::NoNextState<PieceSelected::Object> PieceSelected::HandleEventImpl(const E
 }
 
 Model::NextState<InProgressIdle> PieceSelected::HandleEventImpl(const Event::GameUpdated &event)
+{
+    return ToInProgress();
+}
+
+Model::NextState<InProgressIdle> PieceSelected::HandleEventImpl(const Event::Promotion &)
+{
+    return ToInProgress();
+}
+
+Model::NextState<InProgressIdle> PieceSelected::ToInProgress()
 {
     object->RemoveSelected();
     object->RemoveValid();

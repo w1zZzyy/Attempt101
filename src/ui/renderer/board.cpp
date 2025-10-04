@@ -1,6 +1,5 @@
 #include "board.hpp"
 
-#include "SFML/Graphics/CircleShape.hpp"
 #include "SFML/Graphics/PrimitiveType.hpp"
 #include "SFML/Graphics/RenderWindow.hpp"
 #include "SFML/Graphics/VertexArray.hpp"

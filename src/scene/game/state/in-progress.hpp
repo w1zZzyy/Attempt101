@@ -3,6 +3,7 @@
 #include "core/logic/defs.hpp"
 #include "core/logic/movelist.hpp"
 #include "core/logic/position.hpp"
+#include "logic/move.hpp"
 #include "scene/model/state.hpp"
 #include "scene/game/event/game-updates.hpp"
 
@@ -42,8 +43,9 @@ inline bool InProgress<T, Object>::MoveAttempted(Core::Logic::Square from, Core:
 {
     for(auto& move : moves) {
         if(move.from() == from && move.targ() == targ) {
+            using namespace Core::Logic;
             next.template Load<Object>(OnMove{player, pos, moves});
-            this->bus->template Publish<Event::GameUpdateAttempted>({move});
+            this->bus->template Publish<Event::GameUpdateAttempted>(Move{from, targ, DEFAULT_MF});
             return true;
         }
     }

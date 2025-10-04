@@ -10,7 +10,7 @@
 int main()
 {
     const sf::Vector2u window_size = {1080, 1920};
-    const auto player = Core::Logic::WHITE;
+    const auto player = Core::Logic::BLACK;
 
     Scene::Shared::Bus bus;
     Scene::Shared::Input input(bus);
@@ -18,11 +18,11 @@ int main()
     sf::RenderWindow Window(sf::VideoMode(window_size), "Final Attempt");
     Window.setVerticalSyncEnabled(true);
 
-    Scene::GameScene Scene = 
-        Scene::GameScene::Builder()
+    Scene::GameScene Scene = Scene::GameScene::Builder()
         .setWindow(Window)
         .setEventBus(bus)
         .setFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
+        .setPlayer(player)
         .build();
 
     bus.Launch();
