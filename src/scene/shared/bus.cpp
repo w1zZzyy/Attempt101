@@ -21,7 +21,9 @@ void Bus::Launch(size_t threads)
                 while(flag != Mode::Stopping) 
                 {
                     std::unique_lock<std::mutex> ul(mtx);
-                    cv.wait(ul, [this](){return flag == Mode::Stopping || !waiting.empty();});
+                    cv.wait(ul, [this](){return 
+                        flag == Mode::Stopping || can_proceed();
+                    });
 
                     if(flag == Mode::Stopping)
                         break;
@@ -38,6 +40,19 @@ void Bus::Launch(size_t threads)
             }
         );
     }
+}
+
+void Bus::SwitchMode(Mode newMode) 
+{
+    flag = newMode;
+    if(can_proceed()) {
+        cv.notify_one();
+    }
+}
+
+bool Bus::can_proceed() const noexcept
+{
+    return !waiting.empty() && flag == Mode::ProcessingQueries;
 }
 
 void Bus::Clear() {

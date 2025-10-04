@@ -29,6 +29,8 @@ public:
     void Clear();
     void Launch(size_t threads = 1);
 
+    void SwitchMode(Mode newMode);
+
     template<Model::EventType T>
     using Handler = std::function<void(const T&)>;
 
@@ -37,6 +39,10 @@ public:
 
     template<Model::EventType T>
     void Publish(T&& event);
+
+private:
+
+    bool can_proceed() const noexcept;
 
 private:
 
