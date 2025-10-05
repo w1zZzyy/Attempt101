@@ -19,16 +19,16 @@ public:
         Builder& setFen(std::string) noexcept;
         Builder& setPlayer(Core::Logic::Color) noexcept;
         Builder& setBoardView(const UI::Options::Board&) noexcept;
-        Builder& setEngineOptions(Core::Engine::Search::Options&&) noexcept;
+        Builder& setEngineOptions(const Core::Engine::Search::Options&) noexcept;
         GameScene build();
         
     private:
         sf::RenderWindow* window;
         Shared::Bus* bus;
-        std::optional<std::string> fen;
-        std::optional<Core::Logic::Color> player;
+        std::string fen;
+        Core::Logic::Color player;
         std::optional<UI::Options::Board> bopt;
-        std::optional<Core::Engine::Search::Options> eopt;
+        Core::Engine::Search::Options eopt;
     };
 
     void RenderImpl();

@@ -8,6 +8,10 @@ namespace Scene::Game::Handler
 
 void AIHandler::Init(const Core::Engine::Search::Options &options)
 {
+    options.onMove = [this](Core::Engine::Search::Info info){
+        bus.Publish<Event::GameUpdateAttempted>({info.bestMove});
+    };
+
     engine.Init(options);
 
     OnGame<Event::GameStarted>();

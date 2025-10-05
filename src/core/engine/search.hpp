@@ -36,7 +36,7 @@ public:
         uint64_t timeSec;
         uint64_t ttSizeMB;
         int maxDepth;
-        std::function<void(Info)> onMove;
+        mutable std::function<void(Info)> onMove;
     };
 
 public:
