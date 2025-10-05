@@ -43,4 +43,10 @@ Model::NextState<InProgressIdle, PieceGrabbed> PieceSelected::HandleEventImpl(co
     return next;
 }
 
+Model::NextState<InProgressIdle> PieceSelected::HandleEventImpl(const Event::GameUpdated& event)
+{
+    return HandleGameUpdate<InProgressIdle>(event);
+}
+
+
 }

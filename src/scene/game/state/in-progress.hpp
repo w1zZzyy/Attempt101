@@ -29,6 +29,9 @@ protected:
     template<Model::StateType<Object> OnMove, Model::StateType<Object>... TStates>
     bool MoveAttempted(Core::Logic::Square from, Core::Logic::Square targ, Model::NextState<TStates...>& next);
 
+    template<Model::StateType<Object> OnUpdate>
+    Model::NextState<OnUpdate> HandleGameUpdate(const Event::GameUpdated&);
+
 protected:
 
     Core::Logic::Color player;
@@ -50,6 +53,21 @@ inline bool InProgress<T, Object>::MoveAttempted(Core::Logic::Square from, Core:
         }
     }
     return false;
+}
+
+template <typename T, typename Object>
+template <Model::StateType<Object> OnUpdate>
+inline Model::NextState<OnUpdate>
+InProgress<T, Object>::HandleGameUpdate(const Event::GameUpdated &event) 
+{
+    OnUpdate st(player, pos, moves);
+    st.Init(*this->object, *this->bus);
+    st.HandleEventImpl(event);
+
+    Model::NextState<OnUpdate> next;
+    next.template Load<Object>(std::move(st));
+
+    return next;
 }
 
 }
