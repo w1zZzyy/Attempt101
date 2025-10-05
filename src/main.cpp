@@ -9,13 +9,13 @@
 
 int main()
 {
-    const sf::Vector2u window_size = {1080, 1920};
     const auto player = Core::Logic::WHITE;
 
     Scene::Shared::Bus bus;
     Scene::Shared::Input input(bus);
 
-    sf::RenderWindow Window(sf::VideoMode(window_size), "Final Attempt");
+    sf::RenderWindow Window(sf::VideoMode::getDesktopMode(), "Final Attempt", sf::Style::Titlebar | sf::Style::Close);
+    Window.setPosition({0,0});
     Window.setVerticalSyncEnabled(true);
 
     Scene::GameScene Scene = Scene::GameScene::Builder()
