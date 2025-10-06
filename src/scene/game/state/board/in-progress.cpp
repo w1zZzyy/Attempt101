@@ -21,7 +21,9 @@ Model::NextState<PieceSelected> InProgressIdle::HandleEventImpl(const Event::Mou
     if(color != player)
         return {};
 
+    object->RemoveMove();
     object->SetSelected(*event.sqr);
+    
     for(auto move : moves)
         if(move.from() == *event.sqr) 
             object->AppendValid(move.targ());
