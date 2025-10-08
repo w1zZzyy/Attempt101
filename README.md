@@ -27,10 +27,11 @@ concept EventType = std::derived_from<T, IEvent>;
 
 #### States 
 - the CRTP pattern (src/scene/model/state.hpp)
-``cpp' is used to manage object states.
+- is used to manage object states.
+```cpp 
 template<typename T, typename Object>
 class IState;
-``
+```
 - stores a pointer to the object and to the EventBus
 ```cpp
 protected:
@@ -57,49 +58,49 @@ auto HandleEvent(const Event& event) {
 - example from src/scene/game/state/piece/idle.hpp
 ```cpp
 class Idle : public Model::IState<Idle, UI::Renderer::Pieces>;
-``
+```
 - must have a SupportsImpl method that determines whether a given state can handle an event.
 ```cpp
 template<Model::EventType T>
 constexpr bool SupportsImpl() {return std::is_same_v<T, Event::GameStarted>;}
-``
+```
 - has methods that must be called HandleEventImpl and return the nextState object<NewState1, NewState2.....> to process a specific event
 ```cpp
 Model::NextState<InProgressIdle> HandleEventImpl(const Event::GameStarted& event);
-``
+```
 is an example where we have one state that can transition to one of several new states (src/scene/game/state/piece/piece-grabbed.hpp)
-``cpp
+```cpp
 Model::NextState<InProgressIdle, PieceSelected> HandleEventImpl(const Event::MouseReleased&);
 ```
 - an example when we will definitely not move to a new state and will remain in the same (src/scene/game/state/piece/piece-grabbed.hpp)
-``cpp
+```cpp
 Model::NoNextState<Object> HandleEventImpl(const Event::MouseMoved&);
 ```
 
 ###### Transitions between states
 - nextState (src/scene/model/state.hpp) is responsible for this
-``cpp
+```cpp
 template<typename... TState >
 class nextState;
-``
+```
 - there is no new state by default
 - the Load method loads a new state
 - the Dump method(&dest) loads the saved state to dest if it is not null.
 - the NoNextState<Object> stub just makes it clear that the current state will definitely not change to the new one.
 
-#### The Fortune Machine 
+#### The State Machine 
 - base class (src/scene/model/machine.hpp)
-``cpp
+```cpp
 template<typename Object, StateType<Object>... T>
 class Machine;
-``
+```
 - The machine contains a link to the object, options for its possible states, and an EventBus (so that when the state of the object changes, which may affect other components of the system, they can be informed about it)
 ```cpp
 protected:
     Object& object;
     Shared::Bus& bus;
     std::variant<T...> state;
-``
+```
 - event processing is performed as follows
 ```cpp
 template<EventType Event>
@@ -122,7 +123,7 @@ void HandleEvent(const Event& event) {
 3. if, when processing an event in the HandleEventImpl method, a new state was loaded into nextState via the Load<Object>(NewState1{Args...}) method, then when calling Dump in state, this new state is assumed and Dump returns true, if the new state was not loaded into nextState, it returns false and the state does not change
 
 - this architecture makes it very easy to create new State Machines (src/scene/game/state/machine.hpp)
-``cpp
+```cpp
 class PieceMachine : public Model::Machine<UI::Renderer::Pieces, 
     Piece::Idle,
     Piece::InProgressIdle, 
@@ -151,19 +152,37 @@ make run-release
 
 ### Linux
 - it is necessary that the following dependencies are installed: 
-    freetype
-    x11
-    xrandr
-    xcursor
-    xi
-    udev
-    opengl
-    flac
-    ogg
-    vorbis
-    vorbisenc
-    vorbisfile
-    pthread
+    - freetype
+    - x11
+    - xrandr
+    - xcursor
+    - xi
+    - udev
+    - opengl
+    - flac
+    - ogg
+    - vorbis
+    - vorbisenc
+    - vorbisfile
+    - pthread 
+
+- on ubuntu/debian 
+```bash
+sudo apt update
+sudo apt install -y \
+    libfreetype6-dev \
+    libx11-dev \
+    libxrandr-dev \
+    libxcursor-dev \
+    libxi-dev \
+    libudev-dev \
+    libgl1-mesa-dev \
+    libflac-dev \
+    libogg-dev \
+    libvorbis-dev \
+    libpthread-stubs0-dev
+```
+
 - after that, you can already launch
 ```bash
 git clone https://github.com/w1zZzyy/Attempt101.git
@@ -329,19 +348,36 @@ make run-release
 
 ### Linux
 - необходимо, чтобы были установлены следующие зависимости: 
-    freetype
-    x11
-    xrandr
-    xcursor
-    xi
-    udev
-    opengl
-    flac
-    ogg
-    vorbis
-    vorbisenc
-    vorbisfile
-    pthread
+    - freetype
+    - x11
+    - xrandr
+    - xcursor
+    - xi
+    - udev
+    - opengl
+    - flac
+    - ogg
+    - vorbis
+    - vorbisenc
+    - vorbisfile
+    - pthread 
+
+- на ubuntu/debian 
+```bash
+sudo apt update
+sudo apt install -y \
+    libfreetype6-dev \
+    libx11-dev \
+    libxrandr-dev \
+    libxcursor-dev \
+    libxi-dev \
+    libudev-dev \
+    libgl1-mesa-dev \
+    libflac-dev \
+    libogg-dev \
+    libvorbis-dev \
+    libpthread-stubs0-dev
+```
 - после чего можно уже запускаться
 ```bash
 git clone https://github.com/w1zZzyy/Attempt101.git
